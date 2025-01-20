@@ -6,14 +6,16 @@ import java.time.LocalDateTime;
 public class TournamentCacheDTO implements Serializable {
     private Long tournamentId;
     private LocalDateTime startTime;
+    private long durationInSeconds;
     private boolean scheduled;
 
     // Constructors, getters, and setters
     public TournamentCacheDTO() {}
 
-    public TournamentCacheDTO(Long tournamentId, LocalDateTime startTime, boolean scheduled) {
+    public TournamentCacheDTO(Long tournamentId, LocalDateTime startTime, long durationInSeconds, boolean scheduled) {
         this.tournamentId = tournamentId;
         this.startTime = startTime;
+        this.durationInSeconds = durationInSeconds;
         this.scheduled = scheduled;
     }
 
@@ -39,5 +41,13 @@ public class TournamentCacheDTO implements Serializable {
 
     public void setScheduled(boolean scheduled) {
         this.scheduled = scheduled;
+    }
+
+    public long getDuration() {
+        return durationInSeconds;
+    }
+
+    public void setDuration(long durationInSeconds) {
+        this.durationInSeconds = durationInSeconds;
     }
 }

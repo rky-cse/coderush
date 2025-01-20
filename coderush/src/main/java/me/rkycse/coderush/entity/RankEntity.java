@@ -14,12 +14,10 @@ public class RankEntity {
     @Column(name = "rank_id", nullable = false, unique = true)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private Long tournamentId;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "rank_id")
-    private HashSet<UserTestcaseEntity> rankListTestcases;
+    @Column(name = "user_name", nullable = false)
+    private String userName;
 
     @Column(name = "score", nullable = false)
     private long score;
@@ -33,20 +31,21 @@ public class RankEntity {
         this.id = id;
     }
 
-    public Long getUserId() {
-        return userId;
+
+    public Long getTournamentId() {
+        return tournamentId;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setTournamentId(Long tournamentId) {
+        this.tournamentId = tournamentId;
     }
 
-    public HashSet<UserTestcaseEntity> getRankListTestcases() {
-        return rankListTestcases;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setRankListTestcases(HashSet<UserTestcaseEntity> rankListTestcases) {
-        this.rankListTestcases = rankListTestcases;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public long getScore() {

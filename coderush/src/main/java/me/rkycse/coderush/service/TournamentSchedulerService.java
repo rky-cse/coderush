@@ -1,14 +1,19 @@
 package me.rkycse.coderush.service;
 
+import me.rkycse.coderush.dto.RankDTO;
 import me.rkycse.coderush.dto.TournamentCacheDTO;
+import me.rkycse.coderush.entity.RankEntity;
+import me.rkycse.coderush.mapper.Mapper;
+import me.rkycse.coderush.repository.RankRepository;
 import me.rkycse.coderush.repository.TournamentRepository;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -17,19 +22,26 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class TournamentSchedulerService {
 
+
+
     private final TournamentRepository tournamentRepository;
     private final ThreadPoolTaskScheduler taskScheduler;
-    private final RedisTemplate<String, TournamentCacheDTO> redisTemplate;
+    private final RedisTemplate<String, TournamentCacheDTO> tournamentRedisTemplate;
+    private final RedisTemplate<String, List<RankDTO>>rankListRedisTemplate;
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
+    private final RankRepository rankRepository;
 
     public TournamentSchedulerService(
             TournamentRepository tournamentRepository,
             ThreadPoolTaskScheduler taskScheduler,
-            RedisTemplate<String, TournamentCacheDTO> redisTemplate
-    ) {
+            RedisTemplate<String, TournamentCacheDTO> tournamentRedisTemplate,
+            RedisTemplate<String, List<RankDTO>> rankListRedisTemplate,
+            RankRepository rankRepository) {
         this.tournamentRepository = tournamentRepository;
         this.taskScheduler = taskScheduler;
-        this.redisTemplate = redisTemplate;
+        this.tournamentRedisTemplate = tournamentRedisTemplate;
+        this.rankListRedisTemplate = rankListRedisTemplate;
+        this.rankRepository = rankRepository;
     }
 
     public void startScheduling() {
@@ -50,12 +62,13 @@ public class TournamentSchedulerService {
             tournaments.forEach(row -> {
                 Long tournamentId = (Long) row[0];
                 LocalDateTime startTime = (LocalDateTime) row[1];
+                Long durationInSeconds = (Long) row[2];
 
                 String key = "tournament:" + tournamentId;
                 // Only store if not present
-                if (!Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
-                    TournamentCacheDTO cacheDTO = new TournamentCacheDTO(tournamentId, startTime, false);
-                    redisTemplate.opsForValue().set(key, cacheDTO, 7, TimeUnit.SECONDS);
+                if (!Boolean.TRUE.equals(tournamentRedisTemplate.hasKey(key))) {
+                    TournamentCacheDTO cacheDTO = new TournamentCacheDTO(tournamentId, startTime,durationInSeconds, false);
+                    tournamentRedisTemplate.opsForValue().set(key, cacheDTO, 7, TimeUnit.SECONDS);
                 }
             });
         } catch (Exception e) {
@@ -65,27 +78,27 @@ public class TournamentSchedulerService {
 
     private void scheduleTournaments() {
         try {
-            Set<String> keys = redisTemplate.keys("tournament:*");
+            Set<String> keys = tournamentRedisTemplate.keys("tournament:*");
             if (keys == null || keys.isEmpty()) {
                 return;
             }
 
             for (String key : keys) {
-                TournamentCacheDTO cacheDTO = redisTemplate.opsForValue().get(key);
+                TournamentCacheDTO cacheDTO = tournamentRedisTemplate.opsForValue().get(key);
                 if (cacheDTO == null || cacheDTO.isScheduled()) {
                     continue;
                 }
 
                 long delay = LocalDateTime.now().until(cacheDTO.getStartTime(), java.time.temporal.ChronoUnit.MILLIS);
                 if (delay <= 0) {
-                    redisTemplate.delete(key);
+                    tournamentRedisTemplate.delete(key);
                 } else {
                     taskScheduler.schedule(
-                            () -> startTournament(cacheDTO.getTournamentId()),
+                            () -> startTournament(cacheDTO.getTournamentId(),cacheDTO),
                             Date.from(cacheDTO.getStartTime().atZone(ZoneId.systemDefault()).toInstant())
                     );
                     cacheDTO.setScheduled(true);
-                    redisTemplate.opsForValue().set(key, cacheDTO, 7, TimeUnit.SECONDS);
+                    tournamentRedisTemplate.opsForValue().set(key, cacheDTO, 7, TimeUnit.SECONDS);
                 }
             }
         } catch (Exception e) {
@@ -93,10 +106,24 @@ public class TournamentSchedulerService {
         }
     }
 
-    private void startTournament(Long tournamentId) {
+    private void startTournament(Long tournamentId,TournamentCacheDTO cacheDTO) {
         System.out.println("Starting tournament with ID: " + tournamentId + " at " + LocalDateTime.now());
         // Additional logic
         // Remove from Redis if desired
-        redisTemplate.delete("tournament:" + tournamentId);
+        tournamentRedisTemplate.opsForValue().set("$"+tournamentId, cacheDTO, cacheDTO.getDuration(), TimeUnit.SECONDS);
+        List<RankEntity> rankListEntity= rankRepository.findByTournamentId(tournamentId);
+        if(rankListEntity != null) {
+
+            List<RankDTO>rankListDTO=new ArrayList<>();
+            for(RankEntity rankEntity:rankListEntity) {
+                RankDTO rankDTO= Mapper.toDTO(rankEntity);
+                if(rankDTO != null) {
+                    rankListDTO.add(rankDTO);
+                }
+            }
+            rankListRedisTemplate.opsForValue().set("@"+tournamentId, rankListDTO, cacheDTO.getDuration(), TimeUnit.SECONDS);
+        }
+
+        tournamentRedisTemplate.delete("tournament:" + tournamentId);
     }
 }

@@ -33,11 +33,4 @@ public class MessageController {
     }
 
 
-    @Scheduled(fixedRate = 7000)
-    public void sendPeriodicRankList() {
-        Long tournamentId = 1L; // Replace with your actual logic
-        messagingTemplate.convertAndSend(
-                "/topic/" + tournamentId,
-                tournamentService.getTournamentById(tournamentId));
-    }
 }

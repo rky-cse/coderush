@@ -29,7 +29,7 @@ public class TournamentController {
         return tournamentService.createTournament(tournament);
     }
 
-    @GetMapping("/{tournamentId}")
+    @GetMapping("joinTournament/{tournamentId}")
     public ResponseEntity<TournamentPlayerEntity> joinTournament(@PathVariable Long tournamentId){
         TournamentPlayerEntity tournamentPlayer = tournamentService.joinTournament(tournamentId);
         if(tournamentPlayer!=null){

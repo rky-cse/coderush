@@ -1,7 +1,9 @@
 package me.rkycse.coderush.service;
 
+import me.rkycse.coderush.entity.RankEntity;
 import me.rkycse.coderush.entity.TournamentEntity;
 import me.rkycse.coderush.entity.TournamentPlayerEntity;
+import me.rkycse.coderush.repository.RankRepository;
 import me.rkycse.coderush.repository.TournamentPlayerRepository;
 import me.rkycse.coderush.repository.TournamentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,9 @@ public class TournamentService {
     TournamentRepository tournamentRepository;
     @Autowired
     TournamentPlayerRepository tournamentPlayerRepository;
+
+    @Autowired
+    RankRepository rankRepository;
 
 
     public TournamentEntity getTournamentById(Long tournamentId) {
@@ -80,6 +85,10 @@ public class TournamentService {
                 TournamentPlayerEntity tournamentPlayer=new TournamentPlayerEntity();
                 tournamentPlayer.setTournamentId(tournamentId);
                 tournamentPlayer.setPlayerUserName(userName);
+                RankEntity rankEntity=new RankEntity();
+                rankEntity.setUserName(userName);
+                rankEntity.setTournamentId(tournamentId);
+                rankRepository.save(rankEntity);
                 return tournamentPlayerRepository.save(tournamentPlayer);
 
             }

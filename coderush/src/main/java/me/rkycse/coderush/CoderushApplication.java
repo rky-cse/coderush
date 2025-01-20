@@ -9,7 +9,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@EnableScheduling
 public class CoderushApplication {
 	@Autowired
 	private TournamentSchedulerService schedulerService;
