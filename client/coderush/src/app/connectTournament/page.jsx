@@ -25,12 +25,12 @@ export default function TournamentConnectForm() {
       debug: (str) => console.log(str),
       onConnect: () => {
         setConnected(true);
-        stompClient.subscribe(`/topic/${tournamentId}`, (message) => {
+        stompClient.subscribe(`/topic/rankList${tournamentId}`, (message) => {
           const data = JSON.parse(message.body);
           setTournamentData(data);
           console.log('Received tournament data:', data);
         });
-        console.log(`Subscribed to /topic/${tournamentId}`);
+        console.log(`Subscribed to /topic/rankList${tournamentId}`);
       },
       onStompError: (frame) => {
         console.error('Broker reported error:', frame.headers['message']);

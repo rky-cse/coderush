@@ -5,12 +5,11 @@ public class UserTestcaseDTO {
 
     private Long id;
 
+    private Long tournamentId;
 
-    private Long userId;
-
+    private String userName;
 
     private Long testcaseId;
-
 
     private Boolean isSolved;
 
@@ -25,12 +24,20 @@ public class UserTestcaseDTO {
         this.id = id;
     }
 
-    public Long getUserId() {
-        return userId;
+    public Long getTournamentId() {
+        return tournamentId;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setTournamentId(Long tournamentId) {
+        this.tournamentId = tournamentId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public Long getTestcaseId() {

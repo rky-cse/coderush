@@ -1,11 +1,15 @@
 package me.rkycse.coderush.service;
 
 import me.rkycse.coderush.dto.RankDTO;
+import me.rkycse.coderush.dto.TestcaseDTO;
 import me.rkycse.coderush.dto.TournamentCacheDTO;
+import me.rkycse.coderush.dto.TournamentPlayerDTO;
+import me.rkycse.coderush.entity.QuestionEntity;
 import me.rkycse.coderush.entity.RankEntity;
+import me.rkycse.coderush.entity.TestcaseEntity;
+import me.rkycse.coderush.entity.TournamentPlayerEntity;
 import me.rkycse.coderush.mapper.Mapper;
-import me.rkycse.coderush.repository.RankRepository;
-import me.rkycse.coderush.repository.TournamentRepository;
+import me.rkycse.coderush.repository.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
@@ -25,23 +29,38 @@ public class TournamentSchedulerService {
 
 
     private final TournamentRepository tournamentRepository;
+    private final QuestionRepository questionRepository;
     private final ThreadPoolTaskScheduler taskScheduler;
     private final RedisTemplate<String, TournamentCacheDTO> tournamentRedisTemplate;
     private final RedisTemplate<String, List<RankDTO>>rankListRedisTemplate;
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
     private final RankRepository rankRepository;
+    private final RedisTemplate<String,List<QuestionEntity>> questionListRedisTemplate;
+    private final TournamentPlayerRepository tournamentPlayerRepository;
+    private final TestcaseRepository testcaseRepository;
+    private final RedisTemplate<String,TestcaseDTO>testcaseDTORedisTemplate;
+
 
     public TournamentSchedulerService(
             TournamentRepository tournamentRepository,
             ThreadPoolTaskScheduler taskScheduler,
             RedisTemplate<String, TournamentCacheDTO> tournamentRedisTemplate,
             RedisTemplate<String, List<RankDTO>> rankListRedisTemplate,
-            RankRepository rankRepository) {
+            RankRepository rankRepository, QuestionRepository questionRepository,
+            RedisTemplate<String, List<QuestionEntity>> questionListRedisTemplate, TournamentPlayerRepository tournamentPlayerRepository, TestcaseRepository testcaseRepository,
+            RedisTemplate<String, TestcaseDTO> testcaseDTORedisTemplate) {
         this.tournamentRepository = tournamentRepository;
+
         this.taskScheduler = taskScheduler;
         this.tournamentRedisTemplate = tournamentRedisTemplate;
         this.rankListRedisTemplate = rankListRedisTemplate;
         this.rankRepository = rankRepository;
+        this.questionRepository = questionRepository;
+        this.questionListRedisTemplate = questionListRedisTemplate;
+
+        this.tournamentPlayerRepository = tournamentPlayerRepository;
+        this.testcaseRepository = testcaseRepository;
+        this.testcaseDTORedisTemplate = testcaseDTORedisTemplate;
     }
 
     public void startScheduling() {
@@ -123,6 +142,36 @@ public class TournamentSchedulerService {
             }
             rankListRedisTemplate.opsForValue().set("@"+tournamentId, rankListDTO, cacheDTO.getDuration(), TimeUnit.SECONDS);
         }
+        List<QuestionEntity> questions=questionRepository.findAll();
+
+
+
+        for(int i=0;i<5;i++) {
+            int randomIndex = (int) (Math.random()*questions.size());
+            questions.add(questions.get(randomIndex));
+        }
+
+        List<TournamentPlayerEntity> tournamentPlayers=
+                tournamentPlayerRepository.findByTournamentId(tournamentId);
+        List<TestcaseDTO>tournamentTestcases=new ArrayList<>();
+
+        for(QuestionEntity questionEntity:questions) {
+            List<TestcaseEntity> testcases=testcaseRepository
+                    .findByQuestionId(questionEntity.getQuestionId());
+
+            for(TournamentPlayerEntity tournamentPlayerEntity:tournamentPlayers) {
+                int randomIndex = (int) (Math.random()*testcases.size());
+                TestcaseDTO testcaseDTO=Mapper.toDTO(testcases.get(randomIndex));
+                testcaseDTORedisTemplate.opsForValue()
+                        .set("!"+questionEntity.getQuestionId()+"/"+tournamentPlayerEntity
+                                .getPlayerUserName(),testcaseDTO
+                                ,cacheDTO.getDuration(),TimeUnit.SECONDS);
+
+
+            }
+        }
+
+        questionListRedisTemplate.opsForValue().set("%"+tournamentId, questions, cacheDTO.getDuration(), TimeUnit.SECONDS);
 
         tournamentRedisTemplate.delete("tournament:" + tournamentId);
     }

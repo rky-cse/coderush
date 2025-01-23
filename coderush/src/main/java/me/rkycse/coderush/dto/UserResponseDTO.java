@@ -1,6 +1,6 @@
 package me.rkycse.coderush.dto;
 
-public class UserResponse {
+public class UserResponseDTO {
     private Long testcaseId;
     private Long tournamentId;
     private long submissionTime;

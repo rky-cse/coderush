@@ -1,13 +1,14 @@
 package me.rkycse.coderush.controller;
 
+import me.rkycse.coderush.dto.JoinTournamentResponseDTO;
 import me.rkycse.coderush.entity.TournamentEntity;
-import me.rkycse.coderush.entity.TournamentPlayerEntity;
+
 import me.rkycse.coderush.service.TournamentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+
 
 @CrossOrigin("*")
 @RestController
@@ -30,12 +31,18 @@ public class TournamentController {
     }
 
     @GetMapping("joinTournament/{tournamentId}")
-    public ResponseEntity<TournamentPlayerEntity> joinTournament(@PathVariable Long tournamentId){
-        TournamentPlayerEntity tournamentPlayer = tournamentService.joinTournament(tournamentId);
-        if(tournamentPlayer!=null){
-            return ResponseEntity.ok(tournamentPlayer);
+    public ResponseEntity<JoinTournamentResponseDTO> joinTournament(@PathVariable Long tournamentId){
+        System.out.println("Joining tournament : " + tournamentId);
+        JoinTournamentResponseDTO   joinTournamentResponseDTO = tournamentService.joinTournament(tournamentId);
+        if(joinTournamentResponseDTO!=null){
+            return ResponseEntity.ok(joinTournamentResponseDTO);
         }
         return ResponseEntity.notFound().build();
+    }
+    @GetMapping("/startTournament/{tournamentId}")
+
+    public ResponseEntity<String> startTournament(@PathVariable Long tournamentId){
+        return ResponseEntity.ok(tournamentService.startTournament(tournamentId));
     }
 
 

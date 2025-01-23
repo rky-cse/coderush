@@ -1,9 +1,7 @@
 package me.rkycse.coderush.mapper;
 
-import me.rkycse.coderush.dto.RankDTO;
-import me.rkycse.coderush.dto.UserTestcaseDTO;
-import me.rkycse.coderush.entity.RankEntity;
-import me.rkycse.coderush.entity.UserTestcaseEntity;
+import me.rkycse.coderush.dto.*;
+import me.rkycse.coderush.entity.*;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -43,10 +41,11 @@ public class Mapper {
 
         UserTestcaseDTO dto = new UserTestcaseDTO();
         dto.setId(entity.getId());
-        dto.setUserId(entity.getUserId());
+        dto.setUserName(entity.getUserName());
         dto.setTestcaseId(entity.getTestcaseId());
         dto.setIsSolved(entity.getIsSolved());
         dto.setNumberOfAttempts(entity.getNumberOfAttempts());
+        dto.setTournamentId(entity.getTournamentId());
 
         return dto;
     }
@@ -58,11 +57,76 @@ public class Mapper {
 
         UserTestcaseEntity entity = new UserTestcaseEntity();
         entity.setId(dto.getId());
-        entity.setUserId(dto.getUserId());
+        entity.setUserName(dto.getUserName());
         entity.setTestcaseId(dto.getTestcaseId());
         entity.setIsSolved(dto.getIsSolved());
         entity.setNumberOfAttempts(dto.getNumberOfAttempts());
+        entity.setTournamentId(dto.getTournamentId());
 
         return entity;
+    }
+
+    public static TournamentPlayerDTO toDTO(TournamentPlayerEntity entity) {
+        if (entity == null) {
+            return null;
+
+        }
+        TournamentPlayerDTO dto = new TournamentPlayerDTO();
+        dto.setId(entity.getId());
+        dto.setPlayerUserName(entity.getPlayerUserName());
+        dto.setTournamentId(entity.getTournamentId());
+        return dto;
+    }
+    public static TournamentDTO toDTO(TournamentEntity entity) {
+        if (entity == null) {
+            return null;
+
+        }
+        TournamentDTO dto = new TournamentDTO();
+        dto.setDescription(entity.getDescription());
+        dto.setCreatorUserName(entity.getCreatorUserName());
+        dto.setDurationInSeconds(entity.getDurationInSeconds());
+        dto.setMaxRatingReq(entity.getMaxRatingReq());
+        dto.setRated(entity.getRated());
+        dto.setMinRatingReq(entity.getMinRatingReq());
+        dto.setName(entity.getName());
+        dto.setTournamentId(entity.getTournamentId());
+        dto.setStartTime(entity.getStartTime());
+
+
+
+        return dto;
+    }
+    public static TestcaseDTO toDTO(TestcaseEntity entity) {
+        if (entity == null) {
+            return null;
+
+        }
+        TestcaseDTO dto = new TestcaseDTO();
+        dto.setInput(entity.getInput());
+        dto.setOutput(entity.getOutput());
+        dto.setTestcaseId(entity.getTestcaseId());
+        dto.setRating(entity.getRating());
+        dto.setQuestionId(entity.getQuestionId());
+
+        return dto;
+    }
+
+    public static QuestionDTO toDTO(QuestionEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        QuestionDTO dto = new QuestionDTO();
+        dto.setImageUrls(entity.getImageUrls());
+        dto.setQuestionId(entity.getQuestionId());
+        dto.setCreatorUserName(entity.getCreaterUserName());
+        dto.setLegend(entity.getLegend());
+        dto.setInputFormat(entity.getInputFormat());
+        dto.setOutputFormat(entity.getOutputFormat());
+        dto.setName(entity.getName());
+        dto.setNotes(entity.getNotes());
+        dto.setTutorial(entity.getTutorial());
+        return dto;
+
     }
 }

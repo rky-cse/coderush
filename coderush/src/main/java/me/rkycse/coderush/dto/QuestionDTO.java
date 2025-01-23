@@ -1,54 +1,39 @@
-package me.rkycse.coderush.entity;
+package me.rkycse.coderush.dto;
 
-import jakarta.persistence.*;
+
 import java.util.List;
 
-@Entity
-@Table(name = "questions")
-public class QuestionEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class QuestionDTO {
+
     private Long questionId;
 
-    @Column(name = "name", nullable = false)
+    private String creatorUserName;
+
     private String name;
-    @Column(name = "creator_username", nullable = false)
-    private String createrUserName;
-    @Lob
-    @Column(name = "legend")
+
+
     private String legend;
 
-    @Lob
-    @Column(name = "input_format")
+
     private String inputFormat;
 
-
-
-    @Lob
-    @Column(name = "output_format")
     private String outputFormat;
 
-    @Lob
-    @Column(name = "notes")
+
     private String notes;
 
-    @Lob
-    @Column(name = "tutorial")
+
     private String tutorial;
 
-    @ElementCollection
-    @CollectionTable(name = "question_images", joinColumns = @JoinColumn(name = "question_id"))
-    @Column(name = "image_url")
     private List<String> imageUrls;
 
-    public String getCreaterUserName() {
-        return createrUserName;
+    public String getCreatorUserName() {
+        return creatorUserName;
     }
 
-    public void setCreaterUserName(String createrUserName) {
-        this.createrUserName = createrUserName;
+    public void setCreatorUserName(String creatorUserName) {
+        this.creatorUserName = creatorUserName;
     }
-
 
     public Long getQuestionId() {
         return questionId;

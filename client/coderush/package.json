@@ -9,11 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.1.6",
     "@stomp/stompjs": "^7.0.0",
     "axios": "^1.7.9",
     "next": "15.1.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-pdf": "^9.2.1",
     "sockjs-client": "^1.6.1"
   },
   "devDependencies": {

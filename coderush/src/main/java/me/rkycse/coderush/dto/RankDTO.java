@@ -16,16 +16,7 @@ public class RankDTO {
         this.userName = userName;
     }
 
-    public Long getTournamentId() {
-        return tournamentId;
-    }
-
-    public void setTournamentId(Long tournamentId) {
-        this.tournamentId = tournamentId;
-    }
-
     private Long id;
-
 
     private String userName;
 
@@ -33,7 +24,15 @@ public class RankDTO {
 
     private long score;
 
+
     // Getters and Setters
+    public Long getTournamentId() {
+        return tournamentId;
+    }
+
+    public void setTournamentId(Long tournamentId) {
+        this.tournamentId = tournamentId;
+    }
     public Long getId() {
         return id;
     }

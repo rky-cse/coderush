@@ -3,7 +3,7 @@ import React from 'react';
 
 // Adjust the import path as necessary
 
-import TournamentFormModal from '@components/TournamentFormModal';
+import TournamentFormModal from '@/components/TournamentFormModal';
 
 const CreateTournament = () => {
   const handleFormSubmit = (tournamentData) => {

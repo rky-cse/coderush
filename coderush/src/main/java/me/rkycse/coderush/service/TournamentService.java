@@ -1,30 +1,55 @@
 package me.rkycse.coderush.service;
 
+import me.rkycse.coderush.config.RedisConfig;
+import me.rkycse.coderush.dto.JoinTournamentResponseDTO;
+import me.rkycse.coderush.dto.RankDTO;
+import me.rkycse.coderush.dto.TournamentCacheDTO;
+import me.rkycse.coderush.dto.TournamentDTO;
 import me.rkycse.coderush.entity.RankEntity;
 import me.rkycse.coderush.entity.TournamentEntity;
 import me.rkycse.coderush.entity.TournamentPlayerEntity;
+import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.RankRepository;
 import me.rkycse.coderush.repository.TournamentPlayerRepository;
 import me.rkycse.coderush.repository.TournamentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class TournamentService {
 
     //HashMap<Long,TournamentEntity> tournaments=new HashMap<>();
+    private final TournamentRepository tournamentRepository;
 
-    @Autowired
-    TournamentRepository tournamentRepository;
-    @Autowired
-    TournamentPlayerRepository tournamentPlayerRepository;
+    private final TournamentPlayerRepository tournamentPlayerRepository;
 
-    @Autowired
-    RankRepository rankRepository;
+    private final RankRepository rankRepository;
+
+    private final RedisTemplate<String, TournamentCacheDTO> tournamentCacheDTORedisTemplate;
+    private final RedisTemplate<String, List<RankDTO>> rankListRedisTemplate;
+
+    public TournamentService(
+            TournamentRepository tournamentRepository,
+            TournamentPlayerRepository tournamentPlayerRepository,
+            RankRepository rankRepository,
+            RedisTemplate<String, TournamentCacheDTO> tournamentCacheDTORedisTemplate, RedisTemplate<String, List<RankDTO>> rankListRedisTemplate) {
+        this.tournamentRepository = tournamentRepository;
+
+        this.tournamentPlayerRepository = tournamentPlayerRepository;
+        this.rankRepository = rankRepository;
+        this.tournamentCacheDTORedisTemplate = tournamentCacheDTORedisTemplate;
+
+        this.rankListRedisTemplate = rankListRedisTemplate;
+    }
 
 
     public TournamentEntity getTournamentById(Long tournamentId) {
@@ -72,7 +97,7 @@ public class TournamentService {
         return savedTournament;
     }
 
-    public TournamentPlayerEntity joinTournament(Long tournamentId) {
+    public JoinTournamentResponseDTO joinTournament(Long tournamentId) {
         if (tournamentId == null) {
             throw new IllegalArgumentException("Tournament ID cannot be null");
         }
@@ -85,11 +110,24 @@ public class TournamentService {
                 TournamentPlayerEntity tournamentPlayer=new TournamentPlayerEntity();
                 tournamentPlayer.setTournamentId(tournamentId);
                 tournamentPlayer.setPlayerUserName(userName);
+                tournamentPlayerRepository.save(tournamentPlayer);
+                List<TournamentPlayerEntity> tournamentPlayerEntities=tournamentPlayerRepository
+                        .findByTournamentId(tournamentId);
+
                 RankEntity rankEntity=new RankEntity();
                 rankEntity.setUserName(userName);
                 rankEntity.setTournamentId(tournamentId);
                 rankRepository.save(rankEntity);
-                return tournamentPlayerRepository.save(tournamentPlayer);
+                JoinTournamentResponseDTO joinTournamentResponseDTO=new JoinTournamentResponseDTO();
+                for(TournamentPlayerEntity tournamentPlayerEntity : tournamentPlayerEntities) {
+                    joinTournamentResponseDTO.setTournamentId(tournamentId);
+                    joinTournamentResponseDTO.getTournamentPlayerList().add(Mapper.toDTO(tournamentPlayerEntity));
+                }
+
+                joinTournamentResponseDTO.setTournament(Mapper.toDTO(tournamentRepository
+                        .findById(tournamentId).orElse(null)));
+
+                return joinTournamentResponseDTO;
 
             }
 
@@ -98,6 +136,62 @@ public class TournamentService {
             throw  new NoSuchElementException("No such tournament");
         }
         return null;
+
+    }
+
+
+    public String startTournament(Long tournamentId) {
+        if(tournamentCacheDTORedisTemplate.opsForValue().get("$"+tournamentId) != null){
+            return "Tournament already started";
+        }
+        if(!tournamentRepository.existsById(tournamentId)) {
+            throw new NoSuchElementException("Tournament with ID " + tournamentId + " not found");
+        }
+        else{
+            TournamentEntity tournament=tournamentRepository
+                    .findById(tournamentId).orElse(null);
+            LocalDateTime currentTime = LocalDateTime.now();
+            LocalDateTime startTime = tournament.getStartTime();
+            Long durationInSeconds = tournament.getDurationInSeconds();
+            LocalDateTime endTime = startTime.plusSeconds(durationInSeconds);
+            Duration duration = Duration.between(currentTime, endTime);
+
+            if(currentTime.isBefore(startTime)){
+                return "Tournament Not Started Yet";
+            }
+
+            if(currentTime.isBefore(endTime) ) {
+                TournamentCacheDTO tournamentCacheDTO=new TournamentCacheDTO();
+                tournamentCacheDTO.setTournamentId(tournamentId);
+                tournamentCacheDTO.setStartTime(startTime);
+                tournamentCacheDTO.setScheduled(true);
+                tournamentCacheDTO.setDuration(durationInSeconds);
+                tournamentCacheDTORedisTemplate
+                        .opsForValue()
+                        .set("$"+tournamentId,
+                                tournamentCacheDTO,
+                                duration.getSeconds(),
+                                TimeUnit.SECONDS);
+                List<RankEntity> rankListEntity= rankRepository.findByTournamentId(tournamentId);
+                if(rankListEntity != null) {
+
+                    List<RankDTO>rankListDTO=new ArrayList<>();
+                    for(RankEntity rankEntity:rankListEntity) {
+                        RankDTO rankDTO= Mapper.toDTO(rankEntity);
+                        if(rankDTO != null) {
+                            rankListDTO.add(rankDTO);
+                        }
+                    }
+                    rankListRedisTemplate.opsForValue().set("@"+tournamentId, rankListDTO, duration.getSeconds(), TimeUnit.SECONDS);
+                }
+                return "Tournament Started";
+
+            }
+
+
+
+        }
+        throw new NoSuchElementException("Tournament with ID " + tournamentId + "not in the scheduled");
 
     }
 

@@ -1,28 +1,20 @@
-package me.rkycse.coderush.entity;
+package me.rkycse.coderush.dto;
 
-import jakarta.persistence.*;
 
-@Entity
-@Table(name = "testcases")
-public class TestcaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class TestcaseDTO {
+
+
     private Long testcaseId;
 
-    @Column(name = "question_id", nullable = false)
     private Long questionId;
 
 
-    @Lob
-    @Column(name = "input", nullable = false)
     private String input;
 
-    @Lob
-    @Column(name = "output", nullable = false)
     private String output;
 
-    @Column(name = "rating", nullable = false)
+
     private int rating;
 
     // Getters and Setters
@@ -58,6 +50,17 @@ public class TestcaseEntity {
         this.output = output;
     }
 
+    @Override
+    public String toString() {
+        return "TestcaseDTO{" +
+                "testcaseId=" + testcaseId +
+                ", questionId=" + questionId +
+                ", input='" + input + '\'' +
+                ", output='" + output + '\'' +
+                ", rating=" + rating +
+                '}';
+    }
+
     public int getRating() {
         return rating;
     }
@@ -65,4 +68,5 @@ public class TestcaseEntity {
     public void setRating(int rating) {
         this.rating = rating;
     }
+
 }

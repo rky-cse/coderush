@@ -57,8 +57,9 @@ public class RankListSchedulerService {
                     List<RankDTO> rankList = (List<RankDTO>) rankListRedisTemplate.opsForValue().get(rankListKey);
                     if (rankList != null) {
                         // Send ranklist to the topic
+                        System.out.println("sending rank list to tournament: " + tournamentId);
                         messagingTemplate.convertAndSend(
-                                "/topic/" + tournamentId,
+                                "/topic/rankList" + tournamentId,
                                 rankList
                         );
                     }
