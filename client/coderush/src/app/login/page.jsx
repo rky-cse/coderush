@@ -17,6 +17,7 @@ export default function Login() {
         password: password,
       });
       localStorage.setItem('token', response.data.token);
+      localStorage.setItem('username', username);
       router.push('/profile');
     } catch (error) {
       console.error('Login failed:', error);

@@ -2,13 +2,10 @@ package me.rkycse.coderush.dto;
 
 import jakarta.persistence.*;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
-public class RankDTO {
+public class RankWithUserTestcaseDTO {
 
     public String getUserName() {
         return userName;
@@ -25,6 +22,16 @@ public class RankDTO {
     private Long tournamentId;
 
     private long score;
+
+    public List<UserTestcaseDTO> getUserTestcases() {
+        return userTestcases;
+    }
+
+    public void setUserTestcases(List<UserTestcaseDTO> userTestcases) {
+        this.userTestcases = userTestcases;
+    }
+
+    private List<UserTestcaseDTO>userTestcases=new ArrayList<>();
 
 
     // Getters and Setters

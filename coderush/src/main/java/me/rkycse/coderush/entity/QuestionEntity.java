@@ -1,6 +1,8 @@
 package me.rkycse.coderush.entity;
 
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -14,32 +16,21 @@ public class QuestionEntity {
     private String name;
     @Column(name = "creator_username", nullable = false)
     private String createrUserName;
-    @Lob
-    @Column(name = "legend")
+
+    @Column(name = "legend", columnDefinition = "TEXT")
     private String legend;
 
-    @Lob
-    @Column(name = "input_format")
+    @Column(name = "input_format", columnDefinition = "TEXT")
     private String inputFormat;
 
-
-
-    @Lob
-    @Column(name = "output_format")
+    @Column(name = "output_format", columnDefinition = "TEXT")
     private String outputFormat;
 
-    @Lob
-    @Column(name = "notes")
+    @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @Lob
-    @Column(name = "tutorial")
+    @Column(name = "tutorial", columnDefinition = "TEXT")
     private String tutorial;
-
-    @ElementCollection
-    @CollectionTable(name = "question_images", joinColumns = @JoinColumn(name = "question_id"))
-    @Column(name = "image_url")
-    private List<String> imageUrls;
 
     public String getCreaterUserName() {
         return createrUserName;
@@ -106,11 +97,4 @@ public class QuestionEntity {
         this.tutorial = tutorial;
     }
 
-    public List<String> getImageUrls() {
-        return imageUrls;
-    }
-
-    public void setImageUrls(List<String> imageUrls) {
-        this.imageUrls = imageUrls;
-    }
 }

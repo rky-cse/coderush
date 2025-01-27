@@ -3,16 +3,16 @@ package me.rkycse.coderush.controller;
 import me.rkycse.coderush.dto.TestcaseDTO;
 import me.rkycse.coderush.service.TestcaseService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/testcase")
 public class TestcaseController {
 
     private final TestcaseService testcaseService;
+
 
     public TestcaseController(TestcaseService testcaseService) {
         this.testcaseService = testcaseService;
@@ -27,6 +27,10 @@ public class TestcaseController {
 
         }
         return ResponseEntity.badRequest().build();
+    }
+    @GetMapping("getTestcasesByQuestionId/{questionId}")
+    public ResponseEntity<List<TestcaseDTO>> getTestcasesByQuestionId( @PathVariable Long questionId) {
+        return ResponseEntity.ok(testcaseService.getTestcasesByQuestionId(questionId));
     }
 
 

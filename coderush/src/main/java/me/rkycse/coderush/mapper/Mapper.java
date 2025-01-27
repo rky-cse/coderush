@@ -117,7 +117,7 @@ public class Mapper {
             return null;
         }
         QuestionDTO dto = new QuestionDTO();
-        dto.setImageUrls(entity.getImageUrls());
+
         dto.setQuestionId(entity.getQuestionId());
         dto.setCreatorUserName(entity.getCreaterUserName());
         dto.setLegend(entity.getLegend());

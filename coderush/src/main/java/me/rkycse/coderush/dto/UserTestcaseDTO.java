@@ -11,11 +11,20 @@ public class UserTestcaseDTO {
 
     private Long testcaseId;
 
+    private Long questionId;
+
     private Boolean isSolved;
 
     private int numberOfAttempts;
 
     // Getters and Setters
+
+    public Long getQuestionId() {
+        return questionId;
+    }
+    public void setQuestionId(Long questionId) {
+        this.questionId = questionId;
+    }
     public Long getId() {
         return id;
     }

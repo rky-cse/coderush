@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import me.rkycse.coderush.dto.RankDTO;
-import me.rkycse.coderush.dto.TestcaseDTO;
-import me.rkycse.coderush.dto.TournamentCacheDTO;
-import me.rkycse.coderush.dto.TournamentDTO;
+import me.rkycse.coderush.dto.*;
 import me.rkycse.coderush.entity.QuestionEntity;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,19 +42,17 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, List<RankDTO>> rankListCacheRedisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, List<RankDTO>> template = new RedisTemplate<>();
+    public RedisTemplate<String, RankDTO> rankDTORedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, RankDTO> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
         ObjectMapper objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        // Define the JavaType for List<RankDTO>
-        JavaType javaType = TypeFactory.defaultInstance().constructCollectionType(List.class, RankDTO.class);
-
-        // Use the constructor that accepts ObjectMapper and JavaType
-        Jackson2JsonRedisSerializer<List<RankDTO>> serializer = new Jackson2JsonRedisSerializer<>(objectMapper, javaType);
+        // Pass the ObjectMapper directly into the constructor.
+        Jackson2JsonRedisSerializer<RankDTO> serializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper, RankDTO.class);
 
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(serializer);
@@ -67,6 +62,8 @@ public class RedisConfig {
         template.afterPropertiesSet();
         return template;
     }
+
+
 
     @Bean
     public RedisTemplate<String, List<QuestionEntity>> questionListCacheRedisTemplate(RedisConnectionFactory connectionFactory) {
@@ -128,6 +125,50 @@ public class RedisConfig {
         // Pass the ObjectMapper directly into the constructor.
         Jackson2JsonRedisSerializer<TestcaseDTO> serializer =
                 new Jackson2JsonRedisSerializer<>(objectMapper, TestcaseDTO.class);
+
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(serializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(serializer);
+
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, UserTestcaseDTO> userTestcaseDTORedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, UserTestcaseDTO> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+
+        ObjectMapper objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // Pass the ObjectMapper directly into the constructor.
+        Jackson2JsonRedisSerializer<UserTestcaseDTO> serializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper, UserTestcaseDTO.class);
+
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(serializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(serializer);
+
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, QuestionDTO> questionDTORedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, QuestionDTO> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+
+        ObjectMapper objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // Pass the ObjectMapper directly into the constructor.
+        Jackson2JsonRedisSerializer<QuestionDTO> serializer =
+                new Jackson2JsonRedisSerializer<>(objectMapper, QuestionDTO.class);
 
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(serializer);

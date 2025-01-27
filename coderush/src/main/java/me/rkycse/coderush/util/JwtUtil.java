@@ -56,7 +56,10 @@ public class JwtUtil {
 
     public String extractUserName(String token) {
         // extract the username from jwt token
-        return extractClaim(token, Claims::getSubject);
+
+        String username = extractClaim(token, Claims::getSubject);
+        System.out.println("extractUserName: " + username);
+        return username;
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {

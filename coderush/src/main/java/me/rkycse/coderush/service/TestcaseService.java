@@ -1,7 +1,9 @@
 package me.rkycse.coderush.service;
 
+import jakarta.transaction.Transactional;
 import me.rkycse.coderush.dto.TestcaseDTO;
 import me.rkycse.coderush.entity.TestcaseEntity;
+import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.QuestionRepository;
 import me.rkycse.coderush.repository.TestcaseRepository;
 import org.springframework.security.core.Authentication;
@@ -9,7 +11,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
+@Transactional
 public class TestcaseService {
 
     private final TestcaseRepository testcaseRepository;
@@ -41,19 +47,15 @@ public class TestcaseService {
         testcaseRepository.save(testcaseEntity);
         return true;
 
-//        if(userDetails!=null && userDetails.getUsername()!=null) {
-//            if(questionRepository
-//                    .findQuestionIdByCreaterUserName(userDetails.getUsername())
-//                    .equals(testcase.getQuestionId()))
-//            {
-//
-//
-//
-//            }
-//
-//
-//        }
-//        return false;
 
+    }
+
+    public List<TestcaseDTO> getTestcasesByQuestionId(Long questionId) {
+        List<TestcaseEntity> testcaseEntity=testcaseRepository.findByQuestionId(questionId);
+        List<TestcaseDTO> testcaseDTOS=new ArrayList<>();
+        for(TestcaseEntity testcaseEntity1: testcaseEntity) {
+            testcaseDTOS.add(Mapper.toDTO(testcaseEntity1));
+        }
+        return testcaseDTOS;
     }
 }

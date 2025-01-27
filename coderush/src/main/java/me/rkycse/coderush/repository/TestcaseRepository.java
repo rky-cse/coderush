@@ -9,5 +9,8 @@ import java.util.List;
 
 @Repository
 public interface TestcaseRepository extends JpaRepository<TestcaseEntity, Long> {
-    List<TestcaseEntity> findByQuestionId(Long questionId);
+
+    // Ensure the field name matches 'questionId' in TestcaseEntity
+    @Query("SELECT t FROM TestcaseEntity t WHERE t.questionId = :questionId")
+    List<TestcaseEntity> findByQuestionId(long questionId);
 }

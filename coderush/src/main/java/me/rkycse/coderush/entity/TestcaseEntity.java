@@ -1,9 +1,11 @@
 package me.rkycse.coderush.entity;
 
 import jakarta.persistence.*;
+import jakarta.transaction.Transactional;
 
 @Entity
 @Table(name = "testcases")
+@Transactional
 public class TestcaseEntity {
 
     @Id
@@ -13,13 +15,10 @@ public class TestcaseEntity {
     @Column(name = "question_id", nullable = false)
     private Long questionId;
 
-
-    @Lob
-    @Column(name = "input", nullable = false)
+    @Column(name = "input", nullable = false, columnDefinition = "TEXT")
     private String input;
 
-    @Lob
-    @Column(name = "output", nullable = false)
+    @Column(name = "output", nullable = false, columnDefinition = "TEXT")
     private String output;
 
     @Column(name = "rating", nullable = false)

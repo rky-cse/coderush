@@ -35,19 +35,18 @@ public class TournamentService {
     private final RankRepository rankRepository;
 
     private final RedisTemplate<String, TournamentCacheDTO> tournamentCacheDTORedisTemplate;
-    private final RedisTemplate<String, List<RankDTO>> rankListRedisTemplate;
+    private final RedisTemplate<String, RankDTO> rankListRedisTemplate;
 
     public TournamentService(
             TournamentRepository tournamentRepository,
             TournamentPlayerRepository tournamentPlayerRepository,
             RankRepository rankRepository,
-            RedisTemplate<String, TournamentCacheDTO> tournamentCacheDTORedisTemplate, RedisTemplate<String, List<RankDTO>> rankListRedisTemplate) {
+            RedisTemplate<String, TournamentCacheDTO> tournamentCacheDTORedisTemplate, RedisTemplate<String, RankDTO> rankListRedisTemplate) {
         this.tournamentRepository = tournamentRepository;
 
         this.tournamentPlayerRepository = tournamentPlayerRepository;
         this.rankRepository = rankRepository;
         this.tournamentCacheDTORedisTemplate = tournamentCacheDTORedisTemplate;
-
         this.rankListRedisTemplate = rankListRedisTemplate;
     }
 
@@ -111,23 +110,14 @@ public class TournamentService {
                 tournamentPlayer.setTournamentId(tournamentId);
                 tournamentPlayer.setPlayerUserName(userName);
                 tournamentPlayerRepository.save(tournamentPlayer);
-                List<TournamentPlayerEntity> tournamentPlayerEntities=tournamentPlayerRepository
-                        .findByTournamentId(tournamentId);
+                return getJoinTournamentResponseDTO(tournamentId, userName);
 
-                RankEntity rankEntity=new RankEntity();
-                rankEntity.setUserName(userName);
-                rankEntity.setTournamentId(tournamentId);
-                rankRepository.save(rankEntity);
-                JoinTournamentResponseDTO joinTournamentResponseDTO=new JoinTournamentResponseDTO();
-                for(TournamentPlayerEntity tournamentPlayerEntity : tournamentPlayerEntities) {
-                    joinTournamentResponseDTO.setTournamentId(tournamentId);
-                    joinTournamentResponseDTO.getTournamentPlayerList().add(Mapper.toDTO(tournamentPlayerEntity));
-                }
-
-                joinTournamentResponseDTO.setTournament(Mapper.toDTO(tournamentRepository
-                        .findById(tournamentId).orElse(null)));
-
-                return joinTournamentResponseDTO;
+            }
+            else{
+                TournamentPlayerEntity tournamentPlayer=
+                        tournamentPlayerRepository
+                                .findByTournamentIdAndPlayerUserName(tournamentId, userName);
+                return getJoinTournamentResponseDTO(tournamentId, userName);
 
             }
 
@@ -135,8 +125,29 @@ public class TournamentService {
         else{
             throw  new NoSuchElementException("No such tournament");
         }
-        return null;
 
+
+    }
+
+    private JoinTournamentResponseDTO getJoinTournamentResponseDTO(Long tournamentId, String userName) {
+        List<TournamentPlayerEntity> tournamentPlayerEntities=
+                tournamentPlayerRepository
+                        .findByTournamentId(tournamentId);
+
+        RankEntity rankEntity=new RankEntity();
+        rankEntity.setUserName(userName);
+        rankEntity.setTournamentId(tournamentId);
+        rankRepository.save(rankEntity);
+        JoinTournamentResponseDTO joinTournamentResponseDTO=new JoinTournamentResponseDTO();
+        for(TournamentPlayerEntity tournamentPlayerEntity : tournamentPlayerEntities) {
+            joinTournamentResponseDTO.setTournamentId(tournamentId);
+            joinTournamentResponseDTO.getTournamentPlayerList().add(Mapper.toDTO(tournamentPlayerEntity));
+        }
+
+        joinTournamentResponseDTO.setTournament(Mapper.toDTO(tournamentRepository
+                .findById(tournamentId).orElse(null)));
+
+        return joinTournamentResponseDTO;
     }
 
 
@@ -175,14 +186,19 @@ public class TournamentService {
                 List<RankEntity> rankListEntity= rankRepository.findByTournamentId(tournamentId);
                 if(rankListEntity != null) {
 
-                    List<RankDTO>rankListDTO=new ArrayList<>();
+
                     for(RankEntity rankEntity:rankListEntity) {
                         RankDTO rankDTO= Mapper.toDTO(rankEntity);
                         if(rankDTO != null) {
-                            rankListDTO.add(rankDTO);
+                            rankListRedisTemplate.opsForValue()
+                                    .set("@"+tournamentId
+                                            +"/"+rankDTO.getUserName(),
+                                            rankDTO, duration.getSeconds(),
+                                            TimeUnit.SECONDS);
+
                         }
                     }
-                    rankListRedisTemplate.opsForValue().set("@"+tournamentId, rankListDTO, duration.getSeconds(), TimeUnit.SECONDS);
+
                 }
                 return "Tournament Started";
 

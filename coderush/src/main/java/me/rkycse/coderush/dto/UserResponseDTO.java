@@ -1,17 +1,17 @@
 package me.rkycse.coderush.dto;
 
 public class UserResponseDTO {
-    private Long testcaseId;
+    private int index;
     private Long tournamentId;
     private long submissionTime;
     private String userOutput;
 
-    public Long getTestcaseId() {
-        return testcaseId;
+    public int getIndex() {
+        return index;
     }
 
-    public void setTestcaseId(Long testcaseId) {
-        this.testcaseId = testcaseId;
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     public Long getTournamentId() {
@@ -32,6 +32,16 @@ public class UserResponseDTO {
 
     public String getUserOutput() {
         return userOutput;
+    }
+
+    @Override
+    public String toString() {
+        return "UserResponseDTO{" +
+                "index=" + index +
+                ", tournamentId=" + tournamentId +
+                ", submissionTime=" + submissionTime +
+                ", userOutput='" + userOutput + '\'' +
+                '}';
     }
 
     public void setUserOutput(String userOutput) {

@@ -91,11 +91,5 @@ public class QuestionDTO {
         this.tutorial = tutorial;
     }
 
-    public List<String> getImageUrls() {
-        return imageUrls;
-    }
 
-    public void setImageUrls(List<String> imageUrls) {
-        this.imageUrls = imageUrls;
-    }
 }
