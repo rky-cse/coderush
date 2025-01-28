@@ -54,7 +54,7 @@ public class TournamentWebSocketController {
         UserDetails userDetails = (UserDetails) ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
         String userName = userDetails.getUsername();
         int index = responseDTO.getIndex();
-        System.out.println("recieved response from user "+responseDTO);
+        System.out.println("received response from user "+responseDTO);
 
         Boolean res=tournamentWebSocketService.isCorrect(userName,index,responseDTO);
         messagingTemplate.convertAndSend("/topic/tournament/submit/" + userName+"/" + index, res);

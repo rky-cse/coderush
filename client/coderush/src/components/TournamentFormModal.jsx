@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const TournamentFormModal = ({ closeModal }) => {
   const [formData, setFormData] = useState({
@@ -21,18 +21,13 @@ const TournamentFormModal = ({ closeModal }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Form validation
-    if (
-      !formData.name ||
-      !formData.startTime ||
-      !formData.durationInSeconds
-    ) {
+
+    // Basic validation
+    if (!formData.name || !formData.startTime || !formData.durationInSeconds) {
       alert('Please fill in all required fields.');
       return;
     }
-  
-    // Handle form submission logic here (send data to backend)
+
     try {
       const response = await fetch('http://localhost:8080/api/tournament/createTournament', {
         method: 'POST',
@@ -42,141 +37,125 @@ const TournamentFormModal = ({ closeModal }) => {
         },
         body: JSON.stringify(formData),
       });
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
-        console.log('Tournament Created:', result);
-        // Pass the result to the homepage or display it in the modal as feedback
         alert('Tournament created successfully!');
-        closeModal(); // Close the modal after submission
-  
-        // Optionally, handle the response here (e.g., pass it to a parent component)
-        // Example: setTournamentInfo(result);
+        closeModal();
       } else {
-        console.error('Error creating tournament:', result);
-        alert('Failed to create tournament.');
+        alert(result.message || 'Failed to create tournament.');
       }
     } catch (error) {
       console.error('Error submitting tournament data:', error);
       alert('An error occurred while creating the tournament.');
     }
   };
-  
 
   return (
-    <div style={overlayStyles}>
-      <div style={modalStyles}>
-        <h2>Create New Tournament</h2>
-        <form onSubmit={handleSubmit}>
-
-          <div style={fieldGroupStyles}>
-            <label>Description:</label>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg">
+        <h2 className="text-xl font-bold mb-4 text-gray-800">Create New Tournament</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-600">Description</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
               placeholder="Enter tournament description"
+              className="w-full px-4 py-2 mt-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
 
-          <div style={fieldGroupStyles}>
-            <label>Name:</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-600">Name</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
+              className="w-full px-4 py-2 mt-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               required
             />
           </div>
 
-          <div style={fieldGroupStyles}>
-            <label>Start Time:</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-600">Start Time</label>
             <input
               type="datetime-local"
               name="startTime"
               value={formData.startTime}
               onChange={handleChange}
+              className="w-full px-4 py-2 mt-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               required
             />
           </div>
 
-          <div style={fieldGroupStyles}>
-            <label>Rated:</label>
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-600">Rated:</label>
             <input
               type="checkbox"
               name="rated"
               checked={formData.rated}
               onChange={handleChange}
+              className="form-checkbox h-5 w-5 text-indigo-600"
             />
           </div>
 
-          <div style={fieldGroupStyles}>
-            <label>Min Rating Requirement:</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-600">Min Rating Requirement</label>
             <input
               type="number"
               name="minRatingReq"
               value={formData.minRatingReq}
               onChange={handleChange}
+              className="w-full px-4 py-2 mt-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
 
-          <div style={fieldGroupStyles}>
-            <label>Max Rating Requirement:</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-600">Max Rating Requirement</label>
             <input
               type="number"
               name="maxRatingReq"
               value={formData.maxRatingReq}
               onChange={handleChange}
+              className="w-full px-4 py-2 mt-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
 
-          <div style={fieldGroupStyles}>
-            <label>Duration (in seconds):</label>
+          <div>
+            <label className="block text-sm font-medium text-gray-600">Duration (in seconds)</label>
             <input
               type="number"
               name="durationInSeconds"
               value={formData.durationInSeconds}
               onChange={handleChange}
+              className="w-full px-4 py-2 mt-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               required
             />
           </div>
 
-          <button type="submit">Create Tournament</button>
+          <div className="flex justify-end space-x-4">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded-md"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            >
+              Create Tournament
+            </button>
+          </div>
         </form>
-        <button onClick={closeModal}>Close</button>
       </div>
     </div>
   );
-};
-
-const overlayStyles = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-};
-
-const modalStyles = {
-  backgroundColor: 'white',
-  padding: '20px',
-  borderRadius: '8px',
-  width: '80%',
-  maxWidth: '600px',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '10px',
-};
-
-const fieldGroupStyles = {
-  display: 'flex',
-  flexDirection: 'column',
 };
 
 export default TournamentFormModal;

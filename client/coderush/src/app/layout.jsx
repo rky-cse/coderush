@@ -1,24 +1,27 @@
-export const metadata = {
-  title: 'Tournament Manager',
-  description: 'Manage and create tournaments effortlessly.',
-};
+'use client'
+import { Provider } from 'react-redux';
+import { store } from '../redux/store';
+import Navbar from '@/components/Navbar';
+import './globals.css';
 
-const RootLayout = ({ children }) => {
+const Layout = ({ children }) => {
   return (
     <html lang="en">
-      <body style={bodyStyles}>
-        {children}
+      <body>
+        <Provider store={store}>
+          <div className="min-h-screen bg-gray-100">
+            <Navbar />
+            <main className="container mx-auto py-8 px-4">
+              {children}
+            </main>
+          </div>
+        </Provider>
+
       </body>
+
     </html>
+
   );
 };
 
-const bodyStyles = {
-  margin: 0,
-  padding: 0,
-  fontFamily: 'Arial, sans-serif',
-  backgroundColor: '#f3f4f6',
-  color: '#1f2937',
-};
-
-export default RootLayout;
+export default Layout;
