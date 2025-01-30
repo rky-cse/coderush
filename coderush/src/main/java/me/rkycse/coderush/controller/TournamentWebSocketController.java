@@ -30,20 +30,39 @@ public class TournamentWebSocketController {
 
     @MessageMapping("/tournament/getQuestionWithTestcase")
     public void getQuestionWithTestcase(@RequestBody String payload, Principal principal) {
-        String[] parts = payload.split("/");
-        Long tournamentId = Long.parseLong(parts[0]);
-        int index = Integer.parseInt(parts[1]);
-        UserDetails userDetails = (UserDetails) ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
-        String userName = userDetails.getUsername();
+        try {
+            // Trim and clean the payload to remove any unexpected characters
+            payload = payload.trim().replace("\"", ""); // Remove quotes if present
 
-        QuestionDTO question = tournamentWebSocketService.getQuestion(tournamentId, index);
-        TestcaseDTO testcaseDTO=tournamentWebSocketService
-                .getTestcase(tournamentId, userName,index);
-        QuestionWithTestcaseDTO questionWithTestcaseDTO = new QuestionWithTestcaseDTO();
-        questionWithTestcaseDTO.setTestcase(testcaseDTO);
-        questionWithTestcaseDTO.setQuestion(question);
-        messagingTemplate.convertAndSend("/topic/tournament/getQuestionWithTestcase/"
-                + tournamentId + "/" + index, questionWithTestcaseDTO);
+            // Split the payload into parts
+            String[] parts = payload.split("/");
+            if (parts.length != 2) {
+                throw new IllegalArgumentException("Invalid payload format. Expected format: tournamentId/index");
+            }
+
+            // Parse tournamentId and index
+            Long tournamentId = Long.parseLong(parts[0]);
+            int index = Integer.parseInt(parts[1]);
+
+            // Get user details from the principal
+            UserDetails userDetails = (UserDetails) ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
+            String userName = userDetails.getUsername();
+
+            // Fetch question and testcase
+            QuestionDTO question = tournamentWebSocketService.getQuestion(tournamentId, index);
+            TestcaseDTO testcaseDTO = tournamentWebSocketService.getTestcase(tournamentId, userName, index);
+
+            // Create and send the response DTO
+            QuestionWithTestcaseDTO questionWithTestcaseDTO = new QuestionWithTestcaseDTO();
+            questionWithTestcaseDTO.setTestcase(testcaseDTO);
+            questionWithTestcaseDTO.setQuestion(question);
+
+            messagingTemplate.convertAndSend("/topic/tournament/getQuestionWithTestcase/" + tournamentId + "/" + index, questionWithTestcaseDTO);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid number format in payload: " + payload, e);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to process request: " + e.getMessage(), e);
+        }
     }
 
     @MessageMapping("/tournament/submit")

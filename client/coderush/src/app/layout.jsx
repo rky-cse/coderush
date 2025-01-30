@@ -2,6 +2,7 @@
 import { Provider } from 'react-redux';
 import { store } from '../redux/store';
 import Navbar from '@/components/Navbar';
+import {WebSocketProvider} from '@/context/WebSocketContext';
 import './globals.css';
 
 const Layout = ({ children }) => {
@@ -11,8 +12,17 @@ const Layout = ({ children }) => {
         <Provider store={store}>
           <div className="min-h-screen bg-gray-100">
             <Navbar />
+
             <main className="container mx-auto py-8 px-4">
-              {children}
+
+             {/* <WebSocketProvider>
+                {children}
+             </WebSocketProvider> */}
+             {children}
+           
+               
+
+
             </main>
           </div>
         </Provider>
