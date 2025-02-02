@@ -38,7 +38,7 @@ const JoinTournament = () => {
     }
 
     try {
-      const response = await axios.get(`http://localhost:8080/api/tournament/joinTournament/${tournamentId}`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/tournament/joinTournament/${tournamentId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

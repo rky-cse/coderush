@@ -11,7 +11,7 @@ export default function Profile() {
         const token = localStorage.getItem('token');
         console.log('Token:', token);
 
-        const response = await axios.get('http://localhost:8080/api/user/me', {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/user/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

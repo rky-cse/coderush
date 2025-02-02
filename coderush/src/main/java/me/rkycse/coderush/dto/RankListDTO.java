@@ -19,6 +19,14 @@ public class RankListDTO {
         return rankList;
     }
 
+    @Override
+    public String toString() {
+        return "RankListDTO{" +
+                "tournamentId=" + tournamentId +
+                ", rankList=" + rankList +
+                '}';
+    }
+
     public void setRankList(List<RankWithUserTestcaseDTO> rankList) {
         this.rankList = rankList;
     }

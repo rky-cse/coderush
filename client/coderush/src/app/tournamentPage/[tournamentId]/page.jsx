@@ -7,6 +7,8 @@ import Question from '@/components/Question';
 import { setLanguage } from '@/redux/slices/codeSlice';
 import webSocketService from '@/services/webSocketService';
 import { increment, decrement } from '@/redux/slices/indexSlice';
+import RankListComponent from '@/components/RankListComponent';
+import { toast } from 'react-hot-toast';
 
 export default function TournamentPage({ params }) {
   const { tournamentId } = React.use(params);
@@ -73,23 +75,32 @@ export default function TournamentPage({ params }) {
       userOutput: output,
     };
   
-    console.log('Sending payload:', payload); // Log the payload
+    console.log('Sending payload:', payload);
   
     try {
-      // Use webSocketService.send instead of webSocketService.sendMessage
       webSocketService.send('/app/tournament/submit', payload);
   
-      console.log('Message sent successfully'); // Log success
+      console.log('Message sent successfully');
   
       webSocketService.subscribe(
         `/topic/tournament/submit/${tournamentId}/${index}`,
         (response) => {
-          console.log('Received response:', response); // Log the response
-          setSubmissionResult(response); // Set the submission result
+          console.log('Received response:', response);
+          setSubmissionResult(response);
+  
+          // Handle response toast notifications
+          if (response === true) {
+            toast.success('Correct!');
+          } else if (response === false) {
+            toast.error('Incorrect!');
+          } else {
+            toast.error('Unexpected response. Please contact support.');
+          }
         }
       );
     } catch (error) {
-      console.error('Error sending message:', error); // Log any errors
+      console.error('Error sending message:', error);
+      toast.error('An error occurred while submitting.');
     }
   };
 
@@ -180,15 +191,7 @@ export default function TournamentPage({ params }) {
 
       <div className="mb-8">
         <p className="font-bold">RankList box</p>
-        <div className="p-4 bg-white rounded shadow">
-          <p>1. Player A - 1000 points</p>
-        </div>
-        <div className="p-4 bg-white rounded shadow">
-          <p>2. Player B - 950 points</p>
-        </div>
-        <div className="p-4 bg-white rounded shadow">
-          <p>3. Player C - 900 points</p>
-        </div>
+        <RankListComponent tournamentId={tournamentId} token={token}></RankListComponent>
       </div>
     </div>
   );

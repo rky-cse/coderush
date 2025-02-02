@@ -13,7 +13,7 @@ export const WebSocketProvider = ({ children }) => {
   const connect = useCallback((token) => {
     if (stompClientRef.current) return; // Already connected or connecting
 
-    const socket = new SockJS('http://localhost:8080/ws'); // Replace with your server endpoint
+    const socket = new SockJS(`${process.env.API_URL}/ws`); // Replace with your server endpoint
     const stompClient = Stomp.over(socket);
 
     stompClient.connect(

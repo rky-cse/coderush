@@ -23,7 +23,7 @@ export default function CreateTestcase() {
     try {
       const token = localStorage.getItem('token'); // Retrieve token from localStorage or any other method
       const response = await axios.post(
-        'http://localhost:8080/api/testcase/createTestcase',
+        `${process.env.NEXT_PUBLIC_API_URL}/api/testcase/createTestcase`,
         formData,
         {
           headers: {

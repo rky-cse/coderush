@@ -21,7 +21,7 @@ export const useTournament = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:8080/api/tournament/joinTournament/${tournamentId}`,
+        `${process.env.API_URL}/api/tournament/joinTournament/${tournamentId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data?.tournament?.startTime) {
@@ -54,7 +54,7 @@ export const useTournament = () => {
     if (!isStartButtonDisabled) {
       const token = localStorage.getItem('token');
       const stompClient = new Client({
-        webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+        webSocketFactory: () => new SockJS(`${process.env.API_URL}/ws`),
         connectHeaders: { Authorization: `Bearer ${token}` },
         onConnect: () => {
           stompClient.subscribe(`/topic/rankList${tournamentId}`, (message) => {

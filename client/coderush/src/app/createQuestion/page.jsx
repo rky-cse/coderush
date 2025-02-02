@@ -25,7 +25,7 @@ export default function CreateQuestion() {
     try {
       const token = localStorage.getItem('token'); // Retrieve token from localStorage or any other method
       const response = await axios.post(
-        'http://localhost:8080/api/question/createQuestion',
+        `${process.env.NEXT_PUBLIC_API_URL}/api/question/createQuestion`,
         formData,
         {
           headers: {

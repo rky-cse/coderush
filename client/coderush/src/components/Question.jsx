@@ -16,7 +16,7 @@ export default function Question({ tournamentId }) {
     if (!token) return;
 
     // Establish WebSocket connection
-    webSocketService.connect('http://localhost:8080/ws', token);
+    webSocketService.connect(`${process.env.NEXT_PUBLIC_API_URL}/ws`, token);
 
     // Cleanup function to disconnect WebSocket when the component unmounts
     return () => {

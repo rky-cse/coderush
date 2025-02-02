@@ -16,7 +16,7 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         userName: username,
         password: password,
       });
@@ -67,7 +67,7 @@ export default function Login() {
           </button>
         </form>
         <p className="text-sm text-center text-gray-600">
-          Don't have an account? <a href="/signup" className="text-indigo-600 hover:underline">Sign Up</a>
+          Don't have an account? <a href="/register" className="text-indigo-600 hover:underline">register</a>
         </p>
       </div>
     </div>

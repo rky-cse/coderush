@@ -148,10 +148,30 @@ public class TournamentSchedulerService {
             }
 
             List<QuestionEntity> allQuestions = questionRepository.findAll();
+
             List<QuestionEntity> selectedQuestions = new ArrayList<>();
-            for (int i = 0; i < 5; i++) {
+
+            Set<QuestionEntity> st=new HashSet<>();
+            for (int i = 0;i<5; i++) {
                 int randomIndex = (int) (Math.random() * allQuestions.size());
-                selectedQuestions.add(allQuestions.get(randomIndex));
+                if(st.contains(allQuestions.get(randomIndex))){
+                    int j=randomIndex;
+                    int ct=allQuestions.size();
+                    while(ct-->0){
+                        if(!st.contains(allQuestions.get(j%(allQuestions.size())))){
+                            selectedQuestions.add(allQuestions.get(j%(allQuestions.size())));
+                            st.add(allQuestions.get(j%(allQuestions.size())));
+                            break;
+                        }
+                        j++;
+                    }
+
+                }
+                else{
+                    st.add(allQuestions.get(randomIndex));
+                    selectedQuestions.add(allQuestions.get(randomIndex));
+                }
+
             }
             int index=0;
 
