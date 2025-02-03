@@ -1,20 +1,12 @@
 package me.rkycse.coderush.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
 public class LoginResponse {
-
     private String token;
-
-    public LoginResponse(String token) {
-        this.token = token;
-    }
-
-    // Getter
-    public String getToken() {
-        return token;
-    }
-
-    // Setter
-    public void setToken(String token) {
-        this.token = token;
-    }
 }

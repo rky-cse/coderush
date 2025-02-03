@@ -26,11 +26,6 @@ public class CoderushApplication {
 		schedulerService.startScheduling();
 		RankListSchedulerService rankListSchedulerService = context.getBean(RankListSchedulerService.class);
 		rankListSchedulerService.startScheduling();
-
-
-
-
-
 	}
 
 }

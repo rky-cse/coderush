@@ -1,10 +1,14 @@
 package me.rkycse.coderush.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.juli.logging.Log;
 
 @Entity
 @Table(name = "user_testcases")
+@Getter
+@Setter
 public class UserTestcaseEntity {
 
     @Id
@@ -28,54 +32,4 @@ public class UserTestcaseEntity {
     @Column(name = "number_of_attempts", nullable = false)
     private int numberOfAttempts;
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public Long getTournamentId() {
-        return tournamentId;
-    }
-
-    public void setTournamentId(Long tournamentId) {
-        this.tournamentId = tournamentId;
-    }
-
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Boolean getIsSolved() {
-        return isSolved;
-    }
-
-    public void setIsSolved(Boolean solved) {
-        isSolved = solved;
-    }
-
-    public void setTestcaseId(Long testcaseId) {
-        this.testcaseId = testcaseId;
-    }
-
-    public Long getTestcaseId() {
-        return testcaseId;
-    }
-
-
-    public int getNumberOfAttempts() {
-        return numberOfAttempts;
-    }
-
-    public void setNumberOfAttempts(int numberOfAttempts) {
-        this.numberOfAttempts = numberOfAttempts;
-    }
 }

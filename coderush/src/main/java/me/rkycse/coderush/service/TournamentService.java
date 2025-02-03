@@ -176,7 +176,7 @@ public class TournamentService {
                 tournamentCacheDTO.setTournamentId(tournamentId);
                 tournamentCacheDTO.setStartTime(startTime);
                 tournamentCacheDTO.setScheduled(true);
-                tournamentCacheDTO.setDuration(durationInSeconds);
+                tournamentCacheDTO.setDurationInSeconds(durationInSeconds);
                 tournamentCacheDTORedisTemplate
                         .opsForValue()
                         .set("$"+tournamentId,

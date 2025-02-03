@@ -118,7 +118,7 @@ public class TournamentSchedulerService {
     private void startTournament(Long tournamentId, TournamentCacheDTO cacheDTO) {
         try {
             System.out.println("Starting tournament with ID: " + tournamentId + " at " + LocalDateTime.now());
-            tournamentRedisTemplate.opsForValue().set("$" + tournamentId, cacheDTO, cacheDTO.getDuration(), TimeUnit.SECONDS);
+            tournamentRedisTemplate.opsForValue().set("$" + tournamentId, cacheDTO, cacheDTO.getDurationInSeconds(), TimeUnit.SECONDS);
 
             List<TournamentPlayerEntity> tournamentPlayerEntities=tournamentPlayerRepository
                     .findByTournamentId(tournamentId);
@@ -141,7 +141,7 @@ public class TournamentSchedulerService {
                 rankRedisTemplate.opsForValue().set(
                         "rankDTO/" + tournamentId + "/" + rankDTO.getUserName(),
                         rankDTO,
-                        cacheDTO.getDuration(),
+                        cacheDTO.getDurationInSeconds(),
                         TimeUnit.SECONDS
                 );
 
@@ -195,20 +195,20 @@ public class TournamentSchedulerService {
                                 "testcaseDTO/"+tournamentId+"/"+ player.getPlayerUserName()
                                         +"/"+index,
                                 testcaseDTO,
-                                cacheDTO.getDuration(),
+                                cacheDTO.getDurationInSeconds(),
                                 TimeUnit.SECONDS
                         );
                         userTestcaseDTORedisTemplate.opsForValue().set(
                                 "userTestcaseDTO/" +tournamentId+"/"+
                                         player.getPlayerUserName() + "/" + index,
                                 userTestcaseDTO,
-                                cacheDTO.getDuration(),
+                                cacheDTO.getDurationInSeconds(),
                                 TimeUnit.SECONDS
                         );
                         questionsDTORedisTemplate.opsForValue().set(
                                 "questionDTO/"+tournamentId+"/"+index,
                                 Mapper.toDTO(question),
-                                cacheDTO.getDuration(),TimeUnit.SECONDS
+                                cacheDTO.getDurationInSeconds(),TimeUnit.SECONDS
                         );
                     }
                 }
