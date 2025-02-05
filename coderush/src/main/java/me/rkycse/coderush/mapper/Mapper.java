@@ -129,4 +129,19 @@ public class Mapper {
         return dto;
 
     }
+
+    public static OneToOneGameEntity toEntity(OneToOneGameDTO dto) {
+        if (dto== null) {
+            return null;
+        }
+
+        OneToOneGameEntity entity = new OneToOneGameEntity();
+        entity.setPlayer1(dto.getPlayer1());
+        entity.setPlayer2(dto.getPlayer2());
+        entity.setTimeControl(dto.getTimeControl());
+        entity.setTournamentId(dto.getTournamentId());
+        return entity;
+    }
+
+
 }
