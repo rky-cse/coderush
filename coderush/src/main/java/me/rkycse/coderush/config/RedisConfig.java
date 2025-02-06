@@ -179,28 +179,6 @@ public class RedisConfig {
         return template;
     }
 
-    @Bean
-    public RedisTemplate<String, OneToOneGameDTO> oneToOneGameDTORedisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, OneToOneGameDTO> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-
-        ObjectMapper objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-        // Pass the ObjectMapper directly into the constructor.
-        Jackson2JsonRedisSerializer<OneToOneGameDTO> serializer =
-                new Jackson2JsonRedisSerializer<>(objectMapper, OneToOneGameDTO.class);
-
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(serializer);
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(serializer);
-
-        template.afterPropertiesSet();
-        return template;
-    }
-
 
 
 

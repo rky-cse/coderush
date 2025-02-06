@@ -16,9 +16,10 @@ public class UserTestcaseEntity {
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
+
+
     @Column(name = "user_name", nullable = false)
     private String userName;
-
     @Column(name = "tournament_id", nullable = false)
     private Long tournamentId;
 
