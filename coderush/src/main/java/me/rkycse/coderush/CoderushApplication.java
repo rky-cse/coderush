@@ -10,8 +10,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import  me.rkycse.coderush.service.MatchmakingService;
 
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
 public class CoderushApplication {
@@ -26,6 +30,8 @@ public class CoderushApplication {
 		schedulerService.startScheduling();
 		RankListSchedulerService rankListSchedulerService = context.getBean(RankListSchedulerService.class);
 		rankListSchedulerService.startScheduling();
+
+		MatchmakingService matchmakingService = context.getBean(MatchmakingService.class);
 	}
 
 }

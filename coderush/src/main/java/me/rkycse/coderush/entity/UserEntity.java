@@ -8,7 +8,6 @@ import org.antlr.v4.runtime.misc.NotNull;
 
 import java.util.List;
 
-
 @Entity
 @Table(name = "users")
 @Getter
@@ -44,4 +43,7 @@ public class UserEntity {
     @Column(name = "role")
     private List<String> roles;
 
+    // New field for user rating as Long
+    @Column(name = "rating")
+    private Long rating = 0L;
 }

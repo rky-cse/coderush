@@ -19,6 +19,17 @@ import java.util.List;
 @Configuration
 public class RedisConfig {
 
+    @Bean(name = "matchmakingRedisTemplate")
+    public RedisTemplate<String, String> matchmakingRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        // Use String serializers for both keys and values
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
+        template.afterPropertiesSet();
+        return template;
+    }
+
     @Bean
     public RedisTemplate<String, TournamentCacheDTO> tournamentCacheRedisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, TournamentCacheDTO> template = new RedisTemplate<>();

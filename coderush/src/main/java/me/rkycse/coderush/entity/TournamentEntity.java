@@ -42,6 +42,18 @@ public class TournamentEntity {
     @Column(name = "duration_in_seconds", nullable = false)
     private long durationInSeconds;
 
+    // New field: Visibility (e.g., "PUBLIC" or "PRIVATE")
+    @Column(name = "visibility")
+    private String visibility = "PUBLIC"; // Default visibility is public
+
+    // New field: Password for private tournaments (can be null for public tournaments)
+    @Column(name = "password")
+    private String password;
+
+    // New field: Tournament mode/type (e.g., "1 vs 1 tournament", "many vs many", "single")
+    @Column(name = "tournament_mode")
+    private String tournamentMode;
+
     @Override
     public String toString() {
         return "TournamentEntity{" +
@@ -54,6 +66,9 @@ public class TournamentEntity {
                 ", minRatingReq=" + minRatingReq +
                 ", maxRatingReq=" + maxRatingReq +
                 ", durationInSeconds=" + durationInSeconds +
+                ", visibility='" + visibility + '\'' +
+                ", password='" + password + '\'' +
+                ", tournamentMode='" + tournamentMode + '\'' +
                 '}';
     }
 }

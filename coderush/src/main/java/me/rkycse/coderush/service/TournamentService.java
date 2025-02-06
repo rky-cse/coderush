@@ -91,10 +91,11 @@ public class TournamentService {
         }
 
         TournamentEntity savedTournament=  tournamentRepository.save(tournament);
-        System.out.println("Tournament created successfully: " + tournament);
+        System.out.println("Tournament created successfully: " + savedTournament);
 
         return savedTournament;
     }
+
 
     public JoinTournamentResponseDTO joinTournament(Long tournamentId) {
         if (tournamentId == null) {

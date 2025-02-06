@@ -99,7 +99,7 @@ public class TournamentSchedulerService {
                 if (cacheDTO == null || cacheDTO.isScheduled()) continue;
 
                 long delay = LocalDateTime.now().until(cacheDTO.getStartTime(), java.time.temporal.ChronoUnit.MILLIS);
-                if (delay <= 0) {
+                if (delay <= 0 && !cacheDTO.isScheduled() ) {
                     tournamentRedisTemplate.delete(key);
                 } else {
                     taskScheduler.schedule(
@@ -222,3 +222,6 @@ public class TournamentSchedulerService {
         }
     }
 }
+
+
+
