@@ -33,7 +33,7 @@ const TournamentFormModal = ({ closeModal }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${getCookie('token')}`,
         },
         body: JSON.stringify(formData),
       });

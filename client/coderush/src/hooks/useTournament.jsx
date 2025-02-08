@@ -19,7 +19,7 @@ export const useTournament = () => {
   const handleJoinTournament = async () => {
     setError(null);
     try {
-      const token = localStorage.getItem('token');
+      const token = getCookie('token');
       const response = await axios.get(
         `${process.env.API_URL}/api/tournament/joinTournament/${tournamentId}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -52,7 +52,7 @@ export const useTournament = () => {
 
   const handleStartTournament = () => {
     if (!isStartButtonDisabled) {
-      const token = localStorage.getItem('token');
+      const token = getCookie('token');
       const stompClient = new Client({
         webSocketFactory: () => new SockJS(`${process.env.API_URL}/ws`),
         connectHeaders: { Authorization: `Bearer ${token}` },

@@ -22,7 +22,7 @@ export default function Matchmaking() {
     }, [status]);
 
     useEffect(() => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        const token = typeof window !== 'undefined' ? getCookie('token') : null;
 
         if (token) {
             webSocketService.connect(`${process.env.NEXT_PUBLIC_API_URL}/ws`, token);
@@ -50,7 +50,7 @@ export default function Matchmaking() {
     }, []);
 
     const handlePlay1v1 = async () => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        const token = typeof window !== 'undefined' ? getCookie('token') : null;
         if (!token) {
             setError('Please log in first');
             return;

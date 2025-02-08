@@ -23,7 +23,7 @@ export default function CreateQuestion() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token'); // Retrieve token from localStorage or any other method
+      const token = getCookie('token'); // Retrieve token from localStorage or any other method
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/question/createQuestion`,
         formData,

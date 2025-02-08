@@ -10,7 +10,7 @@ export default function Question({ tournamentId }) {
   const question = useSelector((state) => state.question.data);
   const testcase = useSelector((state) => state.testcase.data);
   const index = useSelector((state) => state.index ?? 0); // Default to 0 if undefined
-  const token = localStorage.getItem('token');
+  const token = getCookie('token');
 
   useEffect(() => {
     if (!token) return;

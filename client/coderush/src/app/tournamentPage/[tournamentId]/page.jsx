@@ -16,7 +16,7 @@ export default function TournamentPage({ params }) {
   const dispatch = useDispatch();
   const { language, code } = useSelector((state) => state.editor);
   
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const token = typeof window !== 'undefined' ? getCookie('token') : null;
   const testcase = useSelector((state) => state.testcase.data) || '';
   const [customInput, setCustomInput] = useState('');
   const [submissionResult, setSubmissionResult] = useState(null);

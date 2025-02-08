@@ -30,7 +30,7 @@ const JoinTournament = () => {
   }, [remainingTime]);
 
   const handleJoinTournament = async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = typeof window !== 'undefined' ? getCookie('token') : null;
 
     if (!tournamentId || !token) {
       alert('Please enter Tournament ID and ensure you are logged in.');
