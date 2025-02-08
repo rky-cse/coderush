@@ -1,12 +1,21 @@
-// src/components/Navbar.jsx
-'use client';
+import { useSelector, useDispatch } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { logout } from '../redux/slices/authSlice';
 import Link from 'next/link';
-import { useState } from 'react';
-// Removed Menu-related imports due to resolution issues.
-// Removed Button import for now as it couldn't be resolved. Please use a standard button component if necessary or confirm library.
+
+
 
 export default function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Replace with actual auth state
+  const { user } = useSelector((state) => state.auth);
+  const router = useRouter();
+  const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    dispatch(logout());  // Clear Redux state
+    localStorage.removeItem('token'); // Remove token from localStorage
+    localStorage.removeItem('username'); // Remove stored username
+    router.push('/login'); // Redirect to login page
+  };
 
   return (
     <nav className="bg-white shadow-md">
@@ -15,17 +24,24 @@ export default function Navbar() {
           Coderush
         </Link>
         <div className="flex items-center space-x-4">
-          <Link href="/dashboard" className="text-gray-600 hover:text-gray-800">
-            Dashboard
-          </Link>
-          <Link href="/createTournament" className="text-gray-600 hover:text-gray-800">
-            Create Tournament
-          </Link>
-          <Link href="/joinTournament" className="text-gray-600 hover:text-gray-800">
-            Join Tournament
-          </Link>
-          {isLoggedIn ? (
-            <div><button onClick={() => setIsLoggedIn(false)} className='text-gray-600'>Logout</button></div>
+          {user ? (
+            <>
+              <Link href="/dashboard" className="text-gray-600 hover:text-gray-800">
+                Dashboard
+              </Link>
+              <Link href="/createTournament" className="text-gray-600 hover:text-gray-800">
+                Create Tournament
+              </Link>
+              <Link href="/joinTournament" className="text-gray-600 hover:text-gray-800">
+                Join Tournament
+              </Link>
+              <button
+                onClick= {handleLogout}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                Logout
+              </button>
+            </>
           ) : (
             <Link href="/login" className="text-gray-600 hover:text-gray-800">
               Login

@@ -1,15 +1,17 @@
 'use client';
-
 import { useState } from 'react';
 import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { login } from '@/redux/slices/authSlice';
 import { useRouter } from 'next/navigation';
 
 export default function Login() {
+  const dispatch = useDispatch();
+  const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,11 +22,12 @@ export default function Login() {
         userName: username,
         password: password,
       });
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('username', username);
+
+      dispatch(login({ user: username, token: response.data.token }));
       router.push('/profile');
     } catch (error) {
-      setError('Invalid username or password');
+      console.log(error);
+      
     } finally {
       setLoading(false);
     }
@@ -66,9 +69,6 @@ export default function Login() {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        <p className="text-sm text-center text-gray-600">
-          Don't have an account? <a href="/register" className="text-indigo-600 hover:underline">register</a>
-        </p>
       </div>
     </div>
   );
