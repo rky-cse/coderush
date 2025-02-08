@@ -103,11 +103,12 @@ public class Mapper {
 
         }
         TestcaseDTO dto = new TestcaseDTO();
+
         dto.setInput(entity.getInput());
         dto.setOutput(entity.getOutput());
         dto.setTestcaseId(entity.getTestcaseId());
         dto.setRating(entity.getRating());
-        dto.setQuestionId(entity.getQuestionId());
+        dto.setQuestionId(entity.getQuestion().getQuestionId());
 
         return dto;
     }
@@ -119,7 +120,17 @@ public class Mapper {
         QuestionDTO dto = new QuestionDTO();
 
         dto.setQuestionId(entity.getQuestionId());
-        dto.setCreatorUserName(entity.getCreaterUserName());
+        if (entity.getCreator() != null) {
+            UserDto creatorDto = new UserDto();
+            creatorDto.setId(entity.getCreator().getId());
+            creatorDto.setUserName(entity.getCreator().getUserName());
+            creatorDto.setFirstName(entity.getCreator().getFirstName());
+            creatorDto.setLastName(entity.getCreator().getLastName());
+            creatorDto.setEmail(entity.getCreator().getEmail());
+            creatorDto.setRoles(entity.getCreator().getRoles());
+
+            dto.setCreator(creatorDto);
+        }
         dto.setLegend(entity.getLegend());
         dto.setInputFormat(entity.getInputFormat());
         dto.setOutputFormat(entity.getOutputFormat());

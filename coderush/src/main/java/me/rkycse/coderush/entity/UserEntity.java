@@ -2,10 +2,9 @@ package me.rkycse.coderush.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Setter;
-import org.antlr.v4.runtime.misc.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -18,23 +17,18 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
     @Column(name = "username", nullable = false, unique = true, length = 50)
     private String userName;
 
-    @NotNull
     @Column(name = "first_name", nullable = false, length = 50)
     private String firstName;
 
-    @NotNull
     @Column(name = "last_name", nullable = false, length = 50)
     private String lastName;
 
-    @NotNull
     @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
 
-    @NotNull
     @Column(name = "password", nullable = false)
     private String password;
 
@@ -43,7 +37,9 @@ public class UserEntity {
     @Column(name = "role")
     private List<String> roles;
 
-    // New field for user rating as Long
     @Column(name = "rating")
     private Long rating = 0L;
+
+    @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QuestionEntity> questions = new ArrayList<>();
 }

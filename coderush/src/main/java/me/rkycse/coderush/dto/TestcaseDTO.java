@@ -3,12 +3,14 @@ package me.rkycse.coderush.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import me.rkycse.coderush.entity.QuestionEntity;
 
 @Getter
 @Setter
 public class TestcaseDTO {
 
     private Long testcaseId;
+
     private Long questionId;
     private String input;
     private String output;

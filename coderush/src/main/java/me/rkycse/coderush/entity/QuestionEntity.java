@@ -3,8 +3,6 @@ package me.rkycse.coderush.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -18,8 +16,6 @@ public class QuestionEntity {
 
     @Column(name = "name", nullable = false)
     private String name;
-    @Column(name = "creator_username", nullable = false)
-    private String createrUserName;
 
     @Column(name = "legend", columnDefinition = "TEXT")
     private String legend;
@@ -36,5 +32,16 @@ public class QuestionEntity {
     @Column(name = "tutorial", columnDefinition = "TEXT")
     private String tutorial;
 
+    // Many-to-One relationship with UserEntity (Creator)
+    @ManyToOne
+    @JoinColumn(name = "creator_id", nullable = false)
+    private UserEntity creator;
 
+    // New field for "rated" or "unrated"
+    @Column(name = "rated")
+    private boolean rated=false;
+
+    // One-to-Many relationship with TestcaseEntity
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TestcaseEntity> testcases;
 }

@@ -2,17 +2,17 @@ package me.rkycse.coderush.service;
 
 import jakarta.transaction.Transactional;
 import me.rkycse.coderush.dto.TestcaseDTO;
+import me.rkycse.coderush.entity.QuestionEntity;
 import me.rkycse.coderush.entity.TestcaseEntity;
 import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.QuestionRepository;
 import me.rkycse.coderush.repository.TestcaseRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -27,34 +27,32 @@ public class TestcaseService {
     }
 
     public Boolean createTestcase(TestcaseDTO testcase) {
+        if (testcase == null || testcase.getInput() == null || testcase.getOutput() == null) {
+            throw new IllegalArgumentException("Testcase input/output cannot be null");
+        }
 
-        if(testcase==null) {
-            throw new NullPointerException("testcase is null");
-        }
-        if(testcase.getInput()==null) {
-            throw new NullPointerException("input is null");
-        }
-        if(testcase.getOutput()==null) {
-            throw new NullPointerException("output is null");
-        }
+        QuestionEntity question = questionRepository.findById(testcase.getQuestionId())
+                .orElseThrow(() -> new IllegalArgumentException("Question not found with id: " + testcase.getQuestionId()));
+
         TestcaseEntity testcaseEntity = new TestcaseEntity();
         testcaseEntity.setInput(testcase.getInput());
         testcaseEntity.setOutput(testcase.getOutput());
         testcaseEntity.setRating(testcase.getRating());
-        testcaseEntity.setQuestionId(testcase.getQuestionId());
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails userDetails = (UserDetails) auth.getPrincipal();
+        testcaseEntity.setQuestion(question);
+
+        question.getTestcases().add(testcaseEntity);
         testcaseRepository.save(testcaseEntity);
+
         return true;
-
-
     }
 
     public List<TestcaseDTO> getTestcasesByQuestionId(Long questionId) {
-        List<TestcaseEntity> testcaseEntity=testcaseRepository.findByQuestionId(questionId);
-        List<TestcaseDTO> testcaseDTOS=new ArrayList<>();
-        for(TestcaseEntity testcaseEntity1: testcaseEntity) {
-            testcaseDTOS.add(Mapper.toDTO(testcaseEntity1));
+        QuestionEntity question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new IllegalArgumentException("Question not found with id: " + questionId));
+
+        List<TestcaseDTO> testcaseDTOS = new ArrayList<>();
+        for (TestcaseEntity testcaseEntity : question.getTestcases()) {
+            testcaseDTOS.add(Mapper.toDTO(testcaseEntity));
         }
         return testcaseDTOS;
     }

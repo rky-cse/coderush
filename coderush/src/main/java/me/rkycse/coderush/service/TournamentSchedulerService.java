@@ -178,7 +178,7 @@ public class TournamentSchedulerService {
             for (QuestionEntity question : selectedQuestions) {
                 System.out.println("QuestionId: " +question.getQuestionId() );
                 List<TestcaseEntity> testcases = testcaseRepository.
-                        findByQuestionId(question.getQuestionId());
+                        findByQuestion_QuestionId(question.getQuestionId());
                 for (TournamentPlayerEntity player : tournamentPlayerEntities) {
                     if (testcases.isEmpty()) continue;
                     int randomIndex = (int) (Math.random() * testcases.size());
