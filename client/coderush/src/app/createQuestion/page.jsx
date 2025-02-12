@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react';
 import axios from 'axios';
+import { getCookie } from 'cookies-next';
 
 export default function CreateQuestion() {
   const [formData, setFormData] = useState({

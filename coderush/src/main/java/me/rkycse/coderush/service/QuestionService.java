@@ -42,8 +42,8 @@ public class QuestionService {
             if(question.getName()!=null && !question.getLegend().isEmpty()){
 
                 QuestionEntity newQuestion = new QuestionEntity();
+                newQuestion.setCreatorId(user.getId());
                 newQuestion.setName(question.getName());
-                newQuestion.setCreator(user);
                 newQuestion.setLegend(question.getLegend());
                 newQuestion.setInputFormat(question.getInputFormat());
                 newQuestion.setOutputFormat(question.getOutputFormat());

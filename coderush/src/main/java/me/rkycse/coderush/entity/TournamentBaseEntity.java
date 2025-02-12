@@ -7,11 +7,11 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tournaments")
+@Table(name = "base_tournaments")
 @Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
-public abstract class TournamentBase {
+public abstract class TournamentBaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,7 +19,7 @@ public abstract class TournamentBase {
     private Long tournamentId;
 
     @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    private Long startTime;
 
     @Column(name = "rated", nullable = false)
     private Boolean rated = false;
@@ -35,9 +35,18 @@ public abstract class TournamentBase {
     @Column(name = "password")
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tournament_type", nullable = false)
+    private TournamentType tournamentType=TournamentType.CLASSIC;
+
+
     // Enum for Visibility
     public enum Visibility {
         PUBLIC,
         PRIVATE
+    }
+    public enum TournamentType{
+        CLASSIC,
+        FREE_STYLE
     }
 }

@@ -8,11 +8,9 @@ import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.QuestionRepository;
 import me.rkycse.coderush.repository.TestcaseRepository;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+
 
 @Service
 @Transactional
@@ -35,23 +33,20 @@ public class TestcaseService {
                 .orElseThrow(() -> new IllegalArgumentException("Question not found with id: " + testcase.getQuestionId()));
 
         TestcaseEntity testcaseEntity = new TestcaseEntity();
+        testcaseEntity.setQuestionId(testcase.getQuestionId());
         testcaseEntity.setInput(testcase.getInput());
         testcaseEntity.setOutput(testcase.getOutput());
         testcaseEntity.setRating(testcase.getRating());
-        testcaseEntity.setQuestion(question);
-
-        question.getTestcases().add(testcaseEntity);
         testcaseRepository.save(testcaseEntity);
 
         return true;
     }
 
     public List<TestcaseDTO> getTestcasesByQuestionId(Long questionId) {
-        QuestionEntity question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new IllegalArgumentException("Question not found with id: " + questionId));
+        List<TestcaseEntity> testcaseEntities = testcaseRepository.findByQuestionId(questionId);
 
         List<TestcaseDTO> testcaseDTOS = new ArrayList<>();
-        for (TestcaseEntity testcaseEntity : question.getTestcases()) {
+        for (TestcaseEntity testcaseEntity : testcaseEntities) {
             testcaseDTOS.add(Mapper.toDTO(testcaseEntity));
         }
         return testcaseDTOS;

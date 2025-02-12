@@ -6,7 +6,7 @@ import { setAuthFromStorage } from '../redux/slices/authSlice';
 import Navbar from '@/components/Navbar';
 import { WebSocketProvider } from '@/context/WebSocketContext';
 import './globals.css';
-
+import { getCookie } from 'cookies-next';
 const InitAuth = () => {
   const dispatch = useDispatch();
   

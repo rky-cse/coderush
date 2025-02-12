@@ -20,13 +20,14 @@ public class TournamentWebSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final TournamentWebSocketService tournamentWebSocketService;
-    private final RedisTemplate<String, TestcaseDTO> testcaseDTORedisTemplate;
+    private final RedisTemplate<String,Object>redisTemplate;
 
-    public TournamentWebSocketController(SimpMessagingTemplate messagingTemplate, TournamentWebSocketService tournamentWebSocketService, RedisTemplate<String, TestcaseDTO> testcaseDTORedisTemplate) {
+    public TournamentWebSocketController(SimpMessagingTemplate messagingTemplate, TournamentWebSocketService tournamentWebSocketService, RedisTemplate<String, Object> redisTemplate) {
         this.messagingTemplate = messagingTemplate;
         this.tournamentWebSocketService = tournamentWebSocketService;
-        this.testcaseDTORedisTemplate = testcaseDTORedisTemplate;
+        this.redisTemplate = redisTemplate;
     }
+
 
     @MessageMapping("/tournament/getQuestionWithTestcase")
     public void getQuestionWithTestcase(@RequestBody String payload, Principal principal) {

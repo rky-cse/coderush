@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import TournamentFormModal from '@/components/TournamentFormModal';
+import { getCookie } from 'cookies-next';
 
 const CreateTournament = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,7 +18,13 @@ const CreateTournament = () => {
         Open Tournament Form
       </button>
 
-      {isModalOpen && <TournamentFormModal closeModal={handleModalToggle} />}
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-4xl w-full max-h-screen overflow-y-auto">
+            <TournamentFormModal closeModal={handleModalToggle} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

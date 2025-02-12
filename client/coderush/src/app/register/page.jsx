@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-
+import { getCookie } from 'cookies-next';
 export default function Register() {
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');

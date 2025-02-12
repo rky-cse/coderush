@@ -1,8 +1,7 @@
 package me.rkycse.coderush.service;
 
 import me.rkycse.coderush.dto.*;
-import me.rkycse.coderush.entity.QuestionEntity;
-import me.rkycse.coderush.mapper.Mapper;
+import me.rkycse.coderush.repository.TournamentRepository;
 import me.rkycse.coderush.util.StringComparator;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -12,28 +11,17 @@ import java.util.NoSuchElementException;
 @Service
 public class TournamentWebSocketService {
 
-   private final RedisTemplate<String, QuestionDTO>redisQuestionDTOTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-   private final RedisTemplate<String, TestcaseDTO>testcaseRedisTemplate;
-
-
-    public TournamentWebSocketService(RedisTemplate<String, QuestionDTO> redisQuestionDTOTemplate, RedisTemplate<String, TestcaseDTO> testcaseRedisTemplate, RedisTemplate<String, UserTestcaseDTO> userTestcaseDTORedisTemplate, RedisTemplate<String, RankDTO> rankRedisTemplate) {
-        this.redisQuestionDTOTemplate = redisQuestionDTOTemplate;
-        this.testcaseRedisTemplate = testcaseRedisTemplate;
-        this.userTestcaseDTORedisTemplate = userTestcaseDTORedisTemplate;
-        this.rankRedisTemplate = rankRedisTemplate;
+    public TournamentWebSocketService(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
     }
-
-    private final RedisTemplate<String, UserTestcaseDTO> userTestcaseDTORedisTemplate;
-
-    private final RedisTemplate<String,RankDTO>rankRedisTemplate;
-
-
 
 
     public QuestionDTO getQuestion(Long tournamentId,int index) {
 
-        QuestionDTO question = redisQuestionDTOTemplate.opsForValue().get("questionDTO/"+tournamentId+"/"+index);
+        QuestionDTO question = (QuestionDTO)redisTemplate
+                .opsForValue().get("questionDTO/"+tournamentId+"/"+index);
         if (question == null) {
             throw new NoSuchElementException("Question not found");
         }
@@ -43,7 +31,7 @@ public class TournamentWebSocketService {
 
     public TestcaseDTO getTestcase(Long tournamentId,String userName,int index) {
 
-        TestcaseDTO testcase = testcaseRedisTemplate
+        TestcaseDTO testcase = (TestcaseDTO) redisTemplate
                 .opsForValue().get("testcaseDTO/"+tournamentId+"/"+userName+ "/"+ index);
         if (testcase == null) {
             throw new NoSuchElementException("Testcase not found");
@@ -55,7 +43,7 @@ public class TournamentWebSocketService {
 
     public Boolean isCorrect(String userName, int index, UserResponseDTO answer) {
         // Fetch the testcase from Redis
-        TestcaseDTO testcase = testcaseRedisTemplate
+        TestcaseDTO testcase = (TestcaseDTO) redisTemplate
                 .opsForValue().get("testcaseDTO/" + answer.getTournamentId() + "/" + userName + "/" + index);
         if (testcase == null) {
             throw new NoSuchElementException("Testcase not found for user: " + userName + " and index: " + index);
@@ -69,7 +57,7 @@ public class TournamentWebSocketService {
         // Compare user output with the expected output
         if (StringComparator.compareIgnoringWhitespace(testcaseOutput, answer.getUserOutput())) {
             // Fetch user testcase details
-            UserTestcaseDTO userTestcaseDTO = userTestcaseDTORedisTemplate
+            UserTestcaseDTO userTestcaseDTO = (UserTestcaseDTO)redisTemplate
                     .opsForValue().get("userTestcaseDTO/" + answer.getTournamentId() + "/" + userName + "/" + index);
             if (userTestcaseDTO == null) {
                 throw new NoSuchElementException("User testcase not found for user: " + userName + " and index: " + index);
@@ -84,12 +72,12 @@ public class TournamentWebSocketService {
             userTestcaseDTO.setNumberOfAttempts(userTestcaseDTO.getNumberOfAttempts() + 1);
 
             // Update userTestcaseDTO in Redis without changing TTL
-            userTestcaseDTORedisTemplate.opsForValue()
+            redisTemplate.opsForValue()
                     .setIfPresent("userTestcaseDTO/" + answer.getTournamentId() + "/" + userName + "/" + index, userTestcaseDTO);
 
             // Fetch rank details
             System.out.println("Fetching rank for user: " + userName + " and tid: " + answer.getTournamentId());
-            RankDTO rank = rankRedisTemplate
+            RankDTO rank = (RankDTO)redisTemplate
                     .opsForValue().get("rankDTO/" + answer.getTournamentId() + "/" + userName);
             if (rank == null) {
                 throw new NoSuchElementException("Rank not found for user: " + userName);
@@ -99,14 +87,14 @@ public class TournamentWebSocketService {
             rank.setScore(rank.getScore() + testcase.getRating());
 
             // Update rank in Redis without changing TTL
-            rankRedisTemplate.opsForValue()
+            redisTemplate.opsForValue()
                     .setIfPresent("rankDTO/" + answer.getTournamentId() + "/" + userName, rank);
 
             return true;
 
         } else {
             // Handle incorrect answers
-            UserTestcaseDTO userTestcaseDTO = userTestcaseDTORedisTemplate
+            UserTestcaseDTO userTestcaseDTO =(UserTestcaseDTO) redisTemplate
                     .opsForValue().get("userTestcaseDTO/" + answer.getTournamentId() + "/" + userName + "/" + index);
             if (userTestcaseDTO == null) {
                 throw new NoSuchElementException("User testcase not found for user: " + userName + " and index: " + index);
@@ -117,7 +105,7 @@ public class TournamentWebSocketService {
                 userTestcaseDTO.setNumberOfAttempts(userTestcaseDTO.getNumberOfAttempts() + 1);
 
                 // Update userTestcaseDTO in Redis without changing TTL
-                userTestcaseDTORedisTemplate.opsForValue()
+                redisTemplate.opsForValue()
                         .setIfPresent("userTestcaseDTO/" + answer.getTournamentId() + "/" + userName + "/" + index, userTestcaseDTO);
             }
         }

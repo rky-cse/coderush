@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setQuestion, clearQuestion } from '@/redux/slices/questionSlice';
 import { setTestcase, clearTestcase } from '@/redux/slices/testcaseSlice';
 import webSocketService from '@/services/webSocketService';
+import { getCookie } from 'cookies-next';
 
 export default function Question({ tournamentId }) {
   const dispatch = useDispatch();

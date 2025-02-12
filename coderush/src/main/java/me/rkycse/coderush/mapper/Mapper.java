@@ -77,26 +77,7 @@ public class Mapper {
         dto.setTournamentId(entity.getTournamentId());
         return dto;
     }
-    public static TournamentDTO toDTO(TournamentEntity entity) {
-        if (entity == null) {
-            return null;
 
-        }
-        TournamentDTO dto = new TournamentDTO();
-        dto.setDescription(entity.getDescription());
-        dto.setCreatorUserName(entity.getCreatorUserName());
-        dto.setDurationInSeconds(entity.getDurationInSeconds());
-        dto.setMaxRatingReq(entity.getMaxRatingReq());
-        dto.setRated(entity.getRated());
-        dto.setMinRatingReq(entity.getMinRatingReq());
-        dto.setName(entity.getName());
-        dto.setTournamentId(entity.getTournamentId());
-        dto.setStartTime(entity.getStartTime());
-
-
-
-        return dto;
-    }
     public static TestcaseDTO toDTO(TestcaseEntity entity) {
         if (entity == null) {
             return null;
@@ -108,8 +89,6 @@ public class Mapper {
         dto.setOutput(entity.getOutput());
         dto.setTestcaseId(entity.getTestcaseId());
         dto.setRating(entity.getRating());
-        dto.setQuestionId(entity.getQuestion().getQuestionId());
-
         return dto;
     }
 
@@ -120,16 +99,10 @@ public class Mapper {
         QuestionDTO dto = new QuestionDTO();
 
         dto.setQuestionId(entity.getQuestionId());
-        if (entity.getCreator() != null) {
-            UserDto creatorDto = new UserDto();
-            creatorDto.setId(entity.getCreator().getId());
-            creatorDto.setUserName(entity.getCreator().getUserName());
-            creatorDto.setFirstName(entity.getCreator().getFirstName());
-            creatorDto.setLastName(entity.getCreator().getLastName());
-            creatorDto.setEmail(entity.getCreator().getEmail());
-            creatorDto.setRoles(entity.getCreator().getRoles());
+        if (entity.getCreatorId() != null) {
 
-            dto.setCreator(creatorDto);
+
+            dto.setCreatorId(entity.getCreatorId());
         }
         dto.setLegend(entity.getLegend());
         dto.setInputFormat(entity.getInputFormat());
@@ -140,4 +113,43 @@ public class Mapper {
         return dto;
 
     }
+    public static MTMTournamentEntity toEntity(MTMTournamentDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        MTMTournamentEntity entity = new MTMTournamentEntity();
+        entity.setCreatorId(dto.getCreatorId());
+        entity.setName(dto.getName());
+        entity.setDescription(dto.getDescription());
+        entity.setTeamStyle(entity.getTeamStyle());
+        entity.setPassword(dto.getPassword());
+        entity.setDurationInSeconds(dto.getDurationInSeconds());
+        entity.setMaxRatingReq(dto.getMaxRatingReq());
+        entity.setRated(dto.getRated());
+        entity.setMinRatingReq(dto.getMinRatingReq());
+        entity.setStartTime(dto.getStartTime());
+        entity.setVisibility(dto.getVisibility());
+        entity.setTournamentType(dto.getTournamentType());
+        return entity;
+    }
+    public static MTMTournamentDTO toDTO(MTMTournamentEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        MTMTournamentDTO dto = new MTMTournamentDTO();
+        dto.setCreatorId(entity.getCreatorId());
+        dto.setName(entity.getName());
+        dto.setDescription(entity.getDescription());
+        dto.setTeamStyle(entity.getTeamStyle());
+        dto.setPassword(entity.getPassword());
+        dto.setDurationInSeconds(entity.getDurationInSeconds());
+        dto.setMaxRatingReq(entity.getMaxRatingReq());
+        dto.setRated(entity.getRated());
+        dto.setMinRatingReq(entity.getMinRatingReq());
+        dto.setStartTime(entity.getStartTime());
+        dto.setVisibility(entity.getVisibility());
+        dto.setTournamentType(entity.getTournamentType());
+        return dto;
+    }
+
 }

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { login } from '@/redux/slices/authSlice';
 import { useRouter } from 'next/navigation';
-
+import { getCookie } from 'cookies-next';
 export default function Login() {
   const dispatch = useDispatch();
   const router = useRouter();
