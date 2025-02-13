@@ -24,7 +24,7 @@ export default function Login() {
       });
 
       dispatch(login({ user: username, token: response.data.token }));
-      router.push('/profile');
+      router.push('/dashboard');
     } catch (error) {
       console.log(error);
       

@@ -7,9 +7,9 @@ export default function HomePage() {
  
 
   return (
-    <div>
+    <>
       <HomeGrid />
       
-    </div>
+    </>
   );
 }

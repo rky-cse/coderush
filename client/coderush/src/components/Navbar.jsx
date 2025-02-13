@@ -35,6 +35,9 @@ export default function Navbar() {
               <Link href="/joinTournament" className="text-gray-600 hover:text-gray-800">
                 Join Tournament
               </Link>
+              <Link href="/myQuestions" className="text-gray-600 hover:text-gray-800">
+                My Questions
+              </Link>
               <button
                 onClick= {handleLogout}
                 className="text-gray-600 hover:text-gray-800"
