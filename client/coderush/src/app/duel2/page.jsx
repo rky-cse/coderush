@@ -2,7 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Timer } from 'lucide-react';
-
+import { getCookie } from 'cookies-next';
 const DuelPage = () => {
   const timeControls = [
     5, 15, 25, 45, 60, 75, 90, 100, 120

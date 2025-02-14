@@ -9,7 +9,7 @@ import webSocketService from '@/services/webSocketService';
 import { increment, decrement } from '@/redux/slices/indexSlice';
 import RankListComponent from '@/components/RankListComponent';
 import { toast } from 'react-hot-toast';
-
+import { getCookie } from 'cookies-next';
 export default function TournamentPage({ params }) {
   const { tournamentId } = React.use(params);
   const [output, setOutput] = useState('');

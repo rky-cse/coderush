@@ -8,7 +8,7 @@ import java.util.HashSet;
 @Setter
 public class JoinTournamentResponseDTO {
     private Long tournamentId;
-    private TournamentDTO tournament;
+    private TournamentBaseDTO tournament;
     private HashSet<TournamentPlayerDTO>tournamentPlayerList=new HashSet<>();
 
 }

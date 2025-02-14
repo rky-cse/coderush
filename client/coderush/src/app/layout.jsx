@@ -7,7 +7,7 @@ import Navbar from '@/components/Navbar';
 import { WebSocketProvider } from '@/context/WebSocketContext';
 import Head from 'next/head';
 import './globals.css';
-
+import { getCookie } from 'cookies-next';
 const InitAuth = () => {
   const dispatch = useDispatch();
   

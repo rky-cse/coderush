@@ -10,7 +10,7 @@ import java.util.List;
 public class QuestionDTO {
 
     private Long questionId;
-    private UserDto creator;
+    private Long creatorId;
     private String name;
     private String legend;
     private String inputFormat;

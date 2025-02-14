@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getCookie } from 'cookies-next';
 
 const TournamentFormModal = ({ closeModal }) => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,10 @@ const TournamentFormModal = ({ closeModal }) => {
     minRatingReq: 0,
     maxRatingReq: 0,
     durationInSeconds: 0,
+    visibility: 'PUBLIC',
+    password: '',
+    tournamentType: 'CLASSIC',
+    teamStyle: false,
   });
 
   const handleChange = (e) => {
@@ -22,20 +27,26 @@ const TournamentFormModal = ({ closeModal }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic validation
     if (!formData.name || !formData.startTime || !formData.durationInSeconds) {
       alert('Please fill in all required fields.');
       return;
     }
 
+    const utcStartTime = Math.floor(new Date(formData.startTime).getTime());
+
+    const payload = {
+      ...formData,
+      startTime: utcStartTime,
+    };
+
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tournament/createTournament`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tournament/mtm/createMTMTournament`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getCookie('token')}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
@@ -53,95 +64,149 @@ const TournamentFormModal = ({ closeModal }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg">
-        <h2 className="text-xl font-bold mb-4 text-gray-800">Create New Tournament</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white p-6 rounded-xl shadow-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+        <h2 className="text-2xl font-bold text-indigo-600 mb-4">Create New Tournament</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-600">Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Enter tournament description"
-              className="w-full px-4 py-2 mt-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-600">Name</label>
+            <label className="block text-sm font-medium text-gray-700">Tournament Name</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-4 py-2 mt-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-600">Start Time</label>
+            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Enter tournament description"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Start Time (Local)</label>
             <input
               type="datetime-local"
               name="startTime"
               value={formData.startTime}
               onChange={handleChange}
-              className="w-full px-4 py-2 mt-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               required
             />
           </div>
 
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-gray-600">Rated:</label>
-            <input
-              type="checkbox"
-              name="rated"
-              checked={formData.rated}
-              onChange={handleChange}
-              className="form-checkbox h-5 w-5 text-indigo-600"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Min Rating</label>
+              <input
+                type="number"
+                name="minRatingReq"
+                value={formData.minRatingReq}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Max Rating</label>
+              <input
+                type="number"
+                name="maxRatingReq"
+                value={formData.maxRatingReq}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-600">Min Rating Requirement</label>
-            <input
-              type="number"
-              name="minRatingReq"
-              value={formData.minRatingReq}
-              onChange={handleChange}
-              className="w-full px-4 py-2 mt-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-600">Max Rating Requirement</label>
-            <input
-              type="number"
-              name="maxRatingReq"
-              value={formData.maxRatingReq}
-              onChange={handleChange}
-              className="w-full px-4 py-2 mt-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-600">Duration (in seconds)</label>
+            <label className="block text-sm font-medium text-gray-700">Duration (seconds)</label>
             <input
               type="number"
               name="durationInSeconds"
               value={formData.durationInSeconds}
               onChange={handleChange}
-              className="w-full px-4 py-2 mt-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               required
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Visibility</label>
+              <select
+                name="visibility"
+                value={formData.visibility}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value="PUBLIC">Public</option>
+                <option value="PRIVATE">Private</option>
+              </select>
+            </div>
+
+            {formData.visibility === 'PRIVATE' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Tournament Type</label>
+            <select
+              name="tournamentType"
+              value={formData.tournamentType}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="CLASSIC">Classic</option>
+              <option value="BLITZ">Blitz</option>
+              <option value="BULLET">Bullet</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              name="rated"
+              checked={formData.rated}
+              onChange={handleChange}
+              className="h-5 w-5 text-indigo-600"
+            />
+            <label className="text-sm font-medium text-gray-700">Rated Tournament</label>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              name="teamStyle"
+              checked={formData.teamStyle}
+              onChange={handleChange}
+              className="h-5 w-5 text-indigo-600"
+            />
+            <label className="text-sm font-medium text-gray-700">Team Style Tournament</label>
           </div>
 
           <div className="flex justify-end space-x-4">
             <button
               type="button"
               onClick={closeModal}
-              className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded-md"
+              className="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500"
             >
               Cancel
             </button>

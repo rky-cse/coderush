@@ -1,12 +1,9 @@
 package me.rkycse.coderush.service;
 
 import me.rkycse.coderush.dto.*;
-import me.rkycse.coderush.entity.QuestionEntity;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -15,23 +12,15 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class RankListSchedulerService {
 
-    private final RedisTemplate<String, TournamentCacheDTO> tournamentRedisTemplate;
-    private final RedisTemplate<String, RankDTO> rankListRedisTemplate;
-    private final RedisTemplate<String,UserTestcaseDTO>userTestcaseRedisTemplate;
-    private final RedisTemplate<String, List<QuestionEntity>>tournamentQuestionRedisTemplate;
+
+    private final RedisTemplate<String, Object>redisTemplate;
     private final SimpMessagingTemplate messagingTemplate;
-    private final TournamentService tournamentService;
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(6);
 
-    public RankListSchedulerService(RedisTemplate<String, TournamentCacheDTO> tournamentRedisTemplate, RedisTemplate<String, RankDTO> rankListRedisTemplate, RedisTemplate<String, UserTestcaseDTO> userTestcaseRedisTemplate, RedisTemplate<String, List<QuestionEntity>> tournamentQuestionRedisTemplate, SimpMessagingTemplate messagingTemplate, TournamentService tournamentService) {
-        this.tournamentRedisTemplate = tournamentRedisTemplate;
-        this.rankListRedisTemplate = rankListRedisTemplate;
-        this.userTestcaseRedisTemplate = userTestcaseRedisTemplate;
-        this.tournamentQuestionRedisTemplate = tournamentQuestionRedisTemplate;
+    public RankListSchedulerService(RedisTemplate<String, Object> redisTemplate, SimpMessagingTemplate messagingTemplate) {
+        this.redisTemplate = redisTemplate;
         this.messagingTemplate = messagingTemplate;
-        this.tournamentService = tournamentService;
     }
-
 
     public void startScheduling() {
         executorService.scheduleAtFixedRate(this::checkAndSendRankLists, 0, 5, TimeUnit.SECONDS);
@@ -40,7 +29,7 @@ public class RankListSchedulerService {
     private void checkAndSendRankLists() {
         try {
             // Fetch all keys starting with "$"
-            Set<String> keys = tournamentRedisTemplate.keys("$*");
+            Set<String> keys = redisTemplate.keys("$*");
             if (keys == null || keys.isEmpty()) {
                 System.out.println("No tournament keys found");
                 return;
@@ -52,7 +41,7 @@ public class RankListSchedulerService {
                     System.out.println("Skipping tournament with id " + tournamentId);
                     continue;
                 }
-                Set<String> rankKeys = rankListRedisTemplate.keys("rankDTO/"+tournamentId
+                Set<String> rankKeys = redisTemplate.keys("rankDTO/"+tournamentId
                 +"/*");
                 if(rankKeys == null || rankKeys.isEmpty()) {
                     System.out.println("No ranks found for tournament "+tournamentId);
@@ -64,8 +53,8 @@ public class RankListSchedulerService {
 
                 for(String rankKey : rankKeys) {
                     RankWithUserTestcaseDTO rankWithUserTestcaseDTO=new RankWithUserTestcaseDTO();
-                    RankDTO rankDTO=rankListRedisTemplate.opsForValue().get(rankKey);
-                    Set<String>userTestcaseKeys=userTestcaseRedisTemplate
+                    RankDTO rankDTO=(RankDTO) redisTemplate.opsForValue().get(rankKey);
+                    Set<String>userTestcaseKeys=redisTemplate
                             .keys("userTestcaseDTO/"+tournamentId+"/"+rankDTO.getUserName()+"/*");
                     if(userTestcaseKeys == null || userTestcaseKeys.isEmpty()) {
                         continue;
@@ -76,7 +65,7 @@ public class RankListSchedulerService {
                     rankWithUserTestcaseDTO.setTournamentId(tournamentId);
 
                     for(String userTestcaseKey : userTestcaseKeys) {
-                        UserTestcaseDTO userTestcaseDTO=userTestcaseRedisTemplate
+                        UserTestcaseDTO userTestcaseDTO=(UserTestcaseDTO) redisTemplate
                                 .opsForValue().get(userTestcaseKey);
                         if(userTestcaseDTO == null) {
                             continue;

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import webSocketService from '@/services/webSocketService';
-
+import { getCookie } from 'cookies-next';
 export default function Matchmaking() {
     const [status, setStatus] = useState('idle');
     const [match, setMatch] = useState(null);

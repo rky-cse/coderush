@@ -8,7 +8,7 @@ import lombok.Setter;
 @Table(name = "duel_tournaments")
 @Getter
 @Setter
-public class DuelTournamentEntity extends TournamentBase {
+public class DuelTournamentEntity extends TournamentBaseEntity {
 
     @Column(name = "player1", nullable = false)
     private Long player1;

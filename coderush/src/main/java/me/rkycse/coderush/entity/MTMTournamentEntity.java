@@ -5,19 +5,18 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "classic_tournaments")
+@Table(name = "mtm_tournaments")
 @Getter
 @Setter
-public class ClassicTournamentEntity extends TournamentBase {
+public class MTMTournamentEntity extends TournamentBaseEntity {
 
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "creator", nullable = false)
-    private String creator;
+    @Column(name = "creator_id", nullable = false)
+    private Long creatorId;
 
-    @Lob
-    @Column(name = "description")
+    @Column(name = "description",columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "min_rating_req")
@@ -34,7 +33,7 @@ public class ClassicTournamentEntity extends TournamentBase {
         return "ClassicTournamentEntity{" +
                 "tournamentId=" + getTournamentId() +
                 ", name='" + name + '\'' +
-                ", creator='" + creator + '\'' +
+                ", creator='" + creatorId+ '\'' +
                 ", description='" + description + '\'' +
                 ", startTime=" + getStartTime() +
                 ", rated=" + getRated() +

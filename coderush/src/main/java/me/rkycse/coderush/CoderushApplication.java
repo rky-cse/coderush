@@ -1,37 +1,26 @@
 package me.rkycse.coderush;
 
-import jakarta.annotation.PostConstruct;
-import me.rkycse.coderush.entity.TestcaseEntity;
-import me.rkycse.coderush.repository.TestcaseRepository;
+import me.rkycse.coderush.service.MTMTournamentSchedulerService;
 import me.rkycse.coderush.service.RankListSchedulerService;
-import me.rkycse.coderush.service.TournamentSchedulerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import  me.rkycse.coderush.service.MatchmakingService;
-
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
 public class CoderushApplication {
 	@Autowired
-	private TournamentSchedulerService schedulerService;
+	private MTMTournamentSchedulerService schedulerService;
 	private RankListSchedulerService rankListSchedulerService;
 
 	public static void main(String[] args) {
 
 		ApplicationContext context = SpringApplication.run(CoderushApplication.class, args);
-		TournamentSchedulerService schedulerService = context.getBean(TournamentSchedulerService.class);
+		MTMTournamentSchedulerService schedulerService = context.getBean(MTMTournamentSchedulerService.class);
 		schedulerService.startScheduling();
 		RankListSchedulerService rankListSchedulerService = context.getBean(RankListSchedulerService.class);
 		rankListSchedulerService.startScheduling();
 
-		MatchmakingService matchmakingService = context.getBean(MatchmakingService.class);
 	}
 
 }

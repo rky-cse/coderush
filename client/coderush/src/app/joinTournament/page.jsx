@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-
+import { getCookie } from 'cookies-next';
 const JoinTournament = () => {
   const [tournamentId, setTournamentId] = useState('');
   const [tournamentData, setTournamentData] = useState(null);
@@ -38,7 +38,7 @@ const JoinTournament = () => {
     }
 
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/tournament/joinTournament/${tournamentId}`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/tournament/mtm/joinTournament/${tournamentId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
