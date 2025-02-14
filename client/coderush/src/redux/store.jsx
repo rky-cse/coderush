@@ -6,6 +6,7 @@ import questionReducer from './slices/questionSlice';
 import testcaseReducer from './slices/testcaseSlice';
 import websocketReducer from './slices/websocketSlice';
 import authReducer from './slices/authSlice';
+import tournamentEndTimeReducer from './slices/tournamentEndTimeSlice';
 
 
 export const store = configureStore({
@@ -16,6 +17,7 @@ export const store = configureStore({
     question: questionReducer,
     testcase: testcaseReducer,
     websocket: websocketReducer,
+    tournamentEndTime: tournamentEndTimeReducer,
 
   },
 });

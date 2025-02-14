@@ -1,10 +1,5 @@
 package me.rkycse.coderush.dto;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
 public class UserResponseDTO {
     private int index;
     private Long tournamentId;
@@ -18,6 +13,38 @@ public class UserResponseDTO {
                 ", submissionTime=" + submissionTime +
                 ", userOutput='" + userOutput + '\'' +
                 '}';
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    public Long getTournamentId() {
+        return tournamentId;
+    }
+
+    public void setTournamentId(Long tournamentId) {
+        this.tournamentId = tournamentId;
+    }
+
+    public long getSubmissionTime() {
+        return submissionTime;
+    }
+
+    public void setSubmissionTime(long submissionTime) {
+        this.submissionTime = submissionTime;
+    }
+
+    public String getUserOutput() {
+        return userOutput;
+    }
+
+    public void setUserOutput(String userOutput) {
+        this.userOutput = userOutput;
     }
 }
 

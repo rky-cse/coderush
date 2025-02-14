@@ -1,15 +1,13 @@
 package me.rkycse.coderush.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tournaments")
-@Getter
-@Setter
+
 public class TournamentEntity {
 
     @Id
@@ -70,5 +68,101 @@ public class TournamentEntity {
                 ", password='" + password + '\'' +
                 ", tournamentMode='" + tournamentMode + '\'' +
                 '}';
+    }
+
+    public Long getTournamentId() {
+        return tournamentId;
+    }
+
+    public void setTournamentId(Long tournamentId) {
+        this.tournamentId = tournamentId;
+    }
+
+    public String getCreatorUserName() {
+        return creatorUserName;
+    }
+
+    public void setCreatorUserName(String creatorUserName) {
+        this.creatorUserName = creatorUserName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public Boolean getRated() {
+        return rated;
+    }
+
+    public void setRated(Boolean rated) {
+        this.rated = rated;
+    }
+
+    public long getMinRatingReq() {
+        return minRatingReq;
+    }
+
+    public void setMinRatingReq(long minRatingReq) {
+        this.minRatingReq = minRatingReq;
+    }
+
+    public long getMaxRatingReq() {
+        return maxRatingReq;
+    }
+
+    public void setMaxRatingReq(long maxRatingReq) {
+        this.maxRatingReq = maxRatingReq;
+    }
+
+    public long getDurationInSeconds() {
+        return durationInSeconds;
+    }
+
+    public void setDurationInSeconds(long durationInSeconds) {
+        this.durationInSeconds = durationInSeconds;
+    }
+
+    public String getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(String visibility) {
+        this.visibility = visibility;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getTournamentMode() {
+        return tournamentMode;
+    }
+
+    public void setTournamentMode(String tournamentMode) {
+        this.tournamentMode = tournamentMode;
     }
 }

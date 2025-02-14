@@ -1,13 +1,11 @@
 package me.rkycse.coderush.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+
 
 @Entity
 @Table(name = "mtm_tournaments")
-@Getter
-@Setter
+
 public class MTMTournamentEntity extends TournamentBaseEntity {
 
     @Column(name = "name", nullable = false)
@@ -44,5 +42,53 @@ public class MTMTournamentEntity extends TournamentBaseEntity {
                 ", password='" + getPassword() + '\'' +
                 ", teamStyle=" + teamStyle +
                 '}';
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Long getCreatorId() {
+        return creatorId;
+    }
+
+    public void setCreatorId(Long creatorId) {
+        this.creatorId = creatorId;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public long getMinRatingReq() {
+        return minRatingReq;
+    }
+
+    public void setMinRatingReq(long minRatingReq) {
+        this.minRatingReq = minRatingReq;
+    }
+
+    public long getMaxRatingReq() {
+        return maxRatingReq;
+    }
+
+    public void setMaxRatingReq(long maxRatingReq) {
+        this.maxRatingReq = maxRatingReq;
+    }
+
+    public Boolean getTeamStyle() {
+        return teamStyle;
+    }
+
+    public void setTeamStyle(Boolean teamStyle) {
+        this.teamStyle = teamStyle;
     }
 }

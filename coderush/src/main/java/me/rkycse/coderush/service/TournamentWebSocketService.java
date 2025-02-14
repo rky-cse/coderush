@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
+
 @Service
 public class TournamentWebSocketService {
 
@@ -63,17 +65,26 @@ public class TournamentWebSocketService {
                 throw new NoSuchElementException("User testcase not found for user: " + userName + " and index: " + index);
             }
 
-            if (userTestcaseDTO.getIsSolved()) {
+            if (userTestcaseDTO.getSolved()) {
                 return true; // If already solved, return true
             }
 
             // Mark as solved and update attempts
-            userTestcaseDTO.setIsSolved(true);
+            userTestcaseDTO.setSolved(true);
             userTestcaseDTO.setNumberOfAttempts(userTestcaseDTO.getNumberOfAttempts() + 1);
 
             // Update userTestcaseDTO in Redis without changing TTL
-            redisTemplate.opsForValue()
-                    .setIfPresent("userTestcaseDTO/" + answer.getTournamentId() + "/" + userName + "/" + index, userTestcaseDTO);
+            String key = "userTestcaseDTO/" + answer.getTournamentId() + "/" + userName + "/" + index;
+
+// Get the current TTL before updating
+            Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+
+            if (ttl != null && ttl > 0) { // Key exists and has an expiry
+                redisTemplate.opsForValue().setIfPresent(key, userTestcaseDTO);
+                redisTemplate.expire(key, ttl, TimeUnit.SECONDS); // Restore TTL
+            } else {
+                redisTemplate.opsForValue().setIfPresent(key, userTestcaseDTO);
+            }
 
             // Fetch rank details
             System.out.println("Fetching rank for user: " + userName + " and tid: " + answer.getTournamentId());
@@ -87,8 +98,17 @@ public class TournamentWebSocketService {
             rank.setScore(rank.getScore() + testcase.getRating());
 
             // Update rank in Redis without changing TTL
-            redisTemplate.opsForValue()
-                    .setIfPresent("rankDTO/" + answer.getTournamentId() + "/" + userName, rank);
+            String rankKey = "rankDTO/" + answer.getTournamentId() + "/" + userName;
+
+// Get the current TTL before updating
+            Long rankTTL = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+
+            if (rankTTL != null && rankTTL > 0) { // Key exists and has an expiry
+                redisTemplate.opsForValue().setIfPresent(rankKey, rank);
+                redisTemplate.expire(key, rankTTL, TimeUnit.SECONDS); // Restore TTL
+            } else {
+                redisTemplate.opsForValue().setIfPresent(key,rank);
+            }
 
             return true;
 
@@ -101,12 +121,21 @@ public class TournamentWebSocketService {
             }
 
             // Increment the number of attempts if not already solved
-            if (!userTestcaseDTO.getIsSolved()) {
+            if (!userTestcaseDTO.getSolved()) {
                 userTestcaseDTO.setNumberOfAttempts(userTestcaseDTO.getNumberOfAttempts() + 1);
 
                 // Update userTestcaseDTO in Redis without changing TTL
-                redisTemplate.opsForValue()
-                        .setIfPresent("userTestcaseDTO/" + answer.getTournamentId() + "/" + userName + "/" + index, userTestcaseDTO);
+                String key = "userTestcaseDTO/" + answer.getTournamentId() + "/" + userName + "/" + index;
+
+// Get the current TTL before updating
+                Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+
+                if (ttl != null && ttl > 0) { // Key exists and has an expiry
+                    redisTemplate.opsForValue().setIfPresent(key, userTestcaseDTO);
+                    redisTemplate.expire(key, ttl, TimeUnit.SECONDS); // Restore TTL
+                } else {
+                    redisTemplate.opsForValue().setIfPresent(key, userTestcaseDTO);
+                }
             }
         }
 
