@@ -40,6 +40,4 @@ public class UserEntity {
     @Column(name = "rating")
     private Long rating = 0L;
 
-//    @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<QuestionEntity> questions = new ArrayList<>();
 }

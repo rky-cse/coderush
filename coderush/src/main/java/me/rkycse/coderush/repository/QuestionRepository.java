@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface QuestionRepository extends JpaRepository<QuestionEntity, Long> {
-    List<QuestionEntity> findByCreator(UserEntity creator);
+    //List<QuestionEntity> findByCreator(UserEntity creator);
+    List<QuestionEntity> findByCreatorId(Long creatorId);
     Optional<QuestionEntity> findById(Long id);
 
 }

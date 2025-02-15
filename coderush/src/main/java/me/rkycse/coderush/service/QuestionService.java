@@ -32,7 +32,23 @@ public class QuestionService {
         }
         return principal.toString();
     }
-
+    private QuestionDTO convertToDTO(QuestionEntity question) {
+        QuestionDTO dto = new QuestionDTO();
+        dto.setQuestionId(question.getQuestionId());
+        dto.setName(question.getName());
+        dto.setLegend(question.getLegend());
+        dto.setInputFormat(question.getInputFormat());
+        dto.setOutputFormat(question.getOutputFormat());
+        dto.setNotes(question.getNotes());
+        dto.setTutorial(question.getTutorial());
+        dto.setRated(question.isRated());
+        return dto;
+    }
+    public QuestionDTO getQuestionById(Long questionId) {
+        QuestionEntity question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new RuntimeException("Question not found"));
+        return convertToDTO(question);
+    }
     public Boolean createQuestion(QuestionDTO question) {
         if (question != null) {
             String username = getCurrentUsername();
@@ -68,70 +84,31 @@ public class QuestionService {
         UserEntity user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<QuestionEntity> questions = questionRepository.findByCreator(user);
-
-        return questions.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        List<QuestionEntity> questions = questionRepository.findByCreatorId(user.getId());
+        return questions.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     public boolean updateQuestion(Long questionId, QuestionDTO updatedQuestion) {
+        QuestionEntity existingQuestion = questionRepository.findById(questionId)
+                .orElseThrow(() -> new RuntimeException("Question not found"));
+
         String username = getCurrentUsername();
+        UserEntity user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Find the existing question
-        Optional<QuestionEntity> questionOpt = questionRepository.findById(questionId);
-        if (questionOpt.isEmpty()) {
-            return false; // Question not found
+        if (!existingQuestion.getCreatorId().equals(user.getId())) {
+            throw new RuntimeException("You are not authorized to update this question");
         }
 
-        QuestionEntity existingQuestion = questionOpt.get();
-
-        // Check if the user is the creator of the question
-        if (!existingQuestion.getCreator().getUserName().equals(username)) {
-            throw new RuntimeException("You are not authorized to update this question.");
-        }
-
-        // Update only non-null fields
-        if (updatedQuestion.getName() != null) existingQuestion.setName(updatedQuestion.getName());
-        if (updatedQuestion.getLegend() != null) existingQuestion.setLegend(updatedQuestion.getLegend());
-        if (updatedQuestion.getInputFormat() != null) existingQuestion.setInputFormat(updatedQuestion.getInputFormat());
-        if (updatedQuestion.getOutputFormat() != null) existingQuestion.setOutputFormat(updatedQuestion.getOutputFormat());
-        if (updatedQuestion.getNotes() != null) existingQuestion.setNotes(updatedQuestion.getNotes());
-        if (updatedQuestion.getTutorial() != null) existingQuestion.setTutorial(updatedQuestion.getTutorial());
-        if (updatedQuestion.getRated() != null) existingQuestion.setRated(updatedQuestion.getRated());
+        existingQuestion.setName(updatedQuestion.getName());
+        existingQuestion.setLegend(updatedQuestion.getLegend());
+        existingQuestion.setInputFormat(updatedQuestion.getInputFormat());
+        existingQuestion.setOutputFormat(updatedQuestion.getOutputFormat());
+        existingQuestion.setNotes(updatedQuestion.getNotes());
+        existingQuestion.setTutorial(updatedQuestion.getTutorial());
 
         questionRepository.save(existingQuestion);
         return true;
     }
-    public QuestionDTO getQuestionById(Long questionId) {
-        Optional<QuestionEntity> questionOpt = questionRepository.findById(questionId);
-        if (questionOpt.isEmpty()) {
-            throw new RuntimeException("Question not found with ID: " + questionId);
-        }
-        return convertToDTO(questionOpt.get());
-    }
 
-    private QuestionDTO convertToDTO(QuestionEntity questionEntity) {
-        QuestionDTO dto = new QuestionDTO();
-        dto.setQuestionId(questionEntity.getQuestionId());
-        dto.setName(questionEntity.getName());
-        dto.setLegend(questionEntity.getLegend());
-        dto.setInputFormat(questionEntity.getInputFormat());
-        dto.setOutputFormat(questionEntity.getOutputFormat());
-        dto.setNotes(questionEntity.getNotes());
-        dto.setTutorial(questionEntity.getTutorial());
-        dto.setRated(questionEntity.isRated());
-        dto.setImageUrls(List.of()); // Modify this if image URLs are stored
-
-        UserDto creatorDto = new UserDto();
-        creatorDto.setId(questionEntity.getCreator().getId());
-        creatorDto.setUserName(questionEntity.getCreator().getUserName());
-        creatorDto.setFirstName(questionEntity.getCreator().getFirstName());
-        creatorDto.setLastName(questionEntity.getCreator().getLastName());
-        creatorDto.setEmail(questionEntity.getCreator().getEmail());
-        creatorDto.setRoles(List.of()); // Modify this if roles are stored
-
-        dto.setCreator(creatorDto);
-        return dto;
-    }
 }

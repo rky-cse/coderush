@@ -26,8 +26,4 @@ public class TestcaseEntity {
     @Column(name = "question_id",nullable = false)
     private Long questionId;
 
-//    // Many-to-One relationship with QuestionEntity
-//    @ManyToOne
-//    @JoinColumn(name = "question_id", nullable = false)
-//    private QuestionEntity question;
 }

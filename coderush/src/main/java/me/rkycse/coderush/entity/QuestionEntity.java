@@ -34,16 +34,7 @@ public class QuestionEntity {
     @Column(name = "creator_id", nullable = false)
     private Long creatorId;
 
-//    // Many-to-One relationship with UserEntity (Creator)
-//    @ManyToOne
-//    @JoinColumn(name = "creator_id", nullable = false)
-//    private UserEntity creator;
-
-    // New field for "rated" or "unrated"
     @Column(name = "rated")
     private boolean rated=false;
 
-//    // One-to-Many relationship with TestcaseEntity
-//    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<TestcaseEntity> testcases;
 }
