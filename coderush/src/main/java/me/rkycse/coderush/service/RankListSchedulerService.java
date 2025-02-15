@@ -37,6 +37,9 @@ public class RankListSchedulerService {
 
             for (String key : keys) {
                 Long tournamentId = extractTournamentId(key);
+                TournamentCacheDTO tournamentCacheDTO =(TournamentCacheDTO)
+                        redisTemplate.opsForValue().get(key);
+
                 if (tournamentId == null) {
                     System.out.println("Skipping tournament with id " + tournamentId);
                     continue;
@@ -50,6 +53,8 @@ public class RankListSchedulerService {
 
                 RankListDTO rankListDTO=new RankListDTO();
                 rankListDTO.setTournamentId(tournamentId);
+                rankListDTO.setEndTime(tournamentCacheDTO.getStartTime()+
+                        (1000L*tournamentCacheDTO.getDurationInSeconds()));
 
                 for(String rankKey : rankKeys) {
                     RankWithUserTestcaseDTO rankWithUserTestcaseDTO=new RankWithUserTestcaseDTO();

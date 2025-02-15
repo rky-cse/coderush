@@ -2,6 +2,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { logout } from '../redux/slices/authSlice';
 import Link from 'next/link';
+import { deleteCookie } from 'cookies-next';
 
 
 
@@ -10,12 +11,15 @@ export default function Navbar() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const handleLogout = () => {
-    dispatch(logout());  // Clear Redux state
-    localStorage.removeItem('token'); // Remove token from localStorage
-    localStorage.removeItem('username'); // Remove stored username
-    router.push('/login'); // Redirect to login page
-  };
+ 
+
+const handleLogout = () => {
+  dispatch(logout());  // Clear Redux state
+  deleteCookie('token'); // Remove token from cookies
+  deleteCookie('username'); // Remove stored username
+  router.push('/login'); // Redirect to login page
+};
+
 
   return (
     <nav className="bg-white shadow-md">

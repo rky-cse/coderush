@@ -43,7 +43,7 @@ public class Mapper {
         dto.setId(entity.getId());
         dto.setUserName(entity.getUserName());
         dto.setTestcaseId(entity.getTestcaseId());
-        dto.setIsSolved(entity.getIsSolved());
+        dto.setSolved(entity.getSolved());
         dto.setNumberOfAttempts(entity.getNumberOfAttempts());
         dto.setTournamentId(entity.getTournamentId());
 
@@ -59,7 +59,7 @@ public class Mapper {
         entity.setId(dto.getId());
         entity.setUserName(dto.getUserName());
         entity.setTestcaseId(dto.getTestcaseId());
-        entity.setIsSolved(dto.getIsSolved());
+        entity.setSolved(dto.getSolved());
         entity.setNumberOfAttempts(dto.getNumberOfAttempts());
         entity.setTournamentId(dto.getTournamentId());
 

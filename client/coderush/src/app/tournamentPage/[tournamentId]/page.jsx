@@ -10,17 +10,19 @@ import { increment, decrement } from '@/redux/slices/indexSlice';
 import RankListComponent from '@/components/RankListComponent';
 import { toast } from 'react-hot-toast';
 import { getCookie } from 'cookies-next';
+import TournamentControlBox from '@/components/TournamentControlBox';
 export default function TournamentPage({ params }) {
   const { tournamentId } = React.use(params);
   const [output, setOutput] = useState('');
   const dispatch = useDispatch();
   const { language, code } = useSelector((state) => state.editor);
-  
+
   const token = typeof window !== 'undefined' ? getCookie('token') : null;
   const testcase = useSelector((state) => state.testcase.data) || '';
   const [customInput, setCustomInput] = useState('');
   const [submissionResult, setSubmissionResult] = useState(null);
-  const index=useSelector((state)=>state.index);
+  const index = useSelector((state) => state.index);
+  const username = useSelector((state) => state.auth.user);
 
   useEffect(() => {
     if (testcase && testcase.input) {
@@ -37,6 +39,8 @@ export default function TournamentPage({ params }) {
   };
 
   const handleRunCode = async () => {
+    toast.dismiss();
+    toast.loading('Running code...');
     const languageVersionMap = {
       javascript: '18.15.0',
       typescript: '5.0.3',
@@ -56,40 +60,62 @@ export default function TournamentPage({ params }) {
         stdin: customInput,
       });
       setOutput(response.data.run.output);
+      if(response.data.run.signal == "SIGKILL"){
+        toast.dismiss();
+        toast.error('Time Limit exceeded!');
+      }
+      else if(response.data.compile.code == 1){
+        toast.dismiss();
+        toast.error('Compilation Error!');
+      }
+      else if(response.data.run.code == 1){
+        toast.dismiss();
+        toast.error('Runtime Error!');
+      }
+      else if(response.data.run.code == 0){
+      toast.dismiss();
+      toast.success('Code executed successfully!');
+      }
     } catch (error) {
       console.error('Error running code:', error);
       setOutput('Error running code');
+      toast.dismiss();
+      toast.error('Error running code.');
     }
   };
 
   const handleSubmit = () => {
+    toast.loading('Submitting...');
     if (!token) {
       alert('You must be logged in to submit.');
       return;
     }
-  
+
     const payload = {
       index,
       tournamentId,
       submissionTime: Date.now(),
       userOutput: output,
     };
-  
+
     console.log('Sending payload:', payload);
-  
+
     try {
       webSocketService.send('/app/tournament/submit', payload);
-  
+
       console.log('Message sent successfully');
-  
+
       webSocketService.subscribe(
-        `/topic/tournament/submit/${tournamentId}/${index}`,
+        `/topic/tournament/submit/${username}/${index}`,
         (response) => {
           console.log('Received response:', response);
           setSubmissionResult(response);
-  
+
           // Handle response toast notifications
+          toast.dismiss();
           if (response === true) {
+            response=null;
+            //alert('Correct!');
             toast.success('Correct!');
           } else if (response === false) {
             toast.error('Incorrect!');
@@ -105,19 +131,30 @@ export default function TournamentPage({ params }) {
   };
 
   const handleNext = () => {
+    if(index === 4){
+      toast.dismiss();
+      toast.error('This is last question!');
+    }
+
     dispatch(increment()); // Dispatch the increment action
   };
-  
+
   const handlePrev = () => {
+    if(index === 0){
+      toast.dismiss();
+      toast.error('This is first Question!');
+    }
+
     dispatch(decrement()); // Dispatch the decrement action
   };
 
   return (
     <div>
       <div className="flex flex-col h-screen">
-        <div className="h-[5vh] w-full bg-blue-200 flex items-center justify-center">
-          <p className="font-bold">Tournament Control Box</p>
+        <div className="h-[6vh] w-full bg-blue-500 text-white flex items-center justify-between px-4 rounded-md shadow-md">
+          <TournamentControlBox />
         </div>
+
 
         <div className="flex h-[95vh] w-full">
           <div className="relative w-[70%] h-full p-4 border-r">

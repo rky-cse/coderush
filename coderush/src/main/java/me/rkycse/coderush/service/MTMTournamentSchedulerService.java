@@ -169,7 +169,7 @@ public class MTMTournamentSchedulerService {
                         UserTestcaseDTO userTestcaseDTO = new UserTestcaseDTO();
                         userTestcaseDTO.setTestcaseId(testcaseDTO.getTestcaseId());
                         userTestcaseDTO.setUserName(player.getPlayerUserName());
-                        userTestcaseDTO.setIsSolved(false);
+                        userTestcaseDTO.setSolved(false);
                         userTestcaseDTO.setNumberOfAttempts(0);
 
                         redisTemplate.opsForValue().set(

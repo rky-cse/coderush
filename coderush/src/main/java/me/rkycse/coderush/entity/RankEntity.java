@@ -1,16 +1,10 @@
 package me.rkycse.coderush.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.HashSet;
-import java.util.List;
 
 @Entity
 @Table(name = "ranks")
-@Getter
-@Setter
+
 public class RankEntity {
 
     @Id
@@ -26,4 +20,35 @@ public class RankEntity {
     @Column(name = "score", nullable = false)
     private long score;
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getTournamentId() {
+        return tournamentId;
+    }
+
+    public void setTournamentId(Long tournamentId) {
+        this.tournamentId = tournamentId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public long getScore() {
+        return score;
+    }
+
+    public void setScore(long score) {
+        this.score = score;
+    }
 }

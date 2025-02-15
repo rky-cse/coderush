@@ -1,13 +1,10 @@
 package me.rkycse.coderush.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
 
 @Entity
 @Table(name = "testcases")
-@Getter
-@Setter
+
 public class TestcaseEntity {
 
     @Id
@@ -26,4 +23,49 @@ public class TestcaseEntity {
     @Column(name = "question_id",nullable = false)
     private Long questionId;
 
+//    // Many-to-One relationship with QuestionEntity
+//    @ManyToOne
+//    @JoinColumn(name = "question_id", nullable = false)
+//    private QuestionEntity question;
+
+
+    public Long getTestcaseId() {
+        return testcaseId;
+    }
+
+    public void setTestcaseId(Long testcaseId) {
+        this.testcaseId = testcaseId;
+    }
+
+    public String getInput() {
+        return input;
+    }
+
+    public void setInput(String input) {
+        this.input = input;
+    }
+
+    public String getOutput() {
+        return output;
+    }
+
+    public void setOutput(String output) {
+        this.output = output;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public void setRating(int rating) {
+        this.rating = rating;
+    }
+
+    public Long getQuestionId() {
+        return questionId;
+    }
+
+    public void setQuestionId(Long questionId) {
+        this.questionId = questionId;
+    }
 }
