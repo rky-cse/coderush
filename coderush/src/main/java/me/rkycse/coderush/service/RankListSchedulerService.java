@@ -88,6 +88,7 @@ public class RankListSchedulerService {
                     // Send ranklist to the topic
                     System.out.println("sending rank list to tournament: "
                             + tournamentId);
+                    rankListDTO.sortByScore();
                     messagingTemplate.convertAndSend(
                             "/topic/rankList" + tournamentId,
                             rankListDTO

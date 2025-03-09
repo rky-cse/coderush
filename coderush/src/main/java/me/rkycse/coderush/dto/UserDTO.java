@@ -3,7 +3,7 @@ import me.rkycse.coderush.entity.QuestionEntity;
 
 import java.util.List;
 
-public class UserDto {
+public class UserDTO {
 
     private Long id;
     private String userName;
@@ -12,6 +12,16 @@ public class UserDto {
     private String email;
     private List<String> roles;
     private String password;
+    private long Rating;
+
+    public long getRating() {
+        return Rating;
+    }
+
+    public void setRating(long rating) {
+        Rating = rating;
+    }
+
     private List<QuestionEntity> createdQuestions;
 
     public Long getId() {

@@ -2,6 +2,7 @@ package me.rkycse.coderush.dto;
 
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class RankListDTO {
@@ -38,5 +39,8 @@ public class RankListDTO {
 
     public void setRankList(List<RankWithUserTestcaseDTO> rankList) {
         this.rankList = rankList;
+    }
+    public void sortByScore() {
+        rankList.sort(Comparator.comparingLong(RankWithUserTestcaseDTO::getScore).reversed());
     }
 }

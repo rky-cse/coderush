@@ -3,6 +3,8 @@ import me.rkycse.coderush.entity.TournamentBaseEntity;
 import me.rkycse.coderush.repository.TournamentBaseRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class TournamentService {
 
@@ -16,5 +18,6 @@ public class TournamentService {
         return tournamentBaseRepository.findById(tournamentId)
                 .orElse(null);
     }
+
 
 }

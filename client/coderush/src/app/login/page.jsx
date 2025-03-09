@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { login } from '@/redux/slices/authSlice';
 import { useRouter } from 'next/navigation';
-import { getCookie } from 'cookies-next';
+
 export default function Login() {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -24,10 +24,9 @@ export default function Login() {
       });
 
       dispatch(login({ user: username, token: response.data.token }));
-      router.push('/dashboard');
+      router.push(`/dashboard/${username}`);
     } catch (error) {
       console.log(error);
-      
     } finally {
       setLoading(false);
     }
@@ -35,7 +34,7 @@ export default function Login() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white shadow-md rounded-xl">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white shadow-md rounded-xl">
         <h1 className="text-2xl font-bold text-gray-900 text-center">Login</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -69,6 +68,16 @@ export default function Login() {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
+        <div className="text-center">
+          <p className="text-sm text-gray-600">Don't have an account? 
+            <button 
+              onClick={() => router.push('/register')} 
+              className="text-indigo-600 hover:underline ml-1"
+            >
+              Register
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

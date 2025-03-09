@@ -152,4 +152,18 @@ public class Mapper {
         return dto;
     }
 
+    public static UserDTO toDTO(UserEntity dto) {
+        if (dto == null) {
+            return null;
+
+        }
+        UserDTO dtoUser = new UserDTO();
+        dtoUser.setUserName(dto.getUserName());
+        dtoUser.setEmail(dto.getEmail());
+        dtoUser.setFirstName(dto.getFirstName());
+        dtoUser.setLastName(dto.getLastName());
+        dtoUser.setRating(dto.getRating());
+        return dtoUser;
+    }
+
 }

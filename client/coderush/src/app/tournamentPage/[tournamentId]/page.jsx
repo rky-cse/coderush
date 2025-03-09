@@ -64,7 +64,7 @@ export default function TournamentPage({ params }) {
         toast.dismiss();
         toast.error('Time Limit exceeded!');
       }
-      else if(response.data.compile.code == 1){
+      else if(response.data.compile && response.data.compile.code == 1){
         toast.dismiss();
         toast.error('Compilation Error!');
       }

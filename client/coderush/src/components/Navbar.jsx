@@ -11,6 +11,8 @@ export default function Navbar() {
   const router = useRouter();
   const dispatch = useDispatch();
 
+  console.log(user)
+
  
 
 const handleLogout = () => {
@@ -30,9 +32,9 @@ const handleLogout = () => {
         <div className="flex items-center space-x-4">
           {user ? (
             <>
-              <Link href="/dashboard" className="text-gray-600 hover:text-gray-800">
-                Dashboard
-              </Link>
+              <Link href={`/dashboard/${user}`} className="text-gray-600 hover:text-gray-800">
+  Dashboard
+</Link>
               <Link href="/createTournament" className="text-gray-600 hover:text-gray-800">
                 Create Tournament
               </Link>

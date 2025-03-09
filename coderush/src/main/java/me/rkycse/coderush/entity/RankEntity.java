@@ -3,8 +3,9 @@ package me.rkycse.coderush.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "ranks")
-
+@Table(name = "ranks", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"tournament_id", "user_name"})
+})
 public class RankEntity {
 
     @Id
@@ -12,6 +13,7 @@ public class RankEntity {
     @Column(name = "rank_id", nullable = false, unique = true)
     private Long id;
 
+    @Column(name = "tournament_id", nullable = false)
     private Long tournamentId;
 
     @Column(name = "user_name", nullable = false)
@@ -20,6 +22,7 @@ public class RankEntity {
     @Column(name = "score", nullable = false)
     private long score;
 
+    // Getters and setters
     public Long getId() {
         return id;
     }

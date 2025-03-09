@@ -1,7 +1,6 @@
 package me.rkycse.coderush.service;
 
 import me.rkycse.coderush.dto.QuestionDTO;
-import me.rkycse.coderush.dto.UserDto;
 import me.rkycse.coderush.entity.QuestionEntity;
 import me.rkycse.coderush.entity.UserEntity;
 import me.rkycse.coderush.repository.QuestionRepository;
@@ -11,7 +10,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service

@@ -2,7 +2,7 @@ package me.rkycse.coderush.controller;
 
 import me.rkycse.coderush.dto.LoginRequest;
 import me.rkycse.coderush.dto.LoginResponse;
-import me.rkycse.coderush.dto.UserDto;
+import me.rkycse.coderush.dto.UserDTO;
 import me.rkycse.coderush.entity.UserEntity;
 import me.rkycse.coderush.repository.UserRepository;
 import me.rkycse.coderush.security.CustomUserDetailsService;
@@ -60,7 +60,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public UserDto register(@RequestBody UserDto userDto) {
+    public UserDTO register(@RequestBody UserDTO userDto) {
         UserEntity userEntity = new UserEntity();
         userEntity.setUserName(userDto.getUserName());
         userEntity.setFirstName(userDto.getFirstName());
@@ -72,7 +72,7 @@ public class AuthController {
         UserEntity savedUser = userRepository.save(userEntity);
 
         // Convert savedUser back to a DTO (excluding password)
-        UserDto responseDto = new UserDto();
+        UserDTO responseDto = new UserDTO();
         responseDto.setId(savedUser.getId());
         responseDto.setUserName(savedUser.getUserName());
         responseDto.setFirstName(savedUser.getFirstName());

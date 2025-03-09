@@ -1,6 +1,8 @@
 package me.rkycse.coderush.service;
 
 import me.rkycse.coderush.dto.*;
+import me.rkycse.coderush.kafka.Producer;
+import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.TournamentRepository;
 import me.rkycse.coderush.util.StringComparator;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -14,9 +16,11 @@ import java.util.concurrent.TimeUnit;
 public class TournamentWebSocketService {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final Producer producer;
 
-    public TournamentWebSocketService(RedisTemplate<String, Object> redisTemplate) {
+    public TournamentWebSocketService(RedisTemplate<String, Object> redisTemplate, Producer producer) {
         this.redisTemplate = redisTemplate;
+        this.producer = producer;
     }
 
 
@@ -99,13 +103,13 @@ public class TournamentWebSocketService {
 
             // Update rank in Redis without changing TTL
             String rankKey = "rankDTO/" + answer.getTournamentId() + "/" + userName;
-
 // Get the current TTL before updating
             Long rankTTL = redisTemplate.getExpire(key, TimeUnit.SECONDS);
 
             if (rankTTL != null && rankTTL > 0) { // Key exists and has an expiry
                 redisTemplate.opsForValue().setIfPresent(rankKey, rank);
                 redisTemplate.expire(key, rankTTL, TimeUnit.SECONDS); // Restore TTL
+                producer.sendRankUpdate(Mapper.toEntity(rank));
             } else {
                 redisTemplate.opsForValue().setIfPresent(key,rank);
             }

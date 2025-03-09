@@ -1,11 +1,7 @@
 package me.rkycse.coderush.service;
 
-import me.rkycse.coderush.dto.JoinTournamentResponseDTO;
-import me.rkycse.coderush.dto.RankDTO;
-import me.rkycse.coderush.dto.TournamentCacheDTO;
-import me.rkycse.coderush.entity.MTMTournamentEntity;
-import me.rkycse.coderush.entity.RankEntity;
-import me.rkycse.coderush.entity.TournamentPlayerEntity;
+import me.rkycse.coderush.dto.*;
+import me.rkycse.coderush.entity.*;
 import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.*;
 import me.rkycse.coderush.util.TimeUtil;
@@ -15,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -27,13 +24,15 @@ public class MTMTournamentService {
     private final TournamentPlayerRepository tournamentPlayerRepository;
     private final RankRepository rankRepository;
     private final UserRepository userRepository;
+    private final TestcaseRepository testcaseRepository;
 
-    public MTMTournamentService(MTMTournamentRepository mtmTournamentRepository, RedisTemplate<String, Object> redisTemplate, TournamentPlayerRepository tournamentPlayerRepository, RankRepository rankRepository, UserRepository userRepository) {
+    public MTMTournamentService(MTMTournamentRepository mtmTournamentRepository, RedisTemplate<String, Object> redisTemplate, TournamentPlayerRepository tournamentPlayerRepository, RankRepository rankRepository, UserRepository userRepository, TestcaseRepository testcaseRepository) {
         this.mtmTournamentRepository = mtmTournamentRepository;
         this.redisTemplate = redisTemplate;
         this.tournamentPlayerRepository = tournamentPlayerRepository;
         this.rankRepository = rankRepository;
         this.userRepository = userRepository;
+        this.testcaseRepository = testcaseRepository;
     }
 
     public MTMTournamentEntity createMTMTournament(MTMTournamentEntity tournament) {
@@ -51,13 +50,12 @@ public class MTMTournamentService {
 
         if (tournament.getStartTime() == null) {
             throw new IllegalArgumentException("Start time cannot be null");
-        }
-        else{
-            System.out.println("currentTime: "+TimeUtil.getCurrentEpochMillis());
-            System.out.println("startTime: "+tournament.getStartTime());
-            System.out.println("start Time:"+
-                    TimeUtil.convertEpochToDateTime(tournament.getStartTime()) );
-            System.out.println("createMTMTournament:"+tournament);
+        } else {
+            System.out.println("currentTime: " + TimeUtil.getCurrentEpochMillis());
+            System.out.println("startTime: " + tournament.getStartTime());
+            System.out.println("start Time:" +
+                    TimeUtil.convertEpochToDateTime(tournament.getStartTime()));
+            System.out.println("createMTMTournament:" + tournament);
         }
 
         if (tournament.getDurationInSeconds() <= 0) {
@@ -80,12 +78,21 @@ public class MTMTournamentService {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String userName = userDetails.getUsername();
+            MTMTournamentEntity tournament = mtmTournamentRepository.findById(tournamentId)
+                    .orElse(null);
+            long currentTime = TimeUtil.getCurrentEpochMillis();
+            long startTime=tournament.getStartTime();
+            long endTime=tournament.getDurationInSeconds()*1000L+startTime;
+
             if (tournamentPlayerRepository.findByTournamentIdAndPlayerUserName(
                     tournamentId, userName) == null) {
                 TournamentPlayerEntity tournamentPlayer = new TournamentPlayerEntity();
                 tournamentPlayer.setTournamentId(tournamentId);
                 tournamentPlayer.setPlayerUserName(userName);
                 tournamentPlayerRepository.save(tournamentPlayer);
+                if(currentTime < endTime && currentTime > startTime) {
+                    startTournament(tournamentId);
+                }
                 return getJoinTournamentResponseDTO(tournamentId, userName);
 
             } else {
@@ -126,61 +133,98 @@ public class MTMTournamentService {
 
 
     public String startTournament(Long tournamentId) {
-        if (redisTemplate.opsForValue().get("$" + tournamentId) != null) {
-            return "Tournament already started";
-        }
-        if (!mtmTournamentRepository.existsById(tournamentId)) {
-            throw new NoSuchElementException("Tournament with ID " + tournamentId + " not found");
-        } else {
-            MTMTournamentEntity tournament = mtmTournamentRepository
-                    .findById(tournamentId).orElse(null);
-            Long currentTime = TimeUtil.getCurrentEpochMillis() / 1000;
-            Long startTime = tournament.getStartTime();
-            Long durationInSeconds = tournament.getDurationInSeconds();
-            Long endTime = startTime + durationInSeconds;
+        try {
 
-
-            if (currentTime < startTime) {
-                return "Tournament Not Started Yet";
+            TournamentCacheDTO cacheDTO = (TournamentCacheDTO) redisTemplate
+                    .opsForValue().get("$" + tournamentId);
+            if (cacheDTO == null) {
+                throw new NoSuchElementException("No cache found for tournament");
             }
 
-            if (currentTime < endTime) {
-                TournamentCacheDTO tournamentCacheDTO = new TournamentCacheDTO();
-                tournamentCacheDTO.setTournamentId(tournamentId);
-                tournamentCacheDTO.setStartTime(startTime);
-                tournamentCacheDTO.setScheduled(true);
-                tournamentCacheDTO.setDurationInSeconds(durationInSeconds);
-                redisTemplate
-                        .opsForValue()
-                        .set("$" + tournamentId,
-                                tournamentCacheDTO,
-                                endTime - currentTime,
-                                TimeUnit.SECONDS);
-                List<RankEntity> rankListEntity = rankRepository.findByTournamentId(tournamentId);
-                if (rankListEntity != null) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String userName = userDetails.getUsername();
+            System.out.println("joined after tournament start: " + userName);
+
+            TournamentPlayerEntity tournamentPlayerEntity = tournamentPlayerRepository
+                    .findByTournamentIdAndPlayerUserName(tournamentId, userName);
+            long currentTime = TimeUtil.getCurrentEpochMillis();
+            long startTime=cacheDTO.getStartTime();
+            long remainingTime = (cacheDTO.getDurationInSeconds()*1000L+startTime-currentTime)/1000L;
 
 
-                    for (RankEntity rankEntity : rankListEntity) {
-                        RankDTO rankDTO = Mapper.toDTO(rankEntity);
-                        if (rankDTO != null) {
-                            redisTemplate.opsForValue()
-                                    .set("@" + tournamentId
-                                                    + "/" + rankDTO.getUserName(),
-                                            rankDTO, endTime - currentTime,
-                                            TimeUnit.SECONDS);
+            RankDTO rankDTO = new RankDTO();
+            rankDTO.setTournamentId(tournamentId);
+            rankDTO.setScore(0);
+            rankDTO.setUserName(tournamentPlayerEntity.getPlayerUserName());
 
-                        }
-                    }
+            System.out.println("inserting rank in tournament:");
+            redisTemplate.opsForValue().set(
+                    "rankDTO/" + tournamentId + "/" + rankDTO.getUserName(),
+                    rankDTO,
 
+                    remainingTime,
+                    TimeUnit.SECONDS
+            );
+
+            Set<String> keys = redisTemplate.keys("questionDTO/" + tournamentId + "*");
+            if (keys.isEmpty()) {
+                throw new NoSuchElementException("No keys found for tournament");
+            }
+            List<QuestionDTO> selectedQuestions = new ArrayList<>();
+
+            for (String key : keys) {
+                QuestionDTO questionDTO = (QuestionDTO) redisTemplate.opsForValue().get(key);
+                selectedQuestions.add(questionDTO);
+            }
+
+            int index = 0;
+
+            for (QuestionDTO question : selectedQuestions) {
+                System.out.println("QuestionId: " + question.getQuestionId());
+                List<TestcaseEntity> testcases = testcaseRepository.
+                        findByQuestionId(question.getQuestionId());
+
+                if (testcases.isEmpty()) continue;
+                int randomIndex = (int) (Math.random() * testcases.size());
+                TestcaseDTO testcaseDTO = Mapper.toDTO(testcases.get(randomIndex));
+
+
+                if (testcaseDTO != null) {
+                    UserTestcaseDTO userTestcaseDTO = new UserTestcaseDTO();
+                    userTestcaseDTO.setTestcaseId(testcaseDTO.getTestcaseId());
+                    userTestcaseDTO.setUserName(tournamentPlayerEntity.getPlayerUserName());
+                    userTestcaseDTO.setSolved(false);
+                    userTestcaseDTO.setNumberOfAttempts(0);
+
+                    redisTemplate.opsForValue().set(
+                            "testcaseDTO/" + tournamentId + "/" +
+                                    tournamentPlayerEntity.getPlayerUserName()
+                                    + "/" + index,
+                            testcaseDTO,
+                            remainingTime,
+                            TimeUnit.SECONDS
+                    );
+                    redisTemplate.opsForValue().set(
+                            "userTestcaseDTO/" + tournamentId + "/" +
+                                    tournamentPlayerEntity.getPlayerUserName() + "/" + index,
+                            userTestcaseDTO,
+                            remainingTime,
+                            TimeUnit.SECONDS
+                    );
+                    redisTemplate.opsForValue().set(
+                            "questionDTO/" + tournamentId + "/" + index,
+                            question,
+                            remainingTime, TimeUnit.SECONDS
+                    );
                 }
-                return "Tournament Started";
-
+                index++;
             }
 
-
+        } catch (Exception e) {
+            e.printStackTrace(); // Replace with proper logging
         }
-        throw new NoSuchElementException("Tournament with ID " + tournamentId + "not in the scheduled");
-
+        return "success";
     }
 
 

@@ -5,21 +5,26 @@ import { BiCopy } from 'react-icons/bi';
 import { FaSun, FaMoon } from 'react-icons/fa';
 import { FiPlus, FiMinus } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
-import { setCode} from '../redux/slices/codeSlice';
+import { setCode, setLanguage} from '../redux/slices/codeSlice';
+
 
 const CodeEditor = () => {
     const dispatch = useDispatch();
     
     // Use Redux for storing code
     const code = useSelector((state) => state.editor.code);
+    const language=useSelector((state)=>state.editor.language);
 
-    const [language, setLanguage] = useState('cpp');
+
     const [theme, setTheme] = useState('dark');
     const [fontSize, setFontSize] = useState(14);
     const editorRef = useRef();
 
     const handleEditorChange = (value) => {
         dispatch(setCode(value));
+    };
+    const handleLanguageChange = (value) => {
+        dispatch(setLanguage(value));
     };
 
     const handleCopyCode = () => {
@@ -40,7 +45,7 @@ const CodeEditor = () => {
             <div className="flex justify-between mb-4">
                 <select
                     value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
+                    onChange={(e) => handleLanguageChange(e.target.value)}
                     className="p-2 bg-white border rounded"
                 >
                     <option value="javascript">JavaScript</option>

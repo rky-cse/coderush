@@ -1,15 +1,19 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import axios from 'axios';
 import { getCookie } from 'cookies-next';
 
 export default function Profile() {
+  const { userName } = useParams(); // Corrected useParams usage
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    if (!userName) return; // Ensure userName exists before making the request
+
     const fetchUser = async () => {
       try {
-        const token = getCookie('token'); // Get token from cookies
+        const token = getCookie('token');
         console.log('Token:', token);
 
         if (!token) {
@@ -17,7 +21,7 @@ export default function Profile() {
           return;
         }
 
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/user/me`, {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${userName}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -35,15 +39,16 @@ export default function Profile() {
     };
 
     fetchUser();
-  }, []);
+  }, [userName]); // Added dependency to useEffect
 
   if (!user) return <div>Loading...</div>;
 
   return (
     <div>
-      {/* console.log(user) */}
       <h1>Profile</h1>
-      <p>Username: {user}</p>
+      <p>Username: {user.userName}</p> {/* Ensure correct property access */}
+      <p>Name: {user.firstName} {user.lastName}</p>
+      <p>Rating: {user.rating}</p>
     </div>
   );
 }
