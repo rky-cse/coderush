@@ -83,9 +83,11 @@ public class TournamentWebSocketService {
 // Get the current TTL before updating
             Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
 
-            if (ttl != null && ttl > 0) { // Key exists and has an expiry
+            if (ttl != null && ttl > 0) {
+                // Key exists and has an expiry
                 redisTemplate.opsForValue().setIfPresent(key, userTestcaseDTO);
                 redisTemplate.expire(key, ttl, TimeUnit.SECONDS); // Restore TTL
+                producer.sendUserTestcaseUpdate(Mapper.toEntity(userTestcaseDTO));
             } else {
                 redisTemplate.opsForValue().setIfPresent(key, userTestcaseDTO);
             }
@@ -137,6 +139,7 @@ public class TournamentWebSocketService {
                 if (ttl != null && ttl > 0) { // Key exists and has an expiry
                     redisTemplate.opsForValue().setIfPresent(key, userTestcaseDTO);
                     redisTemplate.expire(key, ttl, TimeUnit.SECONDS); // Restore TTL
+                    producer.sendUserTestcaseUpdate(Mapper.toEntity(userTestcaseDTO));
                 } else {
                     redisTemplate.opsForValue().setIfPresent(key, userTestcaseDTO);
                 }

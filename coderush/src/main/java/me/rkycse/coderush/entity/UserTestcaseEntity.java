@@ -2,10 +2,9 @@ package me.rkycse.coderush.entity;
 
 import jakarta.persistence.*;
 
-
 @Entity
-@Table(name = "user_testcases")
-
+@Table(name = "user_testcases",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"user_name", "tournament_id", "testcase_id"})})
 public class UserTestcaseEntity {
 
     @Id
@@ -13,10 +12,9 @@ public class UserTestcaseEntity {
     @Column(name = "id", nullable = false, unique = true)
     private Long id;
 
-
-
     @Column(name = "user_name", nullable = false)
     private String userName;
+
     @Column(name = "tournament_id", nullable = false)
     private Long tournamentId;
 
@@ -29,6 +27,7 @@ public class UserTestcaseEntity {
     @Column(name = "number_of_attempts", nullable = false)
     private int numberOfAttempts;
 
+    // Getters and setters
     public Long getId() {
         return id;
     }
@@ -66,7 +65,7 @@ public class UserTestcaseEntity {
     }
 
     public void setSolved(Boolean solved) {
-        solved = solved;
+        this.solved = solved;
     }
 
     public int getNumberOfAttempts() {
@@ -75,5 +74,17 @@ public class UserTestcaseEntity {
 
     public void setNumberOfAttempts(int numberOfAttempts) {
         this.numberOfAttempts = numberOfAttempts;
+    }
+
+    @Override
+    public String toString() {
+        return "UserTestcaseEntity{" +
+                "id=" + id +
+                ", userName='" + userName + '\'' +
+                ", tournamentId=" + tournamentId +
+                ", testcaseId=" + testcaseId +
+                ", solved=" + solved +
+                ", numberOfAttempts=" + numberOfAttempts +
+                '}';
     }
 }

@@ -3,6 +3,7 @@ package me.rkycse.coderush.service;
 import jakarta.transaction.Transactional;
 import me.rkycse.coderush.dto.*;
 import me.rkycse.coderush.entity.*;
+import me.rkycse.coderush.kafka.Producer;
 import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.*;
 import me.rkycse.coderush.util.TimeUtil;
@@ -27,14 +28,16 @@ public class MTMTournamentSchedulerService {
     private final TournamentPlayerRepository tournamentPlayerRepository;
     private final TestcaseRepository testcaseRepository;
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
+    private final Producer producer;
 
-    public MTMTournamentSchedulerService(TournamentBaseRepository tournamentBaseRepository, RedisTemplate<String, Object> redisTemplate, QuestionRepository questionRepository, ThreadPoolTaskScheduler taskScheduler, TournamentPlayerRepository tournamentPlayerRepository, TestcaseRepository testcaseRepository) {
+    public MTMTournamentSchedulerService(TournamentBaseRepository tournamentBaseRepository, RedisTemplate<String, Object> redisTemplate, QuestionRepository questionRepository, ThreadPoolTaskScheduler taskScheduler, TournamentPlayerRepository tournamentPlayerRepository, TestcaseRepository testcaseRepository, Producer producer) {
         this.tournamentBaseRepository = tournamentBaseRepository;
         this.redisTemplate = redisTemplate;
         this.questionRepository = questionRepository;
         this.taskScheduler = taskScheduler;
         this.tournamentPlayerRepository = tournamentPlayerRepository;
         this.testcaseRepository = testcaseRepository;
+        this.producer = producer;
     }
 
 
@@ -102,102 +105,8 @@ public class MTMTournamentSchedulerService {
         try {
             System.out.println("Starting tournament with ID: " + tournamentId + " at " + LocalDateTime.now());
             redisTemplate.opsForValue().set("$" + tournamentId, cacheDTO, cacheDTO.getDurationInSeconds(), TimeUnit.SECONDS);
+            producer.startTournamentInit(cacheDTO);
 
-            List<TournamentPlayerEntity> tournamentPlayerEntities = tournamentPlayerRepository
-                    .findByTournamentId(tournamentId);
-
-            if (tournamentPlayerEntities == null || tournamentPlayerEntities.isEmpty()) {
-                System.out.println("No tournament found for ID: " + tournamentId);
-            } else {
-                System.out.println("Found tournament with ID: " + tournamentId);
-            }
-
-
-            for (TournamentPlayerEntity tournamentPlayerEntity : tournamentPlayerEntities) {
-                RankDTO rankDTO = new RankDTO();
-                rankDTO.setTournamentId(tournamentId);
-                rankDTO.setScore(0);
-                rankDTO.setUserName(tournamentPlayerEntity.getPlayerUserName());
-
-                System.out.println("inserting rank in tournament:");
-                redisTemplate.opsForValue().set(
-                        "rankDTO/" + tournamentId + "/" + rankDTO.getUserName(),
-                        rankDTO,
-                        cacheDTO.getDurationInSeconds(),
-                        TimeUnit.SECONDS
-                );
-
-            }
-
-            List<QuestionEntity> allQuestions = questionRepository.findAll();
-
-            List<QuestionEntity> selectedQuestions = new ArrayList<>();
-
-            Set<QuestionEntity> st = new HashSet<>();
-            for (int i = 0; i < 5; i++) {
-                int randomIndex = (int) (Math.random() * allQuestions.size());
-                if (st.contains(allQuestions.get(randomIndex))) {
-                    int j = randomIndex;
-                    int ct = allQuestions.size();
-                    while (ct-- > 0) {
-                        if (!st.contains(allQuestions.get(j % (allQuestions.size())))) {
-                            selectedQuestions.add(allQuestions.get(j % (allQuestions.size())));
-                            st.add(allQuestions.get(j % (allQuestions.size())));
-                            break;
-                        }
-                        j++;
-                    }
-
-                } else {
-                    st.add(allQuestions.get(randomIndex));
-                    selectedQuestions.add(allQuestions.get(randomIndex));
-                }
-
-            }
-            int index = 0;
-
-            for (QuestionEntity question : selectedQuestions) {
-                System.out.println("QuestionId: " + question.getQuestionId());
-                List<TestcaseEntity> testcases = testcaseRepository.
-                        findByQuestionId(question.getQuestionId());
-                for (TournamentPlayerEntity player : tournamentPlayerEntities) {
-                    if (testcases.isEmpty()) continue;
-                    int randomIndex = (int) (Math.random() * testcases.size());
-                    TestcaseDTO testcaseDTO = Mapper.toDTO(testcases.get(randomIndex));
-
-                    if (testcaseDTO != null) {
-                        UserTestcaseDTO userTestcaseDTO = new UserTestcaseDTO();
-                        userTestcaseDTO.setTestcaseId(testcaseDTO.getTestcaseId());
-                        userTestcaseDTO.setUserName(player.getPlayerUserName());
-                        userTestcaseDTO.setSolved(false);
-                        userTestcaseDTO.setNumberOfAttempts(0);
-
-                        redisTemplate.opsForValue().set(
-                                "testcaseDTO/" + tournamentId + "/" + player.getPlayerUserName()
-                                        + "/" + index,
-                                testcaseDTO,
-                                cacheDTO.getDurationInSeconds(),
-                                TimeUnit.SECONDS
-                        );
-                        redisTemplate.opsForValue().set(
-                                "userTestcaseDTO/" + tournamentId + "/" +
-                                        player.getPlayerUserName() + "/" + index,
-                                userTestcaseDTO,
-                                cacheDTO.getDurationInSeconds(),
-                                TimeUnit.SECONDS
-                        );
-                        redisTemplate.opsForValue().set(
-                                "questionDTO/" + tournamentId + "/" + index,
-                                Mapper.toDTO(question),
-                                cacheDTO.getDurationInSeconds(), TimeUnit.SECONDS
-                        );
-                    }
-                }
-                index++;
-            }
-
-            //questionListRedisTemplate.opsForValue().set("questionListEntity/" + tournamentId, selectedQuestions, cacheDTO.getDuration(), TimeUnit.SECONDS);
-            redisTemplate.delete("tournament:" + tournamentId);
         } catch (Exception e) {
             e.printStackTrace(); // Replace with proper logging
         }
