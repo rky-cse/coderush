@@ -11,7 +11,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -74,41 +73,50 @@ public class MTMTournamentService {
         if (tournamentId == null) {
             throw new IllegalArgumentException("Tournament ID cannot be null");
         }
-        if (mtmTournamentRepository.existsById(tournamentId)) {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String userName = userDetails.getUsername();
-            MTMTournamentEntity tournament = mtmTournamentRepository.findById(tournamentId)
-                    .orElse(null);
-            long currentTime = TimeUtil.getCurrentEpochMillis();
-            long startTime=tournament.getStartTime();
-            long endTime=tournament.getDurationInSeconds()*1000L+startTime;
 
-            if (tournamentPlayerRepository.findByTournamentIdAndPlayerUserName(
-                    tournamentId, userName) == null) {
-                TournamentPlayerEntity tournamentPlayer = new TournamentPlayerEntity();
-                tournamentPlayer.setTournamentId(tournamentId);
-                tournamentPlayer.setPlayerUserName(userName);
-                tournamentPlayerRepository.save(tournamentPlayer);
-                if(currentTime < endTime && currentTime > startTime) {
-                    startTournament(tournamentId);
-                }
-                return getJoinTournamentResponseDTO(tournamentId, userName);
-
-            } else {
-                TournamentPlayerEntity tournamentPlayer =
-                        tournamentPlayerRepository
-                                .findByTournamentIdAndPlayerUserName(tournamentId, userName);
-                return getJoinTournamentResponseDTO(tournamentId, userName);
-
-            }
-
-        } else {
+        if (!mtmTournamentRepository.existsById(tournamentId)) {
             throw new NoSuchElementException("No such tournament");
         }
 
+        // Retrieve the current user
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String userName = userDetails.getUsername();
 
+        // Retrieve tournament details
+        MTMTournamentEntity tournament = mtmTournamentRepository.findById(tournamentId)
+                .orElseThrow(() -> new NoSuchElementException("Tournament not found"));
+
+        long currentTime = TimeUtil.getCurrentEpochMillis();
+        long startTime = tournament.getStartTime();
+        long endTime = tournament.getDurationInSeconds() * 1000L + startTime;
+
+        // Prevent joining if the tournament has already ended
+        if (currentTime >= endTime) {
+            throw new IllegalStateException("Tournament has already ended");
+        }
+
+        // Check if the user is already registered for this tournament (unique combination of tournamentId and username)
+        TournamentPlayerEntity tournamentPlayer = tournamentPlayerRepository
+                .findByTournamentIdAndPlayerUserName(tournamentId, userName);
+
+        // Only save if the player doesn't exist already
+        if (tournamentPlayer == null) {
+            tournamentPlayer = new TournamentPlayerEntity();
+            tournamentPlayer.setTournamentId(tournamentId);
+            tournamentPlayer.setPlayerUserName(userName);
+            tournamentPlayerRepository.save(tournamentPlayer);
+        }
+
+        // If the tournament is active, start it
+        if (currentTime >= startTime && currentTime < endTime) {
+            startTournament(tournamentId);
+        }
+
+        // Return the join tournament response
+        return getJoinTournamentResponseDTO(tournamentId, userName);
     }
+
 
     private JoinTournamentResponseDTO getJoinTournamentResponseDTO(Long tournamentId, String userName) {
         List<TournamentPlayerEntity> tournamentPlayerEntities =
@@ -191,11 +199,11 @@ public class MTMTournamentService {
 
 
                 if (testcaseDTO != null) {
-                    UserTestcaseDTO userTestcaseDTO = new UserTestcaseDTO();
-                    userTestcaseDTO.setTestcaseId(testcaseDTO.getTestcaseId());
-                    userTestcaseDTO.setUserName(tournamentPlayerEntity.getPlayerUserName());
-                    userTestcaseDTO.setSolved(false);
-                    userTestcaseDTO.setNumberOfAttempts(0);
+                    FreeStyleSubmissionStatusDTO freeStyleSubmissionStatusDTO = new FreeStyleSubmissionStatusDTO();
+                    freeStyleSubmissionStatusDTO.setTestcaseId(testcaseDTO.getTestcaseId());
+                    freeStyleSubmissionStatusDTO.setUserName(tournamentPlayerEntity.getPlayerUserName());
+                    freeStyleSubmissionStatusDTO.setSolved(false);
+                    freeStyleSubmissionStatusDTO.setNumberOfAttempts(0);
 
                     redisTemplate.opsForValue().set(
                             "testcaseDTO/" + tournamentId + "/" +
@@ -206,9 +214,9 @@ public class MTMTournamentService {
                             TimeUnit.SECONDS
                     );
                     redisTemplate.opsForValue().set(
-                            "userTestcaseDTO/" + tournamentId + "/" +
+                            "freeStyleSubmissionStatusDTO/" + tournamentId + "/" +
                                     tournamentPlayerEntity.getPlayerUserName() + "/" + index,
-                            userTestcaseDTO,
+                            freeStyleSubmissionStatusDTO,
                             remainingTime,
                             TimeUnit.SECONDS
                     );

@@ -1,8 +1,8 @@
 package me.rkycse.coderush.kafka;
 
 import me.rkycse.coderush.dto.TournamentCacheDTO;
+import me.rkycse.coderush.entity.FreeStyleSubmissionStatus;
 import me.rkycse.coderush.entity.RankEntity;
-import me.rkycse.coderush.entity.UserTestcaseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,7 @@ public class Producer {
     }
     private static final String userTestcaseUpdateTopic = "user-testcase-update";
 
-    public void sendUserTestcaseUpdate(UserTestcaseEntity testcase ) {
+    public void sendUserTestcaseUpdate(FreeStyleSubmissionStatus testcase ) {
         kafkaTemplate.send(userTestcaseUpdateTopic, testcase);
     }
 

@@ -5,6 +5,7 @@ public class RankDTO {
     private Long id;
     private String userName;
     private Long tournamentId;
+    private Long penalty=0L;
     private long score;
 
     public Long getId() {
@@ -37,6 +38,14 @@ public class RankDTO {
 
     public void setScore(long score) {
         this.score = score;
+    }
+
+    public Long getPenalty() {
+        return penalty;
+    }
+
+    public void setPenalty(Long penalty) {
+        this.penalty = penalty;
     }
 
 

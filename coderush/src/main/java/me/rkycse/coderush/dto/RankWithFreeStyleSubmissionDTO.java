@@ -3,13 +3,15 @@ package me.rkycse.coderush.dto;
 
 import java.util.*;
 
-public class RankWithUserTestcaseDTO {
+public class RankWithFreeStyleSubmissionDTO {
 
     private Long id;
     private String userName;
     private Long tournamentId;
     private long score;
-    private List<UserTestcaseDTO>userTestcases=new ArrayList<>();
+    private Long penalty=0L;
+    private List<FreeStyleSubmissionStatusDTO> freeStyleSubmissionStatusDTOS =new ArrayList<>();
+
 
     public Long getId() {
         return id;
@@ -43,11 +45,19 @@ public class RankWithUserTestcaseDTO {
         this.score = score;
     }
 
-    public List<UserTestcaseDTO> getUserTestcases() {
-        return userTestcases;
+    public Long getPenalty() {
+        return penalty;
     }
 
-    public void setUserTestcases(List<UserTestcaseDTO> userTestcases) {
-        this.userTestcases = userTestcases;
+    public void setPenalty(Long penalty) {
+        this.penalty = penalty;
+    }
+
+    public List<FreeStyleSubmissionStatusDTO> getFreeStyleSubmissionDTOS() {
+        return freeStyleSubmissionStatusDTOS;
+    }
+
+    public void setFreeStyleSubmissionDTOS(List<FreeStyleSubmissionStatusDTO> freeStyleSubmissionStatusDTOS) {
+        this.freeStyleSubmissionStatusDTOS = freeStyleSubmissionStatusDTOS;
     }
 }

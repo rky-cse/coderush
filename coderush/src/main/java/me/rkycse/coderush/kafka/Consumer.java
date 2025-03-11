@@ -1,21 +1,18 @@
 package me.rkycse.coderush.kafka;
 
+import me.rkycse.coderush.dto.FreeStyleSubmissionStatusDTO;
 import me.rkycse.coderush.dto.RankDTO;
 import me.rkycse.coderush.dto.TestcaseDTO;
 import me.rkycse.coderush.dto.TournamentCacheDTO;
-import me.rkycse.coderush.dto.UserTestcaseDTO;
 import me.rkycse.coderush.entity.*;
 import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.*;
-import org.slf4j.LoggerFactory;
+import me.rkycse.coderush.util.TimeUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -62,10 +59,10 @@ public class Consumer {
     }
 
     @KafkaListener(topics="user-testcase-update",groupId = "myGroup")
-    public void consume(UserTestcaseEntity userTestcase) {
+    public void consume(FreeStyleSubmissionStatus userTestcase) {
         System.out.println("consuming.............."+ userTestcase);
         if(userTestcase!=null) {
-            UserTestcaseEntity oldUserTestcase=userTestcaseRepository.
+            FreeStyleSubmissionStatus oldUserTestcase=userTestcaseRepository.
                     findByUserNameAndTournamentIdAndTestcaseId(userTestcase.getUserName(),
                             userTestcase.getTournamentId(),userTestcase.getTestcaseId())
                     .orElse(null);
@@ -81,125 +78,153 @@ public class Consumer {
 
 
     }
-    @KafkaListener(topics="start-tournament-init",groupId = "myGroup")
+    @KafkaListener(topics = "start-tournament-init", groupId = "myGroup")
     public void consume(TournamentCacheDTO cacheDTO) {
         System.out.println("consuming.............................");
         Long tournamentId = cacheDTO.getTournamentId();
-        if(tournamentId!=null) {
-            List<TournamentPlayerEntity> tournamentPlayerEntities = tournamentPlayerRepository
-                    .findByTournamentId(tournamentId);
 
-            if (tournamentPlayerEntities == null || tournamentPlayerEntities.isEmpty()) {
-                System.out.println("No tournament found for ID: " + tournamentId);
-            } else {
-                System.out.println("Found tournament with ID: " + tournamentId);
-            }
+        if (tournamentId == null) {
+            System.out.println("Tournament ID is null. Exiting consume method.");
+            return;
+        }
 
+        // Retrieve tournament players and check if available
+        List<TournamentPlayerEntity> tournamentPlayerEntities = tournamentPlayerRepository.findByTournamentId(tournamentId);
+        if (tournamentPlayerEntities == null || tournamentPlayerEntities.isEmpty()) {
+            System.out.println("No tournament players found for tournament ID: " + tournamentId);
+            return;
+        } else {
+            System.out.println("Found tournament players for tournament ID: " + tournamentId);
+        }
 
-            for (TournamentPlayerEntity tournamentPlayerEntity : tournamentPlayerEntities) {
-                RankDTO rankDTO = new RankDTO();
-                rankDTO.setTournamentId(tournamentId);
-                rankDTO.setScore(0);
-                rankDTO.setUserName(tournamentPlayerEntity.getPlayerUserName());
+        // Insert a rank entry for each tournament player in Redis
+        for (TournamentPlayerEntity playerEntity : tournamentPlayerEntities) {
+            RankDTO rankDTO = new RankDTO();
+            rankDTO.setTournamentId(tournamentId);
+            rankDTO.setScore(0);
+            rankDTO.setUserName(playerEntity.getPlayerUserName());
 
-                System.out.println("inserting rank in tournament:");
+            System.out.println("Inserting rank in tournament for user: " + rankDTO.getUserName());
+            try {
                 redisTemplate.opsForValue().set(
                         "rankDTO/" + tournamentId + "/" + rankDTO.getUserName(),
                         rankDTO,
                         cacheDTO.getDurationInSeconds(),
                         TimeUnit.SECONDS
                 );
+            } catch (Exception e) {
+                System.err.println("Failed to insert rank for user: " + rankDTO.getUserName() + ". Error: " + e.getMessage());
+            }
+        }
 
+        // Retrieve questions and check if available
+        List<QuestionEntity> allQuestions = questionRepository.findAll();
+        if (allQuestions == null || allQuestions.isEmpty()) {
+            System.out.println("No questions available.");
+            return;
+        }
+
+        // Shuffle and select up to 5 questions
+        List<QuestionEntity> selectedQuestions = new ArrayList<>();
+        Collections.shuffle(allQuestions);
+        int numQuestions = Math.min(5, allQuestions.size());
+        for (int i = 0; i < numQuestions; i++) {
+            selectedQuestions.add(allQuestions.get(i));
+        }
+
+        int index = 0;
+        // Process each selected question
+        for (QuestionEntity question : selectedQuestions) {
+            System.out.println("QuestionId: " + question.getQuestionId());
+            TournamentQuestionEntity tournamentQuestionEntity = new TournamentQuestionEntity();
+            tournamentQuestionEntity.setQuestionId(question.getQuestionId());
+            tournamentQuestionEntity.setTournamentId(tournamentId);
+            System.out.println("Processing tournament question: " + tournamentQuestionEntity);
+
+            // Check if tournament question already exists and save if not
+            try {
+                TournamentQuestionEntity existingEntity = tournamentQuestionRepository
+                        .findByTournamentIdAndQuestionId(tournamentId, question.getQuestionId());
+                if (existingEntity == null) {
+                    TournamentQuestionEntity savedTournamentQuestion = tournamentQuestionRepository.save(tournamentQuestionEntity);
+                    System.out.println("Saved tournament question: " + savedTournamentQuestion);
+                } else {
+                    System.out.println("Tournament question already exists: " + existingEntity);
+                }
+            } catch (Exception e) {
+                System.err.println("Error saving tournament question: " + tournamentQuestionEntity + ". Error: " + e.getMessage());
             }
 
-            List<QuestionEntity> allQuestions = questionRepository.findAll();
+            // Retrieve test cases for the question
+            List<TestcaseEntity> testcases = testcaseRepository.findByQuestionId(question.getQuestionId());
+            // For each tournament player, assign a random testcase (if available)
+            for (TournamentPlayerEntity player : tournamentPlayerEntities) {
+                if (testcases == null || testcases.isEmpty()) {
+                    continue;
+                }
+                int randomIndex = (int) (Math.random() * testcases.size());
+                TestcaseDTO testcaseDTO = Mapper.toDTO(testcases.get(randomIndex));
 
-            List<QuestionEntity> selectedQuestions = new ArrayList<>();
+                if (testcaseDTO != null) {
+                    FreeStyleSubmissionStatusDTO freeStyleSubmissionStatusDTO = new FreeStyleSubmissionStatusDTO();
+                    freeStyleSubmissionStatusDTO.setTournamentId(tournamentId);
+                    freeStyleSubmissionStatusDTO.setTestcaseId(testcaseDTO.getTestcaseId());
+                    freeStyleSubmissionStatusDTO.setUserName(player.getPlayerUserName());
+                    freeStyleSubmissionStatusDTO.setSolved(false);
+                    freeStyleSubmissionStatusDTO.setSubmissionTime(TimeUtil.getCurrentEpochMillis());
+                    freeStyleSubmissionStatusDTO.setNumberOfAttempts(0);
 
-            Set<QuestionEntity> st = new HashSet<>();
-            for (int i = 0; i < 5; i++) {
-                int randomIndex = (int) (Math.random() * allQuestions.size());
-                if (st.contains(allQuestions.get(randomIndex))) {
-                    int j = randomIndex;
-                    int ct = allQuestions.size();
-                    while (ct-- > 0) {
-                        if (!st.contains(allQuestions.get(j % (allQuestions.size())))) {
-                            selectedQuestions.add(allQuestions.get(j % (allQuestions.size())));
-
-                            st.add(allQuestions.get(j % (allQuestions.size())));
-                            break;
-                        }
-                        j++;
+                    try {
+                        userTestcaseRepository.save(Mapper.toEntity(freeStyleSubmissionStatusDTO));
+                    } catch (Exception e) {
+                        System.err.println("Failed to save FreeStyleSubmissionStatus for user: " + player.getPlayerUserName()
+                                + ". Error: " + e.getMessage());
                     }
 
-                } else {
-                    st.add(allQuestions.get(randomIndex));
-                    selectedQuestions.add(allQuestions.get(randomIndex));
-                }
-
-            }
-            int index = 0;
-
-            for (QuestionEntity question : selectedQuestions) {
-                System.out.println("QuestionId: " + question.getQuestionId());
-                TournamentQuestionEntity tournamentQuestionEntity = new TournamentQuestionEntity();
-                tournamentQuestionEntity.setQuestionId(question.getQuestionId());
-                tournamentQuestionEntity.setTournamentId(tournamentId);
-                System.out.println("saving tournament question: " + tournamentQuestionEntity);
-                try{
-                    TournamentQuestionEntity savedTournamentQuestion=
-                            tournamentQuestionRepository.save(tournamentQuestionEntity);
-                    System.out.println("saved tournament question: " + savedTournamentQuestion);
-
-                }catch (Exception e){
-                    e.printStackTrace();
-                    System.out.println("error saving tournament question: " + tournamentQuestionEntity);
-                }
-
-                List<TestcaseEntity> testcases = testcaseRepository.
-                        findByQuestionId(question.getQuestionId());
-                for (TournamentPlayerEntity player : tournamentPlayerEntities) {
-                    if (testcases.isEmpty()) continue;
-                    int randomIndex = (int) (Math.random() * testcases.size());
-                    TestcaseDTO testcaseDTO = Mapper.toDTO(testcases.get(randomIndex));
-
-                    if (testcaseDTO != null) {
-                        UserTestcaseDTO userTestcaseDTO = new UserTestcaseDTO();
-                        userTestcaseDTO.setTournamentId(tournamentId);
-                        userTestcaseDTO.setTestcaseId(testcaseDTO.getTestcaseId());
-                        userTestcaseDTO.setUserName(player.getPlayerUserName());
-                        userTestcaseDTO.setSolved(false);
-                        userTestcaseDTO.setNumberOfAttempts(0);
-
-                        userTestcaseRepository.save(Mapper.toEntity(userTestcaseDTO));
-
-
+                    try {
                         redisTemplate.opsForValue().set(
-                                "testcaseDTO/" + tournamentId + "/" + player.getPlayerUserName()
-                                        + "/" + index,
+                                "testcaseDTO/" + tournamentId + "/" + player.getPlayerUserName() + "/" + index,
                                 testcaseDTO,
                                 cacheDTO.getDurationInSeconds(),
                                 TimeUnit.SECONDS
                         );
+                    } catch (Exception e) {
+                        System.err.println("Failed to set testcaseDTO for user: " + player.getPlayerUserName() + ". Error: " + e.getMessage());
+                    }
+
+                    try {
                         redisTemplate.opsForValue().set(
-                                "userTestcaseDTO/" + tournamentId + "/" +
-                                        player.getPlayerUserName() + "/" + index,
-                                userTestcaseDTO,
+                                "freeStyleSubmissionStatusDTO/" + tournamentId + "/" + player.getPlayerUserName() + "/" + index,
+                                freeStyleSubmissionStatusDTO,
                                 cacheDTO.getDurationInSeconds(),
                                 TimeUnit.SECONDS
                         );
+                    } catch (Exception e) {
+                        System.err.println("Failed to set freeStyleSubmissionStatusDTO for user: " + player.getPlayerUserName() + ". Error: " + e.getMessage());
+                    }
+
+                    try {
                         redisTemplate.opsForValue().set(
                                 "questionDTO/" + tournamentId + "/" + index,
                                 Mapper.toDTO(question),
-                                cacheDTO.getDurationInSeconds(), TimeUnit.SECONDS
+                                cacheDTO.getDurationInSeconds(),
+                                TimeUnit.SECONDS
                         );
+                    } catch (Exception e) {
+                        System.err.println("Failed to set questionDTO for tournament question: " + question.getQuestionId()
+                                + ". Error: " + e.getMessage());
                     }
                 }
-                index++;
             }
+            index++;
+        }
 
-            //questionListRedisTemplate.opsForValue().set("questionListEntity/" + tournamentId, selectedQuestions, cacheDTO.getDuration(), TimeUnit.SECONDS);
+        // Optionally, delete the tournament key from Redis after processing
+        try {
             redisTemplate.delete("tournament:" + tournamentId);
+        } catch (Exception e) {
+            System.err.println("Failed to delete tournament key from Redis for tournament ID: " + tournamentId
+                    + ". Error: " + e.getMessage());
         }
     }
 

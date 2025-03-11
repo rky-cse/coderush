@@ -8,7 +8,7 @@ import java.util.List;
 public class RankListDTO {
     private Long tournamentId;
     private Long endTime;
-    private List<RankWithUserTestcaseDTO>rankList=new ArrayList<>();
+    private List<RankWithFreeStyleSubmissionDTO>rankList=new ArrayList<>();
     @Override
     public String toString() {
         return "RankListDTO{" +
@@ -33,14 +33,18 @@ public class RankListDTO {
         this.endTime = endTime;
     }
 
-    public List<RankWithUserTestcaseDTO> getRankList() {
+    public List<RankWithFreeStyleSubmissionDTO> getRankList() {
         return rankList;
     }
 
-    public void setRankList(List<RankWithUserTestcaseDTO> rankList) {
+    public void setRankList(List<RankWithFreeStyleSubmissionDTO> rankList) {
         this.rankList = rankList;
     }
     public void sortByScore() {
-        rankList.sort(Comparator.comparingLong(RankWithUserTestcaseDTO::getScore).reversed());
+        rankList.sort(
+                Comparator.comparingLong(RankWithFreeStyleSubmissionDTO::getScore).reversed()
+                        .thenComparingLong(RankWithFreeStyleSubmissionDTO::getPenalty)
+        );
     }
+
 }

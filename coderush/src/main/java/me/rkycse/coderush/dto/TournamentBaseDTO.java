@@ -15,6 +15,15 @@ public class TournamentBaseDTO {
     private Visibility visibility;
     private String password;
     private TournamentType tournamentType;
+    private Long penaltyFactor;
+
+    public Long getPenaltyFactor() {
+        return penaltyFactor;
+    }
+
+    public void setPenaltyFactor(Long penaltyFactor) {
+        this.penaltyFactor = penaltyFactor;
+    }
 
     public Long getStartTime() {
         return startTime;

@@ -4,8 +4,10 @@ package me.rkycse.coderush.dto;
 public class TournamentCacheDTO{
     private Long tournamentId;
     private long startTime;
+    private long penaltyFactor;
     private long durationInSeconds;
     private boolean scheduled;
+
 
     public TournamentCacheDTO() {
     }
@@ -27,6 +29,14 @@ public class TournamentCacheDTO{
 
     public long getStartTime() {
         return startTime;
+    }
+
+    public long getPenaltyFactor() {
+        return penaltyFactor;
+    }
+
+    public void setPenaltyFactor(long penaltyFactor) {
+        this.penaltyFactor = penaltyFactor;
     }
 
     public void setStartTime(long startTime) {

@@ -57,29 +57,29 @@ public class RankListSchedulerService {
                         (1000L*tournamentCacheDTO.getDurationInSeconds()));
 
                 for(String rankKey : rankKeys) {
-                    RankWithUserTestcaseDTO rankWithUserTestcaseDTO=new RankWithUserTestcaseDTO();
+                    RankWithFreeStyleSubmissionDTO rankWithFreeStyleSubmissionDTO =new RankWithFreeStyleSubmissionDTO();
                     RankDTO rankDTO=(RankDTO) redisTemplate.opsForValue().get(rankKey);
-                    Set<String>userTestcaseKeys=redisTemplate
-                            .keys("userTestcaseDTO/"+tournamentId+"/"+rankDTO.getUserName()+"/*");
-                    if(userTestcaseKeys == null || userTestcaseKeys.isEmpty()) {
+                    Set<String>freeStyleSubmissionStatusKeys=redisTemplate
+                            .keys("freeStyleSubmissionStatusDTO/"+tournamentId+"/"+rankDTO.getUserName()+"/*");
+                    if(freeStyleSubmissionStatusKeys == null || freeStyleSubmissionStatusKeys.isEmpty()) {
                         continue;
                     }
-                    rankWithUserTestcaseDTO.setId(rankDTO.getId());
-                    rankWithUserTestcaseDTO.setUserName(rankDTO.getUserName());
-                    rankWithUserTestcaseDTO.setScore(rankDTO.getScore());
-                    rankWithUserTestcaseDTO.setTournamentId(tournamentId);
+                    rankWithFreeStyleSubmissionDTO.setId(rankDTO.getId());
+                    rankWithFreeStyleSubmissionDTO.setUserName(rankDTO.getUserName());
+                    rankWithFreeStyleSubmissionDTO.setScore(rankDTO.getScore());
+                    rankWithFreeStyleSubmissionDTO.setTournamentId(tournamentId);
 
-                    for(String userTestcaseKey : userTestcaseKeys) {
-                        UserTestcaseDTO userTestcaseDTO=(UserTestcaseDTO) redisTemplate
-                                .opsForValue().get(userTestcaseKey);
-                        if(userTestcaseDTO == null) {
+                    for(String freeStyleSubmissionStatusKey : freeStyleSubmissionStatusKeys) {
+                        FreeStyleSubmissionStatusDTO freeStyleSubmissionStatusDTO =(FreeStyleSubmissionStatusDTO) redisTemplate
+                                .opsForValue().get(freeStyleSubmissionStatusKey);
+                        if(freeStyleSubmissionStatusDTO == null) {
                             continue;
                         }
-                        rankWithUserTestcaseDTO
-                                .getUserTestcases()
-                                .add(userTestcaseDTO);
+                        rankWithFreeStyleSubmissionDTO
+                                .getFreeStyleSubmissionDTOS()
+                                .add(freeStyleSubmissionStatusDTO);
                     }
-                    rankListDTO.getRankList().add(rankWithUserTestcaseDTO);
+                    rankListDTO.getRankList().add(rankWithFreeStyleSubmissionDTO);
 
 
                 }

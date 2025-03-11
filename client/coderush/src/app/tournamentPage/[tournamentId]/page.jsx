@@ -94,7 +94,7 @@ export default function TournamentPage({ params }) {
     const payload = {
       index,
       tournamentId,
-      submissionTime: Date.now(),
+      //submissionTime: Date.now(),
       userOutput: output,
     };
 

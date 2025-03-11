@@ -18,6 +18,7 @@ public class Mapper {
         dto.setUserName(entity.getUserName());
         dto.setScore(entity.getScore());
         dto.setTournamentId(entity.getTournamentId());
+        dto.setPenalty(entity.getPenalty());
         return dto;
     }
 
@@ -31,37 +32,40 @@ public class Mapper {
         entity.setUserName(dto.getUserName());
         entity.setScore(dto.getScore());
         entity.setTournamentId(dto.getTournamentId());
+        entity.setPenalty(dto.getPenalty());
         return entity;
     }
 
-    public static UserTestcaseDTO toDTO(UserTestcaseEntity entity) {
+    public static FreeStyleSubmissionStatusDTO toDTO(FreeStyleSubmissionStatus entity) {
         if (entity == null) {
             return null;
         }
 
-        UserTestcaseDTO dto = new UserTestcaseDTO();
+        FreeStyleSubmissionStatusDTO dto = new FreeStyleSubmissionStatusDTO();
         dto.setId(entity.getId());
         dto.setUserName(entity.getUserName());
         dto.setTestcaseId(entity.getTestcaseId());
         dto.setSolved(entity.getSolved());
         dto.setNumberOfAttempts(entity.getNumberOfAttempts());
         dto.setTournamentId(entity.getTournamentId());
+        dto.setSubmissionTime(entity.getSubmissionTime());
 
         return dto;
     }
 
-    public static UserTestcaseEntity toEntity(UserTestcaseDTO dto) {
+    public static FreeStyleSubmissionStatus toEntity(FreeStyleSubmissionStatusDTO dto) {
         if (dto == null) {
             return null;
         }
 
-        UserTestcaseEntity entity = new UserTestcaseEntity();
+        FreeStyleSubmissionStatus entity = new FreeStyleSubmissionStatus();
         entity.setId(dto.getId());
         entity.setUserName(dto.getUserName());
         entity.setTestcaseId(dto.getTestcaseId());
         entity.setSolved(dto.getSolved());
         entity.setNumberOfAttempts(dto.getNumberOfAttempts());
         entity.setTournamentId(dto.getTournamentId());
+        entity.setSubmissionTime(dto.getSubmissionTime());
 
         return entity;
     }
@@ -130,6 +134,7 @@ public class Mapper {
         entity.setStartTime(dto.getStartTime());
         entity.setVisibility(dto.getVisibility());
         entity.setTournamentType(dto.getTournamentType());
+        entity.setPenaltyFactor(dto.getPenaltyFactor());
         return entity;
     }
     public static MTMTournamentDTO toDTO(MTMTournamentEntity entity) {
@@ -149,6 +154,7 @@ public class Mapper {
         dto.setStartTime(entity.getStartTime());
         dto.setVisibility(entity.getVisibility());
         dto.setTournamentType(entity.getTournamentType());
+        dto.setPenaltyFactor(entity.getPenaltyFactor());
         return dto;
     }
 

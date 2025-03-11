@@ -22,6 +22,9 @@ public class RankEntity {
     @Column(name = "score", nullable = false)
     private long score;
 
+    @Column(name="penalty", nullable = false)
+    private Long penalty=0L;
+
     // Getters and setters
     public Long getId() {
         return id;
@@ -37,6 +40,14 @@ public class RankEntity {
 
     public void setTournamentId(Long tournamentId) {
         this.tournamentId = tournamentId;
+    }
+
+    public Long getPenalty() {
+        return penalty;
+    }
+
+    public void setPenalty(Long penalty) {
+        this.penalty = penalty;
     }
 
     public String getUserName() {

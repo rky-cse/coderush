@@ -1,6 +1,6 @@
 package me.rkycse.coderush.dto;
 
-public class UserTestcaseDTO {
+public class FreeStyleSubmissionStatusDTO {
     private Long id;
     private Long tournamentId;
     private String userName;
@@ -8,6 +8,15 @@ public class UserTestcaseDTO {
     private Long questionId;
     private Boolean solved=false;
     private int numberOfAttempts;
+    private Long submissionTime;
+
+    public Long getSubmissionTime() {
+        return submissionTime;
+    }
+
+    public void setSubmissionTime(Long submissionTime) {
+        this.submissionTime = submissionTime;
+    }
 
     public Long getTournamentId() {
         return tournamentId;

@@ -3,9 +3,9 @@ package me.rkycse.coderush.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "user_testcases",
+@Table(name = "free_style_submission_status",
         uniqueConstraints = {@UniqueConstraint(columnNames = {"user_name", "tournament_id", "testcase_id"})})
-public class UserTestcaseEntity {
+public class FreeStyleSubmissionStatus {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,6 +26,17 @@ public class UserTestcaseEntity {
 
     @Column(name = "number_of_attempts", nullable = false)
     private int numberOfAttempts;
+
+    @Column(name = "submission_time", nullable = false)
+    private Long submissionTime;
+
+    public Long getSubmissionTime() {
+        return submissionTime;
+    }
+
+    public void setSubmissionTime(Long submissionTime) {
+        this.submissionTime = submissionTime;
+    }
 
     // Getters and setters
     public Long getId() {

@@ -10,6 +10,7 @@ const TournamentFormModal = ({ closeModal }) => {
     minRatingReq: 0,
     maxRatingReq: 0,
     durationInSeconds: 0,
+    penaltyFactor: 0,
     visibility: 'PUBLIC',
     password: '',
     tournamentType: 'CLASSIC',
@@ -132,6 +133,17 @@ const TournamentFormModal = ({ closeModal }) => {
               type="number"
               name="durationInSeconds"
               value={formData.durationInSeconds}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Penalty Per Wrong Submission (seconds)</label>
+            <input
+              type="number"
+              name="penaltyFactor"
+              value={formData.penaltyFactor}
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               required
