@@ -1,6 +1,7 @@
 package me.rkycse.coderush.kafka;
 
 import me.rkycse.coderush.dto.TournamentCacheDTO;
+import me.rkycse.coderush.entity.ClassicSubmissionDTO;
 import me.rkycse.coderush.entity.FreeStyleSubmissionStatus;
 import me.rkycse.coderush.entity.RankEntity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,5 +28,10 @@ public class Producer {
         kafkaTemplate.send(startTournamentInitTopic, cacheDTO);
 
     }
+    private static final  String classicSubmissionUpdateTopic="classical-submission";
+    public void sendClassicSubmission(String classicSubmissionDTO) {
+        kafkaTemplate.send(classicSubmissionUpdateTopic, classicSubmissionDTO);
+    }
+
 
 }

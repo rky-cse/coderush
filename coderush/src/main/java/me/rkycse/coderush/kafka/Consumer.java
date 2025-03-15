@@ -8,6 +8,7 @@ import me.rkycse.coderush.entity.*;
 import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.*;
 import me.rkycse.coderush.util.TimeUtil;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -227,5 +228,6 @@ public class Consumer {
                     + ". Error: " + e.getMessage());
         }
     }
+
 
 }
