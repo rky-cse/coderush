@@ -1,7 +1,9 @@
 package me.rkycse.coderush.controller;
 
 import me.rkycse.coderush.dto.*;
+import me.rkycse.coderush.kafka.Producer;
 import me.rkycse.coderush.service.TournamentWebSocketService;
+import me.rkycse.coderush.util.JsonConverter;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -18,11 +20,13 @@ public class TournamentWebSocketController {
     private final SimpMessagingTemplate messagingTemplate;
     private final TournamentWebSocketService tournamentWebSocketService;
     private final RedisTemplate<String,Object>redisTemplate;
+    private final Producer producer;
 
-    public TournamentWebSocketController(SimpMessagingTemplate messagingTemplate, TournamentWebSocketService tournamentWebSocketService, RedisTemplate<String, Object> redisTemplate) {
+    public TournamentWebSocketController(SimpMessagingTemplate messagingTemplate, TournamentWebSocketService tournamentWebSocketService, RedisTemplate<String, Object> redisTemplate, Producer producer) {
         this.messagingTemplate = messagingTemplate;
         this.tournamentWebSocketService = tournamentWebSocketService;
         this.redisTemplate = redisTemplate;
+        this.producer = producer;
     }
 
 
@@ -46,14 +50,11 @@ public class TournamentWebSocketController {
             UserDetails userDetails = (UserDetails) ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
             String userName = userDetails.getUsername();
 
-            // Fetch question and testcase
-            QuestionDTO question = tournamentWebSocketService.getQuestion(tournamentId, index);
-            TestcaseDTO testcaseDTO = tournamentWebSocketService.getTestcase(tournamentId, userName, index);
+
 
             // Create and send the response DTO
-            QuestionWithTestcaseDTO questionWithTestcaseDTO = new QuestionWithTestcaseDTO();
-            questionWithTestcaseDTO.setTestcase(testcaseDTO);
-            questionWithTestcaseDTO.setQuestion(question);
+            QuestionWithTestcaseDTO questionWithTestcaseDTO = tournamentWebSocketService
+                    .getQuestionWithTestcase(tournamentId,index,userName);
 
             messagingTemplate.convertAndSend("/topic/tournament/getQuestionWithTestcase/" + tournamentId + "/" + index, questionWithTestcaseDTO);
         } catch (NumberFormatException e) {
@@ -86,7 +87,9 @@ public class TournamentWebSocketController {
         int index = classicSubmissionDTO.getIndex();
         System.out.println("received response from user "+classicSubmissionDTO);
 
+        producer.sendClassicSubmission(JsonConverter.toJson(classicSubmissionDTO));
+
         Boolean res=null;// to complete
-        messagingTemplate.convertAndSend("/topic/tournament/classicSubmit/" + userName+"/" + index, res);
+
     }
 }

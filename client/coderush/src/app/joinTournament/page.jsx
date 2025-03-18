@@ -3,19 +3,20 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { getCookie } from 'cookies-next';
+import { useDispatch } from 'react-redux';
+import { setTournamentData } from '@/redux/slices/tournamentSlice';
 import { setTournamentEndTime } from '@/redux/slices/tournamentEndTimeSlice';
-import { useDispatch} from 'react-redux';
 
-const JoinTournament = () => {
+const JoinTournamentPage = () => {
   const [tournamentId, setTournamentId] = useState('');
-  const [tournamentData, setTournamentData] = useState(null);
+  const [tournamentData, setTournamentDataLocal] = useState(null);
   const [startTime, setStartTime] = useState(null);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const dispatch = useDispatch();
   const router = useRouter();
 
   useEffect(() => {
-    if (!tournamentData) return;
+    if (!tournamentData || !startTime) return;
 
     const updateCountdown = () => {
       const now = Date.now();
@@ -35,9 +36,8 @@ const JoinTournament = () => {
 
     updateCountdown();
     const timer = setInterval(updateCountdown, 1000);
-
     return () => clearInterval(timer);
-  }, [tournamentData]);
+  }, [tournamentData, startTime]);
 
   const handleJoinTournament = async () => {
     const token = typeof window !== 'undefined' ? getCookie('token') : null;
@@ -48,15 +48,28 @@ const JoinTournament = () => {
     }
 
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/tournament/mtm/joinTournament/${tournamentId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setTournamentData(response.data);
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/tournament/mtm/joinTournament/${tournamentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
+      // Store data in local component state
+      setTournamentDataLocal(response.data);
       setStartTime(response.data.tournament.startTime);
-      dispatch(setTournamentEndTime(response.data.tournament.startTime + response.data.tournament.durationInSeconds * 1000));
+
+      // Store tournament data in Redux
+      dispatch(setTournamentData(response.data));
+      console.log("yahi hai"+response.data);
+      dispatch(
+        setTournamentEndTime(
+          response.data.tournament.startTime +
+            response.data.tournament.durationInSeconds * 1000
+        )
+      );
     } catch (error) {
       alert('Failed to join tournament. Please check the ID or your network connection.');
     }
@@ -65,8 +78,6 @@ const JoinTournament = () => {
   const handleStartTournament = () => {
     router.push(`/tournamentPage/${tournamentId}`);
   };
-
-
 
   return (
     <div className="min-h-screen p-4 bg-gray-50 flex flex-col items-center">
@@ -90,18 +101,36 @@ const JoinTournament = () => {
       {tournamentData && (
         <div className="w-full max-w-lg p-4 shadow-lg rounded-xl bg-white">
           <h2 className="text-xl font-semibold">Tournament Details</h2>
-          <p><strong>Name:</strong> {tournamentData.tournament.name}</p>
-          <p><strong>Description:</strong> {tournamentData.tournament.description}</p>
-          <p><strong>Creator:</strong> {tournamentData.tournament.creatorUserName}</p>
-          <p><strong>Start Time:</strong> {new Date(tournamentData.tournament.startTime).toLocaleString()}</p>
-          <p><strong>Rated:</strong> {tournamentData.tournament.rated ? 'Yes' : 'No'}</p>
-          <p><strong>Min Rating:</strong> {tournamentData.tournament.minRatingReq}</p>
-          <p><strong>Max Rating:</strong> {tournamentData.tournament.maxRatingReq}</p>
-          <p><strong>Duration:</strong> {Math.floor(tournamentData.tournament.durationInSeconds / 60)} minutes</p>
+          <p>
+            <strong>Name:</strong> {tournamentData.tournament.name}
+          </p>
+          <p>
+            <strong>Description:</strong> {tournamentData.tournament.description}
+          </p>
+          <p>
+            <strong>Creator:</strong> {tournamentData.tournament.creatorUserName}
+          </p>
+          <p>
+            <strong>Start Time:</strong>{' '}
+            {new Date(tournamentData.tournament.startTime).toLocaleString()}
+          </p>
+          <p>
+            <strong>Rated:</strong> {tournamentData.tournament.rated ? 'Yes' : 'No'}
+          </p>
+          <p>
+            <strong>Min Rating:</strong> {tournamentData.tournament.minRatingReq}
+          </p>
+          <p>
+            <strong>Max Rating:</strong> {tournamentData.tournament.maxRatingReq}
+          </p>
+          <p>
+            <strong>Duration:</strong>{' '}
+            {Math.floor(tournamentData.tournament.durationInSeconds / 60)} minutes
+          </p>
 
           <h3 className="mt-4 font-semibold">Participants</h3>
           <ul>
-            {tournamentData.tournamentPlayerList.map(player => (
+            {tournamentData.tournamentPlayerList.map((player) => (
               <li key={player.id}>{player.playerUserName}</li>
             ))}
           </ul>
@@ -119,19 +148,25 @@ const JoinTournament = () => {
             ))}
           </div>
 
-
-
           <button
             className="mt-4 w-full bg-green-600 text-white py-2 rounded-md disabled:bg-gray-400"
             onClick={handleStartTournament}
-            disabled={startTime - Date.now() > 0 || startTime + tournamentData.tournament.durationInSeconds * 1000 - Date.now() <= 0}
+            disabled={
+              startTime - Date.now() > 0 ||
+              startTime +
+                tournamentData.tournament.durationInSeconds * 1000 -
+                Date.now() <=
+                0
+            }
           >
-            {startTime + tournamentData?.tournament.durationInSeconds * 1000 - Date.now() <= 0
-  ? 'Tournament Ended'
-  : startTime - Date.now() <= 0
-  ? 'Start Tournament'
-  : 'Waiting for Start Time'}
-
+            {startTime +
+              tournamentData.tournament.durationInSeconds * 1000 -
+              Date.now() <=
+            0
+              ? 'Tournament Ended'
+              : startTime - Date.now() <= 0
+              ? 'Start Tournament'
+              : 'Waiting for Start Time'}
           </button>
         </div>
       )}
@@ -139,4 +174,4 @@ const JoinTournament = () => {
   );
 };
 
-export default JoinTournament;
+export default JoinTournamentPage;

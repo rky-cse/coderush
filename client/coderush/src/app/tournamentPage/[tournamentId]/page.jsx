@@ -11,24 +11,55 @@ import RankListComponent from '@/components/RankListComponent';
 import { toast } from 'react-hot-toast';
 import { getCookie } from 'cookies-next';
 import TournamentControlBox from '@/components/TournamentControlBox';
-export default function TournamentPage({ params }) {
-  const { tournamentId } = React.use(params);
-  const [output, setOutput] = useState('');
-  const dispatch = useDispatch();
-  const { language, code } = useSelector((state) => state.editor);
 
+export default function TournamentPage({ params: paramsPromise }) {
+  // Unwrap the params promise with React.use()
+  const params = React.use(paramsPromise);
+
+  if (!params) {
+    console.error("TournamentPage: Params not provided.");
+    return <div>Error: Missing parameters.</div>;
+  }
+
+  const { tournamentId } = params;
+  if (!tournamentId) {
+    console.error("TournamentPage: Tournament ID is missing in params.");
+    return <div>Error: Tournament ID is missing.</div>;
+  }
+
+  // Get token and ensure it exists
   const token = typeof window !== 'undefined' ? getCookie('token') : null;
+  if (!token) {
+    console.error("TournamentPage: User token not found. User must be logged in.");
+    return <div>Error: You must be logged in to access this page.</div>;
+  }
+
+  const dispatch = useDispatch();
+  const { language, code } = useSelector((state) => state.editor) || {};
   const testcase = useSelector((state) => state.testcase.data) || '';
   const [customInput, setCustomInput] = useState('');
+  const [output, setOutput] = useState('');
   const [submissionResult, setSubmissionResult] = useState(null);
-  const index = useSelector((state) => state.index);
-  const username = useSelector((state) => state.auth.user);
+  const index = useSelector((state) => state.index) ?? 0;
+  const username = useSelector((state) => state.auth.user) || 'anonymous';
+  const question= useSelector((state) => state.question.data) || {};
+  const tournamentType =
+    useSelector((state) => state.tournament?.tournamentData?.tournament?.tournamentType) || 'CLASSIC';
 
   useEffect(() => {
     if (testcase && testcase.input) {
       setCustomInput(testcase.input);
     }
   }, [testcase]);
+
+  // Establish WebSocket connection conditionally based on token.
+  useEffect(() => {
+    if (!token) return;
+    webSocketService.connect(`${process.env.NEXT_PUBLIC_API_URL}/ws`, token);
+    return () => {
+      webSocketService.disconnect();
+    };
+  }, [token]);
 
   const handleInputChange = (e) => {
     setCustomInput(e.target.value);
@@ -60,21 +91,19 @@ export default function TournamentPage({ params }) {
         stdin: customInput,
       });
       setOutput(response.data.run.output);
-      if(response.data.run.signal == "SIGKILL"){
+
+      if (response.data.run.signal === "SIGKILL") {
         toast.dismiss();
         toast.error('Time Limit exceeded!');
-      }
-      else if(response.data.compile && response.data.compile.code == 1){
+      } else if (response.data.compile && response.data.compile.code === 1) {
         toast.dismiss();
         toast.error('Compilation Error!');
-      }
-      else if(response.data.run.code == 1){
+      } else if (response.data.run.code === 1) {
         toast.dismiss();
         toast.error('Runtime Error!');
-      }
-      else if(response.data.run.code == 0){
-      toast.dismiss();
-      toast.success('Code executed successfully!');
+      } else if (response.data.run.code === 0) {
+        toast.dismiss();
+        toast.success('Code executed successfully!');
       }
     } catch (error) {
       console.error('Error running code:', error);
@@ -86,66 +115,94 @@ export default function TournamentPage({ params }) {
 
   const handleSubmit = () => {
     toast.loading('Submitting...');
-    if (!token) {
-      alert('You must be logged in to submit.');
+    if (!tournamentType) {
+      console.error("handleSubmit: Tournament type is missing.");
+      toast.dismiss();
+      toast.error("Tournament type is missing, cannot submit.");
       return;
     }
 
-    const payload = {
-      index,
-      tournamentId,
-      //submissionTime: Date.now(),
-      userOutput: output,
-    };
-
-    console.log('Sending payload:', payload);
-
     try {
-      webSocketService.send('/app/tournament/freeStyleSubmit', payload);
+      if (tournamentType === 'FREE_STYLE') {
+        const payload = {
+          index,
+          questionId: question.questionId,
+          tournamentId,
+          userOutput: output,
+        };
 
-      console.log('Message sent successfully');
+        console.log('Submitting payload (FREE_STYLE):', payload);
+        webSocketService.send('/app/tournament/freeStyleSubmit', payload);
 
-      webSocketService.subscribe(
-        `/topic/tournament/freeStyleSubmit/${username}/${index}`,
-        (response) => {
-          console.log('Received response:', response);
-          setSubmissionResult(response);
-
-          // Handle response toast notifications
-          toast.dismiss();
-          if (response === true) {
-            response=null;
-            //alert('Correct!');
-            toast.success('Correct!');
-          } else if (response === false) {
-            toast.error('Incorrect!');
-          } else {
-            toast.error('Unexpected response. Please contact support.');
+        webSocketService.subscribe(
+          `/topic/tournament/freeStyleSubmit/${username}/${index}`,
+          (response) => {
+            console.log('Received FREE_STYLE response:', response);
+            setSubmissionResult(response);
+            toast.dismiss();
+            if (response === true) {
+              toast.success('Correct!');
+            } else if (response === false) {
+              toast.error('Incorrect!');
+            } else {
+              toast.error('Unexpected response. Please contact support.');
+            }
           }
-        }
-      );
+        );
+      } else if (tournamentType === 'CLASSIC') {
+        const payload = {
+          index,
+          tournamentId,
+          language,
+          code,
+        };
+
+        console.log('Submitting payload (CLASSIC):', payload);
+        webSocketService.send('/app/tournament/classicSubmit', payload);
+
+        webSocketService.subscribe(
+          `/topic/tournament/classicSubmit/${username}/${index}`,
+          (response) => {
+            console.log('Received CLASSIC response:', response);
+            setSubmissionResult(response);
+            toast.dismiss();
+            if (response === true) {
+              toast.success('Correct!');
+            } else if (response === false) {
+              toast.error('Incorrect!');
+            } else {
+              toast.error('Unexpected response. Please contact support.');
+            }
+          }
+        );
+      } else {
+        console.error("handleSubmit: Unknown tournament type:", tournamentType);
+        toast.dismiss();
+        toast.error("Unknown tournament type. Cannot submit.");
+      }
     } catch (error) {
       console.error('Error sending message:', error);
+      toast.dismiss();
       toast.error('An error occurred while submitting.');
     }
   };
 
   const handleNext = () => {
-    if(index === 4){
+    if (index === 4) {
       toast.dismiss();
-      toast.error('This is last question!');
+      toast.error('This is the last question!');
+      return;
     }
-
-    dispatch(increment()); // Dispatch the increment action
+    dispatch(increment());
   };
 
   const handlePrev = () => {
-    if(index === 0){
+    if (index === 0) {
       toast.dismiss();
-      toast.error('This is first Question!');
+      toast.error('This is the first question!');
+      return;
     }
-
-    dispatch(decrement()); // Dispatch the decrement action
+    dispatch(decrement());
   };
 
   return (
@@ -155,11 +212,14 @@ export default function TournamentPage({ params }) {
           <TournamentControlBox />
         </div>
 
-
         <div className="flex h-[95vh] w-full">
           <div className="relative w-[70%] h-full p-4 border-r">
             <div className="questionAndEditorBox absolute inset-0 overflow-auto bg-white p-4">
-              <Question tournamentId={tournamentId} index={index} token={token} />
+              {tournamentId && index !== undefined && token ? (
+                <Question tournamentId={tournamentId} index={index} token={token} />
+              ) : (
+                <p>Error loading question. Required data is missing.</p>
+              )}
 
               <div className="mb-8">
                 <h2 className="text-xl font-bold mb-2">Code Editor</h2>
@@ -227,8 +287,12 @@ export default function TournamentPage({ params }) {
       )}
 
       <div className="mb-8">
-        <p className="font-bold">RankList box</p>
-        <RankListComponent tournamentId={tournamentId} token={token}></RankListComponent>
+        <p className="font-bold">RankList Box</p>
+        {tournamentId && token ? (
+          <RankListComponent tournamentId={tournamentId} token={token} />
+        ) : (
+          <p>Error loading Rank List. Required data is missing.</p>
+        )}
       </div>
     </div>
   );

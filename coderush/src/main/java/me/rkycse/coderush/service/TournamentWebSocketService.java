@@ -1,11 +1,13 @@
 package me.rkycse.coderush.service;
 
 import me.rkycse.coderush.dto.*;
+import me.rkycse.coderush.entity.TournamentBaseEntity;
 import me.rkycse.coderush.kafka.Producer;
 import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.util.StringComparator;
 import me.rkycse.coderush.util.TimeUtil;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.util.NoSuchElementException;
@@ -23,7 +25,8 @@ public class TournamentWebSocketService {
     }
 
 
-    public QuestionDTO getQuestion(Long tournamentId,int index) {
+    public QuestionDTO getQuestion(Long tournamentId,int index) throws InterruptedException {
+
 
         QuestionDTO question = (QuestionDTO)redisTemplate
                 .opsForValue().get("questionDTO/"+tournamentId+"/"+index);
@@ -45,6 +48,34 @@ public class TournamentWebSocketService {
         return testcase;
 
     }
+
+    public QuestionWithTestcaseDTO getQuestionWithTestcase(Long tournamentId,int index,String userName) throws InterruptedException {
+        // Fetch question and testcase
+        QuestionDTO question = getQuestion(tournamentId, index);
+        TournamentCacheDTO cacheDTO=(TournamentCacheDTO) redisTemplate.opsForValue().get("$"+tournamentId);
+
+
+        // Create and send the response DTO
+        QuestionWithTestcaseDTO questionWithTestcaseDTO = new QuestionWithTestcaseDTO();
+        if (TournamentBaseEntity.TournamentType.FREE_STYLE.equals(cacheDTO.getTournamentType())){
+            TestcaseDTO testcaseDTO = getTestcase(tournamentId, userName, index);
+            questionWithTestcaseDTO.setTestcase(testcaseDTO);
+        }
+        else{
+            TestcaseDTO testcaseDTO1 =new TestcaseDTO();
+            testcaseDTO1.setInput("");
+            testcaseDTO1.setOutput("");
+            questionWithTestcaseDTO.setTestcase(testcaseDTO1);// temp
+        }
+        questionWithTestcaseDTO.setQuestion(question);
+
+        return questionWithTestcaseDTO;
+
+
+    }
+
+
+
 
 
 
@@ -164,6 +195,113 @@ public class TournamentWebSocketService {
         }
 
         return false;
+    }
+
+    public void classicRankAndSubUpdate(ClassicSubmissionResponseDTO classicDTO) {
+        Long tournamentId = classicDTO.getTournamentId();
+        String userName=classicDTO.getUsername();
+        int index=classicDTO.getIndex();
+
+        TournamentCacheDTO cacheDTO=(TournamentCacheDTO) redisTemplate.opsForValue().get("$"+tournamentId);
+        if(cacheDTO==null) {
+            throw new NoSuchElementException("Tournament not found");
+        }
+        Long startTime=cacheDTO.getStartTime();
+        Long endTime=startTime+cacheDTO.getDurationInSeconds()*1000L;
+        Long submissionTime= TimeUtil.getCurrentEpochMillis();
+
+        if(submissionTime>endTime) {
+            throw new NoSuchElementException("tournament already ended");
+        }
+
+        String verdict = classicDTO.getVerdict();
+        if(verdict==null) {
+            throw new NoSuchElementException("verdict not found");
+        }
+        // Fetch rank details
+        System.out.println("Fetching rank for user: " + classicDTO.getUsername() + " and tid: " + classicDTO.getTournamentId());
+        RankDTO rank = (RankDTO)redisTemplate
+                .opsForValue().get("rankDTO/" + classicDTO.getTournamentId() + "/" + classicDTO.getUsername());
+        if (rank == null) {
+            throw new NoSuchElementException("Rank not found for user: " + classicDTO.getUsername());
+        }
+
+        if(verdict.equals("AC")){
+
+            // Fetch user testcase details
+            SubmissionStatusDTO SubmissionStatusDTO = (SubmissionStatusDTO)redisTemplate
+                    .opsForValue().get("SubmissionStatusDTO/" + classicDTO.getTournamentId() + "/" + classicDTO.getUsername() + "/" + classicDTO.getIndex());
+            if (SubmissionStatusDTO == null) {
+                throw new NoSuchElementException("User testcase not found for user: " + classicDTO.getUsername()+ " and index: " + classicDTO.getIndex());
+            }
+
+
+
+            // Mark as solved and update attempts
+            SubmissionStatusDTO.setSolved(true);
+            SubmissionStatusDTO.setNumberOfAttempts(SubmissionStatusDTO.getNumberOfAttempts() + 1);
+            rank.setPenalty(rank.getPenalty()+(TimeUtil.getCurrentEpochMillis())/(60000L));
+
+            // Update SubmissionStatusDTO in Redis without changing TTL
+            String key = "SubmissionStatusDTO/" + tournamentId + "/" + userName + "/" + index;
+
+// Get the current TTL before updating
+            Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+
+            if (ttl != null && ttl > 0) {
+                // Key exists and has an expiry
+                redisTemplate.opsForValue().setIfPresent(key, SubmissionStatusDTO);
+                redisTemplate.expire(key, ttl, TimeUnit.SECONDS); // Restore TTL
+                producer.sendSubmissionStatusUpdate(Mapper.toEntity(SubmissionStatusDTO));
+            } else {
+                redisTemplate.opsForValue().setIfPresent(key, SubmissionStatusDTO);
+            }
+
+            // Update rank in Redis without changing TTL
+            String rankKey = "rankDTO/" + tournamentId + "/" + userName;
+// Get the current TTL before updating
+            Long rankTTL = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+
+            if (rankTTL != null && rankTTL > 0) { // Key exists and has an expiry
+                redisTemplate.opsForValue().setIfPresent(rankKey, rank);
+                redisTemplate.expire(key, rankTTL, TimeUnit.SECONDS); // Restore TTL
+                producer.sendRankUpdate(Mapper.toEntity(rank));
+            } else {
+                redisTemplate.opsForValue().setIfPresent(key,rank);
+            }
+
+
+
+        }
+        else {
+            // Handle incorrect answers
+            SubmissionStatusDTO SubmissionStatusDTO =(SubmissionStatusDTO) redisTemplate
+                    .opsForValue().get("SubmissionStatusDTO/" + tournamentId + "/" + userName + "/" + index);
+            if (SubmissionStatusDTO == null) {
+                throw new NoSuchElementException("User testcase not found for user: " + userName + " and index: " + index);
+            }
+
+            // Increment the number of attempts if not already solved
+            if (!SubmissionStatusDTO.getSolved()) {
+                SubmissionStatusDTO.setNumberOfAttempts(SubmissionStatusDTO.getNumberOfAttempts() + 1);
+                rank.setPenalty(rank.getPenalty() + cacheDTO.getPenaltyFactor());
+                // Update SubmissionStatusDTO in Redis without changing TTL
+                String key = "SubmissionStatusDTO/" + tournamentId + "/" + userName + "/" + index;
+
+// Get the current TTL before updating
+                Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+
+                if (ttl != null && ttl > 0) { // Key exists and has an expiry
+                    redisTemplate.opsForValue().setIfPresent(key, SubmissionStatusDTO);
+                    redisTemplate.expire(key, ttl, TimeUnit.SECONDS); // Restore TTL
+                    producer.sendSubmissionStatusUpdate(Mapper.toEntity(SubmissionStatusDTO));
+                } else {
+                    redisTemplate.opsForValue().setIfPresent(key, SubmissionStatusDTO);
+                }
+            }
+        }
+
+
     }
 
 

@@ -1,16 +1,17 @@
 package me.rkycse.coderush.kafka;
 
-import me.rkycse.coderush.dto.SubmissionStatusDTO;
-import me.rkycse.coderush.dto.RankDTO;
-import me.rkycse.coderush.dto.TestcaseDTO;
-import me.rkycse.coderush.dto.TournamentCacheDTO;
+import me.rkycse.coderush.controller.TournamentWebSocketController;
+import me.rkycse.coderush.dto.*;
 import me.rkycse.coderush.entity.*;
 import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.*;
+import me.rkycse.coderush.service.TournamentWebSocketService;
+import me.rkycse.coderush.util.JsonConverter;
 import me.rkycse.coderush.util.TimeUtil;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -25,23 +26,25 @@ public class Consumer {
     private final TestcaseRepository testcaseRepository;
     private final TournamentPlayerRepository tournamentPlayerRepository;
     private final TournamentQuestionRepository tournamentQuestionRepository;
+    private final TournamentWebSocketService tournamentWebSocketService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     private final RankRepository rankRepository;
     private final UserRepository userRepository;
     private final SubmissionStatusRepository submissionStatusRepository;
 
-    public Consumer(RedisTemplate<String, Object> redisTemplate, QuestionRepository questionRepository, TestcaseRepository testcaseRepository, TournamentPlayerRepository tournamentPlayerRepository, TournamentQuestionRepository tournamentQuestionRepository,  RankRepository rankRepository, UserRepository userRepository, SubmissionStatusRepository submissionStatusRepository) {
+    public Consumer(RedisTemplate<String, Object> redisTemplate, QuestionRepository questionRepository, TestcaseRepository testcaseRepository, TournamentPlayerRepository tournamentPlayerRepository, TournamentQuestionRepository tournamentQuestionRepository, TournamentWebSocketService tournamentWebSocketService, SimpMessagingTemplate messagingTemplate, RankRepository rankRepository, UserRepository userRepository, SubmissionStatusRepository submissionStatusRepository) {
         this.redisTemplate = redisTemplate;
         this.questionRepository = questionRepository;
         this.testcaseRepository = testcaseRepository;
         this.tournamentPlayerRepository = tournamentPlayerRepository;
         this.tournamentQuestionRepository = tournamentQuestionRepository;
-
+        this.tournamentWebSocketService = tournamentWebSocketService;
+        this.messagingTemplate = messagingTemplate;
         this.rankRepository = rankRepository;
         this.userRepository = userRepository;
         this.submissionStatusRepository = submissionStatusRepository;
     }
-
 
     @KafkaListener(topics = "rank-update", groupId = "myGroup")
     public void consume(RankEntity rank) {
@@ -244,7 +247,16 @@ public class Consumer {
     @KafkaListener(topics="classical-submission-response",groupId = "myGroup")
     public void consumeClassicSubmissionResponse(String classicSubmissionResponse) {
         System.out.println("ClassicSubmissionResponse: " + classicSubmissionResponse);
+        // convert to object
 
+        ClassicSubmissionResponseDTO classicSubmissionResponseDTO=
+                JsonConverter.fromJson(classicSubmissionResponse,
+                        ClassicSubmissionResponseDTO.class);
+
+        tournamentWebSocketService.classicRankAndSubUpdate(classicSubmissionResponseDTO);
+        String userName=classicSubmissionResponseDTO.getUsername();
+        int index=classicSubmissionResponseDTO.getIndex();
+        messagingTemplate.convertAndSend("/topic/tournament/classicSubmit/" + userName+"/" + index, classicSubmissionResponseDTO);
     }
 
 
