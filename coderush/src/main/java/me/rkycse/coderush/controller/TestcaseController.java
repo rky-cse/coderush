@@ -1,5 +1,6 @@
 package me.rkycse.coderush.controller;
 
+import me.rkycse.coderush.dto.ClassicTestcaseDTO;
 import me.rkycse.coderush.dto.TestcaseDTO;
 import me.rkycse.coderush.service.TestcaseService;
 import org.springframework.http.ResponseEntity;
@@ -28,9 +29,22 @@ public class TestcaseController {
         }
         return ResponseEntity.badRequest().build();
     }
+
+    @PostMapping("createClassicTestcase")
+    public ResponseEntity<String > createClassicTestcase(@RequestBody ClassicTestcaseDTO testcase) {
+        if(testcaseService.createClassicTestcase(testcase)) {
+            return ResponseEntity.ok("Success");
+        }
+        return ResponseEntity.badRequest().build();
+
+    }
     @GetMapping("getTestcasesByQuestionId/{questionId}")
     public ResponseEntity<List<TestcaseDTO>> getTestcasesByQuestionId( @PathVariable Long questionId) {
         return ResponseEntity.ok(testcaseService.getTestcasesByQuestionId(questionId));
+    }
+    @GetMapping("getClassicTestcaseById/{testcaseId}")
+    public ResponseEntity<ClassicTestcaseDTO> getClassicTestcasesByQuestionId( @PathVariable Long testcaseId) {
+        return ResponseEntity.ok(testcaseService.getClassicTestcaseById(testcaseId));
     }
 
 

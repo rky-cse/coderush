@@ -36,15 +36,15 @@ public class Mapper {
         return entity;
     }
 
-    public static FreeStyleSubmissionStatusDTO toDTO(FreeStyleSubmissionStatus entity) {
+    public static SubmissionStatusDTO toDTO(SubmissionStatus entity) {
         if (entity == null) {
             return null;
         }
 
-        FreeStyleSubmissionStatusDTO dto = new FreeStyleSubmissionStatusDTO();
+        SubmissionStatusDTO dto = new SubmissionStatusDTO();
         dto.setId(entity.getId());
         dto.setUserName(entity.getUserName());
-        dto.setTestcaseId(entity.getTestcaseId());
+        dto.setQuestionId(entity.getQuestionId());
         dto.setSolved(entity.getSolved());
         dto.setNumberOfAttempts(entity.getNumberOfAttempts());
         dto.setTournamentId(entity.getTournamentId());
@@ -53,15 +53,15 @@ public class Mapper {
         return dto;
     }
 
-    public static FreeStyleSubmissionStatus toEntity(FreeStyleSubmissionStatusDTO dto) {
+    public static SubmissionStatus toEntity(SubmissionStatusDTO dto) {
         if (dto == null) {
             return null;
         }
 
-        FreeStyleSubmissionStatus entity = new FreeStyleSubmissionStatus();
+        SubmissionStatus entity = new SubmissionStatus();
         entity.setId(dto.getId());
         entity.setUserName(dto.getUserName());
-        entity.setTestcaseId(dto.getTestcaseId());
+        entity.setQuestionId(dto.getQuestionId());
         entity.setSolved(dto.getSolved());
         entity.setNumberOfAttempts(dto.getNumberOfAttempts());
         entity.setTournamentId(dto.getTournamentId());

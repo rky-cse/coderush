@@ -1,9 +1,6 @@
 package me.rkycse.coderush.controller;
 
-import me.rkycse.coderush.dto.QuestionDTO;
-import me.rkycse.coderush.dto.QuestionWithTestcaseDTO;
-import me.rkycse.coderush.dto.TestcaseDTO;
-import me.rkycse.coderush.dto.UserResponseDTO;
+import me.rkycse.coderush.dto.*;
 import me.rkycse.coderush.service.TournamentWebSocketService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -66,7 +63,7 @@ public class TournamentWebSocketController {
         }
     }
 
-    @MessageMapping("/tournament/submit")
+    @MessageMapping("/tournament/freeStyleSubmit")
     public void submit(@RequestBody UserResponseDTO responseDTO, Principal principal) {
         if (principal == null) {
             throw new IllegalStateException("No principal found in security context");
@@ -77,6 +74,19 @@ public class TournamentWebSocketController {
         System.out.println("received response from user "+responseDTO);
 
         Boolean res=tournamentWebSocketService.isCorrect(userName,index,responseDTO);
-        messagingTemplate.convertAndSend("/topic/tournament/submit/" + userName+"/" + index, res);
+        messagingTemplate.convertAndSend("/topic/tournament/freeStyleSubmit/" + userName+"/" + index, res);
+    }
+    @MessageMapping("/tournament/classicSubmit")
+    public void submit(@RequestBody ClassicSubmissionDTO classicSubmissionDTO, Principal principal) {
+        if (principal == null) {
+            throw new IllegalStateException("No principal found in security context");
+        }
+        UserDetails userDetails = (UserDetails) ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
+        String userName = userDetails.getUsername();
+        int index = classicSubmissionDTO.getIndex();
+        System.out.println("received response from user "+classicSubmissionDTO);
+
+        Boolean res=null;// to complete
+        messagingTemplate.convertAndSend("/topic/tournament/classicSubmit/" + userName+"/" + index, res);
     }
 }

@@ -59,9 +59,9 @@ public class RankListSchedulerService {
                 for(String rankKey : rankKeys) {
                     RankWithFreeStyleSubmissionDTO rankWithFreeStyleSubmissionDTO =new RankWithFreeStyleSubmissionDTO();
                     RankDTO rankDTO=(RankDTO) redisTemplate.opsForValue().get(rankKey);
-                    Set<String>freeStyleSubmissionStatusKeys=redisTemplate
-                            .keys("freeStyleSubmissionStatusDTO/"+tournamentId+"/"+rankDTO.getUserName()+"/*");
-                    if(freeStyleSubmissionStatusKeys == null || freeStyleSubmissionStatusKeys.isEmpty()) {
+                    Set<String>SubmissionStatusKeys=redisTemplate
+                            .keys("SubmissionStatusDTO/"+tournamentId+"/"+rankDTO.getUserName()+"/*");
+                    if(SubmissionStatusKeys == null || SubmissionStatusKeys.isEmpty()) {
                         continue;
                     }
                     rankWithFreeStyleSubmissionDTO.setId(rankDTO.getId());
@@ -69,15 +69,15 @@ public class RankListSchedulerService {
                     rankWithFreeStyleSubmissionDTO.setScore(rankDTO.getScore());
                     rankWithFreeStyleSubmissionDTO.setTournamentId(tournamentId);
 
-                    for(String freeStyleSubmissionStatusKey : freeStyleSubmissionStatusKeys) {
-                        FreeStyleSubmissionStatusDTO freeStyleSubmissionStatusDTO =(FreeStyleSubmissionStatusDTO) redisTemplate
-                                .opsForValue().get(freeStyleSubmissionStatusKey);
-                        if(freeStyleSubmissionStatusDTO == null) {
+                    for(String SubmissionStatusKey : SubmissionStatusKeys) {
+                        SubmissionStatusDTO SubmissionStatusDTO =(SubmissionStatusDTO) redisTemplate
+                                .opsForValue().get(SubmissionStatusKey);
+                        if(SubmissionStatusDTO == null) {
                             continue;
                         }
                         rankWithFreeStyleSubmissionDTO
                                 .getFreeStyleSubmissionDTOS()
-                                .add(freeStyleSubmissionStatusDTO);
+                                .add(SubmissionStatusDTO);
                     }
                     rankListDTO.getRankList().add(rankWithFreeStyleSubmissionDTO);
 

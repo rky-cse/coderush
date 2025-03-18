@@ -1,8 +1,7 @@
 package me.rkycse.coderush.kafka;
 
 import me.rkycse.coderush.dto.TournamentCacheDTO;
-import me.rkycse.coderush.entity.ClassicSubmissionDTO;
-import me.rkycse.coderush.entity.FreeStyleSubmissionStatus;
+import me.rkycse.coderush.entity.SubmissionStatus;
 import me.rkycse.coderush.entity.RankEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -17,10 +16,10 @@ public class Producer {
         kafkaTemplate.send(rankUpdateTopic, rank);
         System.out.println("Produced message: " + rank);
     }
-    private static final String userTestcaseUpdateTopic = "user-testcase-update";
+    private static final String SubmissionStatusUpdateTopic = "user-testcase-update";
 
-    public void sendUserTestcaseUpdate(FreeStyleSubmissionStatus testcase ) {
-        kafkaTemplate.send(userTestcaseUpdateTopic, testcase);
+    public void sendSubmissionStatusUpdate(SubmissionStatus testcase ) {
+        kafkaTemplate.send(SubmissionStatusUpdateTopic, testcase);
     }
 
     private static final  String startTournamentInitTopic="start-tournament-init";

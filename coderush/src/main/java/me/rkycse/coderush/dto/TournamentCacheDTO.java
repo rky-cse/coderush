@@ -1,13 +1,23 @@
 package me.rkycse.coderush.dto;
 
 
+import me.rkycse.coderush.entity.TournamentBaseEntity;
+
 public class TournamentCacheDTO{
     private Long tournamentId;
     private long startTime;
     private long penaltyFactor;
     private long durationInSeconds;
+    private TournamentBaseEntity.TournamentType tournamentType;
     private boolean scheduled;
 
+    public TournamentBaseEntity.TournamentType getTournamentType() {
+        return tournamentType;
+    }
+
+    public void setTournamentType(TournamentBaseEntity.TournamentType tournamentType) {
+        this.tournamentType = tournamentType;
+    }
 
     public TournamentCacheDTO() {
     }
@@ -16,12 +26,6 @@ public class TournamentCacheDTO{
         return tournamentId;
     }
 
-    public TournamentCacheDTO(Long tournamentId, long startTime, long durationInSeconds, boolean scheduled) {
-        this.tournamentId = tournamentId;
-        this.startTime = startTime;
-        this.durationInSeconds = durationInSeconds;
-        this.scheduled = scheduled;
-    }
 
     public void setTournamentId(Long tournamentId) {
         this.tournamentId = tournamentId;
@@ -57,6 +61,18 @@ public class TournamentCacheDTO{
 
     public void setScheduled(boolean scheduled) {
         this.scheduled = scheduled;
+    }
+
+    @Override
+    public String toString() {
+        return "TournamentCacheDTO{" +
+                "tournamentId=" + tournamentId +
+                ", startTime=" + startTime +
+                ", penaltyFactor=" + penaltyFactor +
+                ", durationInSeconds=" + durationInSeconds +
+                ", tournamentType=" + tournamentType +
+                ", scheduled=" + scheduled +
+                '}';
     }
 }
 

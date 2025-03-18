@@ -101,12 +101,12 @@ export default function TournamentPage({ params }) {
     console.log('Sending payload:', payload);
 
     try {
-      webSocketService.send('/app/tournament/submit', payload);
+      webSocketService.send('/app/tournament/freeStyleSubmit', payload);
 
       console.log('Message sent successfully');
 
       webSocketService.subscribe(
-        `/topic/tournament/submit/${username}/${index}`,
+        `/topic/tournament/freeStyleSubmit/${username}/${index}`,
         (response) => {
           console.log('Received response:', response);
           setSubmissionResult(response);

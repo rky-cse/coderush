@@ -13,7 +13,7 @@ const TournamentFormModal = ({ closeModal }) => {
     penaltyFactor: 0,
     visibility: 'PUBLIC',
     password: '',
-    tournamentType: 'CLASSIC',
+    tournamentType: 'FREE_STYLE',
     teamStyle: false,
   });
 
@@ -186,9 +186,10 @@ const TournamentFormModal = ({ closeModal }) => {
               onChange={handleChange}
               className="w-full px-4 py-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500"
             >
+              <option value="FREE_STYLE">FreeStyle</option>
               <option value="CLASSIC">Classic</option>
-              <option value="BLITZ">Blitz</option>
-              <option value="BULLET">Bullet</option>
+              
+            
             </select>
           </div>
 

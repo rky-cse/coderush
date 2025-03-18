@@ -85,34 +85,34 @@ public class TournamentWebSocketService {
         // Compare user output with the expected output
         if (StringComparator.compareIgnoringWhitespace(testcaseOutput, answer.getUserOutput())) {
             // Fetch user testcase details
-            FreeStyleSubmissionStatusDTO freeStyleSubmissionStatusDTO = (FreeStyleSubmissionStatusDTO)redisTemplate
-                    .opsForValue().get("freeStyleSubmissionStatusDTO/" + answer.getTournamentId() + "/" + userName + "/" + index);
-            if (freeStyleSubmissionStatusDTO == null) {
+            SubmissionStatusDTO SubmissionStatusDTO = (SubmissionStatusDTO)redisTemplate
+                    .opsForValue().get("SubmissionStatusDTO/" + answer.getTournamentId() + "/" + userName + "/" + index);
+            if (SubmissionStatusDTO == null) {
                 throw new NoSuchElementException("User testcase not found for user: " + userName + " and index: " + index);
             }
 
-            if (freeStyleSubmissionStatusDTO.getSolved()) {
+            if (SubmissionStatusDTO.getSolved()) {
                 return true; // If already solved, return true
             }
 
             // Mark as solved and update attempts
-            freeStyleSubmissionStatusDTO.setSolved(true);
-            freeStyleSubmissionStatusDTO.setNumberOfAttempts(freeStyleSubmissionStatusDTO.getNumberOfAttempts() + 1);
+            SubmissionStatusDTO.setSolved(true);
+            SubmissionStatusDTO.setNumberOfAttempts(SubmissionStatusDTO.getNumberOfAttempts() + 1);
             rank.setPenalty(rank.getPenalty()+(TimeUtil.getCurrentEpochMillis())/(60000L));
 
-            // Update freeStyleSubmissionStatusDTO in Redis without changing TTL
-            String key = "freeStyleSubmissionStatusDTO/" + answer.getTournamentId() + "/" + userName + "/" + index;
+            // Update SubmissionStatusDTO in Redis without changing TTL
+            String key = "SubmissionStatusDTO/" + answer.getTournamentId() + "/" + userName + "/" + index;
 
 // Get the current TTL before updating
             Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
 
             if (ttl != null && ttl > 0) {
                 // Key exists and has an expiry
-                redisTemplate.opsForValue().setIfPresent(key, freeStyleSubmissionStatusDTO);
+                redisTemplate.opsForValue().setIfPresent(key, SubmissionStatusDTO);
                 redisTemplate.expire(key, ttl, TimeUnit.SECONDS); // Restore TTL
-                producer.sendUserTestcaseUpdate(Mapper.toEntity(freeStyleSubmissionStatusDTO));
+                producer.sendSubmissionStatusUpdate(Mapper.toEntity(SubmissionStatusDTO));
             } else {
-                redisTemplate.opsForValue().setIfPresent(key, freeStyleSubmissionStatusDTO);
+                redisTemplate.opsForValue().setIfPresent(key, SubmissionStatusDTO);
             }
 
 
@@ -137,28 +137,28 @@ public class TournamentWebSocketService {
 
         } else {
             // Handle incorrect answers
-            FreeStyleSubmissionStatusDTO freeStyleSubmissionStatusDTO =(FreeStyleSubmissionStatusDTO) redisTemplate
-                    .opsForValue().get("freeStyleSubmissionStatusDTO/" + answer.getTournamentId() + "/" + userName + "/" + index);
-            if (freeStyleSubmissionStatusDTO == null) {
+            SubmissionStatusDTO SubmissionStatusDTO =(SubmissionStatusDTO) redisTemplate
+                    .opsForValue().get("SubmissionStatusDTO/" + answer.getTournamentId() + "/" + userName + "/" + index);
+            if (SubmissionStatusDTO == null) {
                 throw new NoSuchElementException("User testcase not found for user: " + userName + " and index: " + index);
             }
 
             // Increment the number of attempts if not already solved
-            if (!freeStyleSubmissionStatusDTO.getSolved()) {
-                freeStyleSubmissionStatusDTO.setNumberOfAttempts(freeStyleSubmissionStatusDTO.getNumberOfAttempts() + 1);
+            if (!SubmissionStatusDTO.getSolved()) {
+                SubmissionStatusDTO.setNumberOfAttempts(SubmissionStatusDTO.getNumberOfAttempts() + 1);
                 rank.setPenalty(rank.getPenalty() + cacheDTO.getPenaltyFactor());
-                // Update freeStyleSubmissionStatusDTO in Redis without changing TTL
-                String key = "freeStyleSubmissionStatusDTO/" + answer.getTournamentId() + "/" + userName + "/" + index;
+                // Update SubmissionStatusDTO in Redis without changing TTL
+                String key = "SubmissionStatusDTO/" + answer.getTournamentId() + "/" + userName + "/" + index;
 
 // Get the current TTL before updating
                 Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
 
                 if (ttl != null && ttl > 0) { // Key exists and has an expiry
-                    redisTemplate.opsForValue().setIfPresent(key, freeStyleSubmissionStatusDTO);
+                    redisTemplate.opsForValue().setIfPresent(key, SubmissionStatusDTO);
                     redisTemplate.expire(key, ttl, TimeUnit.SECONDS); // Restore TTL
-                    producer.sendUserTestcaseUpdate(Mapper.toEntity(freeStyleSubmissionStatusDTO));
+                    producer.sendSubmissionStatusUpdate(Mapper.toEntity(SubmissionStatusDTO));
                 } else {
-                    redisTemplate.opsForValue().setIfPresent(key, freeStyleSubmissionStatusDTO);
+                    redisTemplate.opsForValue().setIfPresent(key, SubmissionStatusDTO);
                 }
             }
         }

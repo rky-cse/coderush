@@ -2,7 +2,7 @@ package me.rkycse.coderush.controller;
 
 //for testing purpose only
 
-import me.rkycse.coderush.entity.ClassicSubmissionDTO;
+import me.rkycse.coderush.dto.ClassicSubmissionDTO;
 import me.rkycse.coderush.kafka.Producer;
 import me.rkycse.coderush.util.JsonConverter;
 import org.springframework.http.ResponseEntity;

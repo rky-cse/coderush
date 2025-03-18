@@ -33,7 +33,9 @@ services:
       - internal_net
 
   judge:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: judge
     depends_on:
       - broker
@@ -41,6 +43,9 @@ services:
     environment:
       # Use the internal Kafka listener for container-to-container communication.
       KAFKA_BOOTSTRAP_SERVERS: broker:29092
+    volumes:
+      # Mount the host testcases directory as read-only into /testcases in the container.
+      - E:\testcases:/testcases:ro
     deploy:
       resources:
         limits:

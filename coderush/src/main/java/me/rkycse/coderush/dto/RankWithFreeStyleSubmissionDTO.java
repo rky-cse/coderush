@@ -10,7 +10,7 @@ public class RankWithFreeStyleSubmissionDTO {
     private Long tournamentId;
     private long score;
     private Long penalty=0L;
-    private List<FreeStyleSubmissionStatusDTO> freeStyleSubmissionStatusDTOS =new ArrayList<>();
+    private List<SubmissionStatusDTO> SubmissionStatusDTOS =new ArrayList<>();
 
 
     public Long getId() {
@@ -53,11 +53,11 @@ public class RankWithFreeStyleSubmissionDTO {
         this.penalty = penalty;
     }
 
-    public List<FreeStyleSubmissionStatusDTO> getFreeStyleSubmissionDTOS() {
-        return freeStyleSubmissionStatusDTOS;
+    public List<SubmissionStatusDTO> getFreeStyleSubmissionDTOS() {
+        return SubmissionStatusDTOS;
     }
 
-    public void setFreeStyleSubmissionDTOS(List<FreeStyleSubmissionStatusDTO> freeStyleSubmissionStatusDTOS) {
-        this.freeStyleSubmissionStatusDTOS = freeStyleSubmissionStatusDTOS;
+    public void setFreeStyleSubmissionDTOS(List<SubmissionStatusDTO> SubmissionStatusDTOS) {
+        this.SubmissionStatusDTOS = SubmissionStatusDTOS;
     }
 }

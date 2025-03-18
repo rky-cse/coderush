@@ -110,6 +110,7 @@ public class MTMTournamentService {
 
         // If the tournament is active, start it
         if (currentTime >= startTime && currentTime < endTime) {
+            System.out.println("startTournament called in mtmTournamentService for tid: " + tournamentId);
             startTournament(tournamentId);
         }
 
@@ -199,11 +200,11 @@ public class MTMTournamentService {
 
 
                 if (testcaseDTO != null) {
-                    FreeStyleSubmissionStatusDTO freeStyleSubmissionStatusDTO = new FreeStyleSubmissionStatusDTO();
-                    freeStyleSubmissionStatusDTO.setTestcaseId(testcaseDTO.getTestcaseId());
-                    freeStyleSubmissionStatusDTO.setUserName(tournamentPlayerEntity.getPlayerUserName());
-                    freeStyleSubmissionStatusDTO.setSolved(false);
-                    freeStyleSubmissionStatusDTO.setNumberOfAttempts(0);
+                    SubmissionStatusDTO SubmissionStatusDTO = new SubmissionStatusDTO();
+                    SubmissionStatusDTO.setQuestionId(question.getQuestionId());
+                    SubmissionStatusDTO.setUserName(tournamentPlayerEntity.getPlayerUserName());
+                    SubmissionStatusDTO.setSolved(false);
+                    SubmissionStatusDTO.setNumberOfAttempts(0);
 
                     redisTemplate.opsForValue().set(
                             "testcaseDTO/" + tournamentId + "/" +
@@ -214,9 +215,9 @@ public class MTMTournamentService {
                             TimeUnit.SECONDS
                     );
                     redisTemplate.opsForValue().set(
-                            "freeStyleSubmissionStatusDTO/" + tournamentId + "/" +
+                            "SubmissionStatusDTO/" + tournamentId + "/" +
                                     tournamentPlayerEntity.getPlayerUserName() + "/" + index,
-                            freeStyleSubmissionStatusDTO,
+                            SubmissionStatusDTO,
                             remainingTime,
                             TimeUnit.SECONDS
                     );

@@ -1,6 +1,6 @@
 package me.rkycse.coderush.kafka;
 
-import me.rkycse.coderush.dto.FreeStyleSubmissionStatusDTO;
+import me.rkycse.coderush.dto.SubmissionStatusDTO;
 import me.rkycse.coderush.dto.RankDTO;
 import me.rkycse.coderush.dto.TestcaseDTO;
 import me.rkycse.coderush.dto.TournamentCacheDTO;
@@ -28,9 +28,9 @@ public class Consumer {
 
     private final RankRepository rankRepository;
     private final UserRepository userRepository;
-    private final UserTestcaseRepository userTestcaseRepository;
+    private final SubmissionStatusRepository submissionStatusRepository;
 
-    public Consumer(RedisTemplate<String, Object> redisTemplate, QuestionRepository questionRepository, TestcaseRepository testcaseRepository, TournamentPlayerRepository tournamentPlayerRepository, TournamentQuestionRepository tournamentQuestionRepository,  RankRepository rankRepository, UserRepository userRepository, UserTestcaseRepository userTestcaseRepository) {
+    public Consumer(RedisTemplate<String, Object> redisTemplate, QuestionRepository questionRepository, TestcaseRepository testcaseRepository, TournamentPlayerRepository tournamentPlayerRepository, TournamentQuestionRepository tournamentQuestionRepository,  RankRepository rankRepository, UserRepository userRepository, SubmissionStatusRepository submissionStatusRepository) {
         this.redisTemplate = redisTemplate;
         this.questionRepository = questionRepository;
         this.testcaseRepository = testcaseRepository;
@@ -39,7 +39,7 @@ public class Consumer {
 
         this.rankRepository = rankRepository;
         this.userRepository = userRepository;
-        this.userTestcaseRepository = userTestcaseRepository;
+        this.submissionStatusRepository = submissionStatusRepository;
     }
 
 
@@ -60,20 +60,20 @@ public class Consumer {
     }
 
     @KafkaListener(topics="user-testcase-update",groupId = "myGroup")
-    public void consume(FreeStyleSubmissionStatus userTestcase) {
-        System.out.println("consuming.............."+ userTestcase);
-        if(userTestcase!=null) {
-            FreeStyleSubmissionStatus oldUserTestcase=userTestcaseRepository.
-                    findByUserNameAndTournamentIdAndTestcaseId(userTestcase.getUserName(),
-                            userTestcase.getTournamentId(),userTestcase.getTestcaseId())
+    public void consume(SubmissionStatus submissionStatus) {
+        System.out.println("consuming.............."+ submissionStatus);
+        if(submissionStatus!=null) {
+            SubmissionStatus oldsubmissionStatus=submissionStatusRepository.
+                    findByUserNameAndTournamentIdAndQuestionId(submissionStatus.getUserName(),
+                            submissionStatus.getTournamentId(),submissionStatus.getQuestionId())
                     .orElse(null);
-            if(oldUserTestcase==null) {
-                userTestcaseRepository.save(userTestcase);
+            if(oldsubmissionStatus==null) {
+                submissionStatusRepository.save(submissionStatus);
             }
             else{
-                oldUserTestcase.setNumberOfAttempts(userTestcase.getNumberOfAttempts());
-                oldUserTestcase.setSolved(userTestcase.getSolved());
-                userTestcaseRepository.save(oldUserTestcase);
+                oldsubmissionStatus.setNumberOfAttempts(submissionStatus.getNumberOfAttempts());
+                oldsubmissionStatus.setSolved(submissionStatus.getSolved());
+                submissionStatusRepository.save(oldsubmissionStatus);
             }
         }
 
@@ -81,7 +81,14 @@ public class Consumer {
     }
     @KafkaListener(topics = "start-tournament-init", groupId = "myGroup")
     public void consume(TournamentCacheDTO cacheDTO) {
-        System.out.println("consuming.............................");
+        System.out.println("consuming............................."+ cacheDTO);
+
+        if (TournamentBaseEntity.TournamentType.FREE_STYLE.equals(cacheDTO.getTournamentType())) {
+            System.out.println("FREE STYLE");
+        }
+        else{
+            System.out.println("CLASSIC");
+        }
         Long tournamentId = cacheDTO.getTournamentId();
 
         if (tournamentId == null) {
@@ -104,6 +111,7 @@ public class Consumer {
             rankDTO.setTournamentId(tournamentId);
             rankDTO.setScore(0);
             rankDTO.setUserName(playerEntity.getPlayerUserName());
+            rankDTO.setPenalty(0L);
 
             System.out.println("Inserting rank in tournament for user: " + rankDTO.getUserName());
             try {
@@ -163,24 +171,49 @@ public class Consumer {
                 if (testcases == null || testcases.isEmpty()) {
                     continue;
                 }
-                int randomIndex = (int) (Math.random() * testcases.size());
-                TestcaseDTO testcaseDTO = Mapper.toDTO(testcases.get(randomIndex));
+                SubmissionStatusDTO SubmissionStatusDTO = new SubmissionStatusDTO();
+                SubmissionStatusDTO.setTournamentId(tournamentId);
+                SubmissionStatusDTO.setQuestionId(question.getQuestionId());
+                SubmissionStatusDTO.setUserName(player.getPlayerUserName());
+                SubmissionStatusDTO.setSolved(false);
+                SubmissionStatusDTO.setSubmissionTime(TimeUtil.getCurrentEpochMillis());
+                SubmissionStatusDTO.setNumberOfAttempts(0);
 
-                if (testcaseDTO != null) {
-                    FreeStyleSubmissionStatusDTO freeStyleSubmissionStatusDTO = new FreeStyleSubmissionStatusDTO();
-                    freeStyleSubmissionStatusDTO.setTournamentId(tournamentId);
-                    freeStyleSubmissionStatusDTO.setTestcaseId(testcaseDTO.getTestcaseId());
-                    freeStyleSubmissionStatusDTO.setUserName(player.getPlayerUserName());
-                    freeStyleSubmissionStatusDTO.setSolved(false);
-                    freeStyleSubmissionStatusDTO.setSubmissionTime(TimeUtil.getCurrentEpochMillis());
-                    freeStyleSubmissionStatusDTO.setNumberOfAttempts(0);
+                try {
+                    submissionStatusRepository.save(Mapper.toEntity(SubmissionStatusDTO));
+                } catch (Exception e) {
+                    System.err.println("Failed to save SubmissionStatus for user: " + player.getPlayerUserName()
+                            + ". Error: " + e.getMessage());
+                }
+                try {
+                    redisTemplate.opsForValue().set(
+                            "SubmissionStatusDTO/" + tournamentId + "/" + player.getPlayerUserName() + "/" + index,
+                            SubmissionStatusDTO,
+                            cacheDTO.getDurationInSeconds(),
+                            TimeUnit.SECONDS
+                    );
+                } catch (Exception e) {
+                    System.err.println("Failed to set SubmissionStatusDTO for user: " + player.getPlayerUserName() + ". Error: " + e.getMessage());
+                }
+                try {
+                    redisTemplate.opsForValue().set(
+                            "questionDTO/" + tournamentId + "/" + index,
+                            Mapper.toDTO(question),
+                            cacheDTO.getDurationInSeconds(),
+                            TimeUnit.SECONDS
+                    );
+                } catch (Exception e) {
+                    System.err.println("Failed to set questionDTO for tournament question: " + question.getQuestionId()
+                            + ". Error: " + e.getMessage());
+                }
 
-                    try {
-                        userTestcaseRepository.save(Mapper.toEntity(freeStyleSubmissionStatusDTO));
-                    } catch (Exception e) {
-                        System.err.println("Failed to save FreeStyleSubmissionStatus for user: " + player.getPlayerUserName()
-                                + ". Error: " + e.getMessage());
-                    }
+
+
+                if (TournamentBaseEntity.TournamentType.FREE_STYLE.equals(cacheDTO.getTournamentType())) {
+
+                    int randomIndex = (int) (Math.random() * testcases.size());
+                    TestcaseDTO testcaseDTO = Mapper.toDTO(testcases.get(randomIndex));
+
 
                     try {
                         redisTemplate.opsForValue().set(
@@ -193,28 +226,7 @@ public class Consumer {
                         System.err.println("Failed to set testcaseDTO for user: " + player.getPlayerUserName() + ". Error: " + e.getMessage());
                     }
 
-                    try {
-                        redisTemplate.opsForValue().set(
-                                "freeStyleSubmissionStatusDTO/" + tournamentId + "/" + player.getPlayerUserName() + "/" + index,
-                                freeStyleSubmissionStatusDTO,
-                                cacheDTO.getDurationInSeconds(),
-                                TimeUnit.SECONDS
-                        );
-                    } catch (Exception e) {
-                        System.err.println("Failed to set freeStyleSubmissionStatusDTO for user: " + player.getPlayerUserName() + ". Error: " + e.getMessage());
-                    }
 
-                    try {
-                        redisTemplate.opsForValue().set(
-                                "questionDTO/" + tournamentId + "/" + index,
-                                Mapper.toDTO(question),
-                                cacheDTO.getDurationInSeconds(),
-                                TimeUnit.SECONDS
-                        );
-                    } catch (Exception e) {
-                        System.err.println("Failed to set questionDTO for tournament question: " + question.getQuestionId()
-                                + ". Error: " + e.getMessage());
-                    }
                 }
             }
             index++;
@@ -228,6 +240,14 @@ public class Consumer {
                     + ". Error: " + e.getMessage());
         }
     }
+
+    @KafkaListener(topics="classical-submission-response",groupId = "myGroup")
+    public void consumeClassicSubmissionResponse(String classicSubmissionResponse) {
+        System.out.println("ClassicSubmissionResponse: " + classicSubmissionResponse);
+
+    }
+
+
 
 
 }

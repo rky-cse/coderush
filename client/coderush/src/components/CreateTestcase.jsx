@@ -8,7 +8,8 @@ export default function CreateTestcase() {
     questionId: '',
     input: '',
     output: '',
-    rating: 0,
+    rating: 0, // Only applicable for FreeStyle Testcases
+    testcaseType: 'freeStyle', // default option set to FreeStyle
   });
 
   const handleInputChange = (e) => {
@@ -22,16 +23,25 @@ export default function CreateTestcase() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = getCookie('token'); // Retrieve token from localStorage or any other method
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/testcase/createTestcase`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const token = getCookie('token');
+      const endpoint =
+        formData.testcaseType === 'classic'
+          ? `${process.env.NEXT_PUBLIC_API_URL}/api/testcase/createClassicTestcase`
+          : `${process.env.NEXT_PUBLIC_API_URL}/api/testcase/createTestcase`;
+
+      // Remove testcaseType from the payload.
+      // Also remove rating if the testcase type is classic.
+      const { testcaseType, ...rest } = formData;
+      const payload = { ...rest };
+      if (testcaseType === 'classic') {
+        delete payload.rating;
+      }
+
+      const response = await axios.post(endpoint, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       alert('Testcase created successfully!');
       console.log(response.data);
     } catch (error) {
@@ -44,7 +54,6 @@ export default function CreateTestcase() {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Create Testcase</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
-        
         <input
           type="number"
           name="questionId"
@@ -70,15 +79,34 @@ export default function CreateTestcase() {
           className="block w-full border px-3 py-2"
           required
         ></textarea>
-        <input
-          type="number"
-          name="rating"
-          placeholder="Rating"
-          value={formData.rating}
-          onChange={handleInputChange}
-          className="block w-full border px-3 py-2"
-          required
-        />
+
+        <div>
+          <label htmlFor="testcaseType" className="block mb-2">
+            Testcase Type
+          </label>
+          <select
+            name="testcaseType"
+            value={formData.testcaseType}
+            onChange={handleInputChange}
+            className="block w-full border px-3 py-2"
+          >
+            <option value="freeStyle">FreeStyle Testcase</option>
+            <option value="classic">Classic Testcase</option>
+          </select>
+        </div>
+
+        {formData.testcaseType === 'freeStyle' && (
+          <input
+            type="number"
+            name="rating"
+            placeholder="Rating"
+            value={formData.rating}
+            onChange={handleInputChange}
+            className="block w-full border px-3 py-2"
+            required
+          />
+        )}
+
         <button
           type="submit"
           className="bg-green-500 text-white px-4 py-2 rounded"
