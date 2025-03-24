@@ -9,6 +9,8 @@ import me.rkycse.coderush.service.TournamentWebSocketService;
 import me.rkycse.coderush.util.JsonConverter;
 import me.rkycse.coderush.util.TimeUtil;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -20,8 +22,9 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class Consumer {
 
+    private static final Logger logger = LoggerFactory.getLogger(Consumer.class);
 
-    private final RedisTemplate<String,Object>redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final QuestionRepository questionRepository;
     private final TestcaseRepository testcaseRepository;
     private final TournamentPlayerRepository tournamentPlayerRepository;
@@ -48,64 +51,68 @@ public class Consumer {
 
     @KafkaListener(topics = "rank-update", groupId = "myGroup")
     public void consume(RankEntity rank) {
-        System.out.println("consuming.............................");
-        if(rank != null) {
-            RankEntity oldRank=rankRepository.findByUserNameAndTournamentId(rank.getUserName(), rank.getTournamentId());
-            if(oldRank==null) {
+
+        logger.info("consuming.............................");
+        if (rank != null) {
+            RankEntity oldRank = rankRepository.findByUserNameAndTournamentId(rank.getUserName(), rank.getTournamentId());
+            if (oldRank == null) {
                 rankRepository.save(rank);
-            }
-            else{
+                logger.info("Saved new rank for user: {}", rank.getUserName());
+            } else {
                 oldRank.setScore(rank.getScore());
                 rankRepository.save(oldRank);
-
+                logger.info("Updated rank for user: {}", rank.getUserName());
             }
         }
     }
 
-    @KafkaListener(topics="user-testcase-update",groupId = "myGroup")
+    @KafkaListener(topics = "user-testcase-update", groupId = "myGroup")
     public void consume(SubmissionStatus submissionStatus) {
-        System.out.println("consuming.............."+ submissionStatus);
-        if(submissionStatus!=null) {
-            SubmissionStatus oldsubmissionStatus=submissionStatusRepository.
-                    findByUserNameAndTournamentIdAndQuestionId(submissionStatus.getUserName(),
-                            submissionStatus.getTournamentId(),submissionStatus.getQuestionId())
+
+        logger.info("consuming..............{}", submissionStatus);
+        if (submissionStatus != null) {
+            SubmissionStatus oldsubmissionStatus = submissionStatusRepository
+                    .findByUserNameAndTournamentIdAndQuestionId(submissionStatus.getUserName(),
+                            submissionStatus.getTournamentId(), submissionStatus.getQuestionId())
                     .orElse(null);
-            if(oldsubmissionStatus==null) {
+            if (oldsubmissionStatus == null) {
                 submissionStatusRepository.save(submissionStatus);
-            }
-            else{
+                logger.info("Saved new SubmissionStatus for user: {}", submissionStatus.getUserName());
+            } else {
                 oldsubmissionStatus.setNumberOfAttempts(submissionStatus.getNumberOfAttempts());
                 oldsubmissionStatus.setSolved(submissionStatus.getSolved());
                 submissionStatusRepository.save(oldsubmissionStatus);
+                logger.info("Updated SubmissionStatus for user: {}", submissionStatus.getUserName());
             }
         }
-
-
     }
+
     @KafkaListener(topics = "start-tournament-init", groupId = "myGroup")
     public void consume(TournamentCacheDTO cacheDTO) {
-        System.out.println("consuming............................."+ cacheDTO);
+        
+        logger.info("consuming.............................{}", cacheDTO);
 
         if (TournamentBaseEntity.TournamentType.FREE_STYLE.equals(cacheDTO.getTournamentType())) {
             System.out.println("FREE STYLE");
-        }
-        else{
+            logger.info("Tournament type: FREE STYLE");
+        } else {
             System.out.println("CLASSIC");
+            logger.info("Tournament type: CLASSIC");
         }
         Long tournamentId = cacheDTO.getTournamentId();
 
         if (tournamentId == null) {
-            System.out.println("Tournament ID is null. Exiting consume method.");
+            logger.error("Tournament ID is null. Exiting consume method.");
             return;
         }
 
         // Retrieve tournament players and check if available
         List<TournamentPlayerEntity> tournamentPlayerEntities = tournamentPlayerRepository.findByTournamentId(tournamentId);
         if (tournamentPlayerEntities == null || tournamentPlayerEntities.isEmpty()) {
-            System.out.println("No tournament players found for tournament ID: " + tournamentId);
+            logger.error("No tournament players found for tournament ID: {}", tournamentId);
             return;
         } else {
-            System.out.println("Found tournament players for tournament ID: " + tournamentId);
+            logger.info("Found tournament players for tournament ID: {}", tournamentId);
         }
 
         // Insert a rank entry for each tournament player in Redis
@@ -116,7 +123,7 @@ public class Consumer {
             rankDTO.setUserName(playerEntity.getPlayerUserName());
             rankDTO.setPenalty(0L);
 
-            System.out.println("Inserting rank in tournament for user: " + rankDTO.getUserName());
+            logger.info("Inserting rank in tournament for user: {}", rankDTO.getUserName());
             try {
                 redisTemplate.opsForValue().set(
                         "rankDTO/" + tournamentId + "/" + rankDTO.getUserName(),
@@ -124,15 +131,18 @@ public class Consumer {
                         cacheDTO.getDurationInSeconds(),
                         TimeUnit.SECONDS
                 );
+                logger.info("Inserted rankDTO for user: {} in Redis", rankDTO.getUserName());
             } catch (Exception e) {
-                System.err.println("Failed to insert rank for user: " + rankDTO.getUserName() + ". Error: " + e.getMessage());
+
+                logger.error("Failed to insert rank for user: {}. Error: {}", rankDTO.getUserName(), e.getMessage());
             }
         }
 
         // Retrieve questions and check if available
         List<QuestionEntity> allQuestions = questionRepository.findAll();
         if (allQuestions == null || allQuestions.isEmpty()) {
-            System.out.println("No questions available.");
+
+            logger.error("No questions available.");
             return;
         }
 
@@ -147,11 +157,11 @@ public class Consumer {
         int index = 0;
         // Process each selected question
         for (QuestionEntity question : selectedQuestions) {
-            System.out.println("QuestionId: " + question.getQuestionId());
+            logger.info("Processing QuestionId: {}", question.getQuestionId());
             TournamentQuestionEntity tournamentQuestionEntity = new TournamentQuestionEntity();
             tournamentQuestionEntity.setQuestionId(question.getQuestionId());
             tournamentQuestionEntity.setTournamentId(tournamentId);
-            System.out.println("Processing tournament question: " + tournamentQuestionEntity);
+            logger.info("Processing tournament question: {}", tournamentQuestionEntity);
 
             // Check if tournament question already exists and save if not
             try {
@@ -159,21 +169,17 @@ public class Consumer {
                         .findByTournamentIdAndQuestionId(tournamentId, question.getQuestionId());
                 if (existingEntity == null) {
                     TournamentQuestionEntity savedTournamentQuestion = tournamentQuestionRepository.save(tournamentQuestionEntity);
-                    System.out.println("Saved tournament question: " + savedTournamentQuestion);
+                    logger.info("Saved tournament question: {}", savedTournamentQuestion);
                 } else {
-                    System.out.println("Tournament question already exists: " + existingEntity);
+                    logger.info("Tournament question already exists: {}", existingEntity);
                 }
             } catch (Exception e) {
-                System.err.println("Error saving tournament question: " + tournamentQuestionEntity + ". Error: " + e.getMessage());
+                logger.error("Error saving tournament question: {}. Error: {}", tournamentQuestionEntity, e.getMessage());
             }
 
-            // Retrieve test cases for the question
-            List<TestcaseEntity> testcases = testcaseRepository.findByQuestionId(question.getQuestionId());
             // For each tournament player, assign a random testcase (if available)
             for (TournamentPlayerEntity player : tournamentPlayerEntities) {
-                if (testcases == null || testcases.isEmpty()) {
-                    continue;
-                }
+
                 SubmissionStatusDTO SubmissionStatusDTO = new SubmissionStatusDTO();
                 SubmissionStatusDTO.setTournamentId(tournamentId);
                 SubmissionStatusDTO.setQuestionId(question.getQuestionId());
@@ -184,9 +190,10 @@ public class Consumer {
 
                 try {
                     submissionStatusRepository.save(Mapper.toEntity(SubmissionStatusDTO));
+                    logger.info("Saved SubmissionStatus for user: {}", player.getPlayerUserName());
                 } catch (Exception e) {
-                    System.err.println("Failed to save SubmissionStatus for user: " + player.getPlayerUserName()
-                            + ". Error: " + e.getMessage());
+
+                    logger.error("Failed to save SubmissionStatus for user: {}. Error: {}", player.getPlayerUserName(), e.getMessage());
                 }
                 try {
                     redisTemplate.opsForValue().set(
@@ -195,8 +202,10 @@ public class Consumer {
                             cacheDTO.getDurationInSeconds(),
                             TimeUnit.SECONDS
                     );
+                    logger.info("Set SubmissionStatusDTO in Redis for user: {} at index: {}", player.getPlayerUserName(), index);
                 } catch (Exception e) {
-                    System.err.println("Failed to set SubmissionStatusDTO for user: " + player.getPlayerUserName() + ". Error: " + e.getMessage());
+
+                    logger.error("Failed to set SubmissionStatusDTO for user: {}. Error: {}", player.getPlayerUserName(), e.getMessage());
                 }
                 try {
                     redisTemplate.opsForValue().set(
@@ -205,18 +214,22 @@ public class Consumer {
                             cacheDTO.getDurationInSeconds(),
                             TimeUnit.SECONDS
                     );
+                    logger.info("Set questionDTO in Redis for tournament question: {} at index: {}", question.getQuestionId(), index);
                 } catch (Exception e) {
-                    System.err.println("Failed to set questionDTO for tournament question: " + question.getQuestionId()
-                            + ". Error: " + e.getMessage());
+
+                    logger.error("Failed to set questionDTO for tournament question: {}. Error: {}", question.getQuestionId(), e.getMessage());
                 }
 
-
-
                 if (TournamentBaseEntity.TournamentType.FREE_STYLE.equals(cacheDTO.getTournamentType())) {
+                    List<TestcaseEntity> testcases = testcaseRepository.findByQuestionId(question.getQuestionId());
+                    if (testcases == null || testcases.isEmpty()) {
+
+                        logger.error("No testcases available for question: {}", question.getQuestionId());
+                        continue;
+                    }
 
                     int randomIndex = (int) (Math.random() * testcases.size());
                     TestcaseDTO testcaseDTO = Mapper.toDTO(testcases.get(randomIndex));
-
 
                     try {
                         redisTemplate.opsForValue().set(
@@ -225,11 +238,10 @@ public class Consumer {
                                 cacheDTO.getDurationInSeconds(),
                                 TimeUnit.SECONDS
                         );
+                        logger.info("Set testcaseDTO in Redis for user: {} at index: {}", player.getPlayerUserName(), index);
                     } catch (Exception e) {
-                        System.err.println("Failed to set testcaseDTO for user: " + player.getPlayerUserName() + ". Error: " + e.getMessage());
+                        logger.error("Failed to set testcaseDTO for user: {}. Error: {}", player.getPlayerUserName(), e.getMessage());
                     }
-
-
                 }
             }
             index++;
@@ -238,28 +250,25 @@ public class Consumer {
         // Optionally, delete the tournament key from Redis after processing
         try {
             redisTemplate.delete("tournament:" + tournamentId);
+            logger.info("Deleted tournament key from Redis for tournament ID: {}", tournamentId);
         } catch (Exception e) {
-            System.err.println("Failed to delete tournament key from Redis for tournament ID: " + tournamentId
-                    + ". Error: " + e.getMessage());
+            logger.error("Failed to delete tournament key from Redis for tournament ID: {}. Error: {}", tournamentId, e.getMessage());
         }
     }
 
-    @KafkaListener(topics="classical-submission-response",groupId = "myGroup")
+    @KafkaListener(topics = "classical-submission-response", groupId = "myGroup")
     public void consumeClassicSubmissionResponse(String classicSubmissionResponse) {
-        System.out.println("ClassicSubmissionResponse: " + classicSubmissionResponse);
+        logger.info("ClassicSubmissionResponse: {}", classicSubmissionResponse);
         // convert to object
 
-        ClassicSubmissionResponseDTO classicSubmissionResponseDTO=
+        ClassicSubmissionResponseDTO classicSubmissionResponseDTO =
                 JsonConverter.fromJson(classicSubmissionResponse,
                         ClassicSubmissionResponseDTO.class);
 
         tournamentWebSocketService.classicRankAndSubUpdate(classicSubmissionResponseDTO);
-        String userName=classicSubmissionResponseDTO.getUsername();
-        int index=classicSubmissionResponseDTO.getIndex();
-        messagingTemplate.convertAndSend("/topic/tournament/classicSubmit/" + userName+"/" + index, classicSubmissionResponseDTO);
+        String userName = classicSubmissionResponseDTO.getUsername();
+        int index = classicSubmissionResponseDTO.getIndex();
+        messagingTemplate.convertAndSend("/topic/tournament/classicSubmit/" + userName + "/" + index, classicSubmissionResponseDTO);
+        logger.info("Sent classic submission response via WebSocket for user: {} at index: {}", userName, index);
     }
-
-
-
-
 }

@@ -236,6 +236,35 @@ public class MTMTournamentService {
         return "success";
     }
 
+    public List<MTMTournamentDTO> getLiveMTMTournaments() {
+        List<MTMTournamentEntity> tournaments =
+                mtmTournamentRepository.findLiveMTMTournaments(TimeUtil.getCurrentEpochMillis());
+        List<MTMTournamentDTO> tournamentDTOs = new ArrayList<>();
+        for(MTMTournamentEntity tournament : tournaments) {
+            tournamentDTOs.add(Mapper.toDTO(tournament));
+
+        }
+
+        return tournamentDTOs;
+    }
+    public List<MTMTournamentDTO> getUpcomingMTMTournaments() {
+        List<MTMTournamentEntity> tournaments =
+                mtmTournamentRepository.findUpcomingMTMTournaments(TimeUtil.getCurrentEpochMillis());
+        List<MTMTournamentDTO> tournamentDTOs = new ArrayList<>();
+        for(MTMTournamentEntity tournament : tournaments) {
+            tournamentDTOs.add(Mapper.toDTO(tournament));
+
+        }
+        return tournamentDTOs;
+    }
+    public List<Long> getRegisteredMTMTournamentsByUserName(String userName) {
+        return tournamentPlayerRepository.tournamentIdsByPlayerUserName(userName);
+    }
+
+    public MTMTournamentDTO getMTMTournamentById(Long tournamentId) {
+        return Mapper.toDTO(mtmTournamentRepository.findByTournamentId(tournamentId));
+    }
+
 
 }
 

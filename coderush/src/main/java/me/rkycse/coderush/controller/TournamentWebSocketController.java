@@ -4,6 +4,7 @@ import me.rkycse.coderush.dto.*;
 import me.rkycse.coderush.kafka.Producer;
 import me.rkycse.coderush.service.TournamentWebSocketService;
 import me.rkycse.coderush.util.JsonConverter;
+import me.rkycse.coderush.util.TimeUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -85,11 +86,17 @@ public class TournamentWebSocketController {
         UserDetails userDetails = (UserDetails) ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
         String userName = userDetails.getUsername();
         int index = classicSubmissionDTO.getIndex();
+        Long submissionTime= TimeUtil.getCurrentEpochMillis();
+        classicSubmissionDTO.setSubmissionTime(submissionTime);
+        classicSubmissionDTO.setUsername(userName);
         System.out.println("received response from user "+classicSubmissionDTO);
+
 
         producer.sendClassicSubmission(JsonConverter.toJson(classicSubmissionDTO));
 
         Boolean res=null;// to complete
 
     }
+
+
 }

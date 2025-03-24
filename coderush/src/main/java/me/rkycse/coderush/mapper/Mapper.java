@@ -143,6 +143,7 @@ public class Mapper {
         }
         MTMTournamentDTO dto = new MTMTournamentDTO();
         dto.setCreatorId(entity.getCreatorId());
+        dto.setTournamentId(entity.getTournamentId());
         dto.setName(entity.getName());
         dto.setDescription(entity.getDescription());
         dto.setTeamStyle(entity.getTeamStyle());
@@ -171,5 +172,23 @@ public class Mapper {
         dtoUser.setRating(dto.getRating());
         return dtoUser;
     }
+    private static TournamentBaseDTO toDTO(TournamentBaseEntity entity) {
+        if (entity == null) {
+            return null;
+
+        }
+        TournamentBaseDTO dto = new TournamentBaseDTO();
+        dto.setDurationInSeconds(entity.getDurationInSeconds());
+        dto.setRated(entity.getRated());
+        dto.setStartTime(entity.getStartTime());
+        dto.setPenaltyFactor(entity.getPenaltyFactor());
+        dto.setVisibility(entity.getVisibility());
+        dto.setTournamentType(entity.getTournamentType());
+        dto.setTournamentId(entity.getTournamentId());
+
+        return dto;
+    }
+
+
 
 }

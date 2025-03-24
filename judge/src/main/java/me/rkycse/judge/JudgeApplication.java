@@ -7,6 +7,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class JudgeApplication {
 
     public static void main(String[] args) {
+
+        System.out.println("mai judge hun");
+
+
         SpringApplication.run(JudgeApplication.class, args);
     }
 

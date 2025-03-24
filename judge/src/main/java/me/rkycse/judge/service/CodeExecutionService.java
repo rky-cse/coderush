@@ -28,7 +28,7 @@ public class CodeExecutionService {
     public String executeCode(String jsonInput) {
         logger.info("Received execution request");
         // Record submission time (milliseconds)
-        long submissionTime = System.currentTimeMillis();
+
         // Record judge start time (this timestamp will be returned as judgingTime)
         long judgeStart = System.currentTimeMillis();
 
@@ -49,8 +49,14 @@ public class CodeExecutionService {
             String language = jsonNode.get("language").asText().toLowerCase();
             String username = jsonNode.get("username").asText();
             Long tournamentId = jsonNode.get("tournamentId").asLong();
+            int index=jsonNode.get("index").asInt();
+            Long submissionTime = jsonNode.get("submissionTime").asLong();
 
-            logger.info("Parsed input for questionId: {}, language: {}", questionId, language);
+            logger.info("Parsed jsonInput: questionId: {}," +
+                    " index: {}, tournamentId: {}, code: {} ," +
+                    "language: {}, ", questionId, index, tournamentId,code, language);
+
+
 
             // Create a temporary directory for execution
             tempDir = Files.createTempDirectory("execution_");
@@ -65,7 +71,7 @@ public class CodeExecutionService {
                     logger.error("Compilation failed: {}", compilationError);
                     verdict = "Compilation Error (CE)\n" + compilationError;
                     // Build response with verdict "CE" (after mapping) and zero time/memory.
-                    return buildResponse(null, 0, username, tournamentId, Long.parseLong(questionId), language,
+                    return buildResponse(null, index, username, tournamentId, Long.parseLong(questionId), language,
                             verdict, submissionTime, judgeStart, 0L, 0L);
                 }
                 logger.info("Compilation succeeded");
@@ -77,7 +83,7 @@ public class CodeExecutionService {
                 String errorMsg = "No test cases found for questionId " + questionId;
                 logger.error(errorMsg);
                 verdict = "Error: " + errorMsg;
-                return buildResponse(null, 0, username, tournamentId, Long.parseLong(questionId), language,
+                return buildResponse(null, index, username, tournamentId, Long.parseLong(questionId), language,
                         verdict, submissionTime, judgeStart, 0L, 0L);
             }
             logger.info("Found {} test case directories", testCaseDirs.size());
@@ -175,12 +181,12 @@ public class CodeExecutionService {
 
             // Build and return the response DTO as JSON;
             // judgeTime is the timestamp when judging started.
-            return buildResponse(null, 0, username, tournamentId, Long.parseLong(questionId), language,
+            return buildResponse(null, index, username, tournamentId, Long.parseLong(questionId), language,
                     verdict, submissionTime, judgeStart, maxTimeTaken, maxMemoryUsed);
         } catch (Exception e) {
             logger.error("Error during code execution", e);
-            return buildResponse(null, 0, null, null, null, null,
-                    "Error: " + e.getMessage(), submissionTime, judgeStart, 0L, 0L);
+            return buildResponse(null, -1, null, null, null, null,
+                    "Error: " + e.getMessage(),judgeStart, judgeStart, 0L, 0L);
         } finally {
             if (tempDir != null) {
                 try {

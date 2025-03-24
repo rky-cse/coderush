@@ -1,7 +1,6 @@
 package me.rkycse.coderush.repository;
 
 import me.rkycse.coderush.entity.TournamentBaseEntity;
-import me.rkycse.coderush.entity.TournamentBaseEntity.TournamentType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

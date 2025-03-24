@@ -35,12 +35,13 @@ const handleLogout = () => {
               <Link href={`/dashboard/${user}`} className="text-gray-600 hover:text-gray-800">
   Dashboard
 </Link>
+              <Link href="/tournaments" className="text-gray-600 hover:text-gray-800">
+                Tournaments
+              </Link>
               <Link href="/createTournament" className="text-gray-600 hover:text-gray-800">
                 Create Tournament
               </Link>
-              <Link href="/joinTournament" className="text-gray-600 hover:text-gray-800">
-                Join Tournament
-              </Link>
+              
               <Link href="/myQuestions" className="text-gray-600 hover:text-gray-800">
                 My Questions
               </Link>

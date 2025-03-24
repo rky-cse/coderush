@@ -34,9 +34,6 @@ public abstract class TournamentBaseEntity {
     @Column(name = "penalty_factor", nullable = false)
     private long penaltyFactor;
 
-
-
-
     // Visibility using an enum
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility", nullable = false)

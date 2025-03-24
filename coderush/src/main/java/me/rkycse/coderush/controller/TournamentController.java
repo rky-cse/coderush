@@ -1,11 +1,15 @@
 package me.rkycse.coderush.controller;
 
+import me.rkycse.coderush.dto.MTMTournamentDTO;
 import me.rkycse.coderush.entity.TournamentBaseEntity;
 import me.rkycse.coderush.service.DuelTournamentService;
 import me.rkycse.coderush.service.MTMTournamentService;
 import me.rkycse.coderush.service.TournamentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @CrossOrigin("*")
 @RestController
@@ -27,5 +31,6 @@ public class TournamentController {
     public TournamentBaseEntity getTournamentById(@PathVariable Long tournamentId){
         return tournamentService.getTournamentById(tournamentId);
     }
+
 
 }
