@@ -1,7 +1,8 @@
+'use client'
 import React, { useRef, useState, useEffect } from 'react';
 import { Editor } from '@monaco-editor/react';
 import { useSelector, useDispatch } from 'react-redux';
-import { setCode, setLanguage } from '../redux/slices/codeSlice';
+import { setCode, setLanguage } from '@/redux/slices/codeSlice';
 import { BiCopy, BiCheck } from 'react-icons/bi';
 import { FaSun, FaMoon, FaJs, FaPython, FaJava } from 'react-icons/fa';
 import { SiTypescript, SiCplusplus, SiC, SiDotnet } from 'react-icons/si';
@@ -9,7 +10,7 @@ import { FiPlus, FiMinus } from 'react-icons/fi';
 
 const CodeEditor = () => {
   const dispatch = useDispatch();
-  const code = useSelector((state) => state.editor.code|| '');
+  const code = useSelector((state) => state.editor.code || '');
   const language = useSelector((state) => state.editor.language || 'c++');
 
   const [theme, setTheme] = useState('vs-dark');
