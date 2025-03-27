@@ -26,7 +26,7 @@ export default function Matchmaking() {
 
         if (token) {
             webSocketService.connect(`${process.env.NEXT_PUBLIC_API_URL}/ws`, token);
-            webSocketService.subscribe('/user/queue/match', async (message) => {
+            webSocketService.subscribe('/user/queue/match-notifications', async (message) => {
                 console.log('Match found:', message);
                 
                 if( message.opponent === "YES"){

@@ -165,6 +165,7 @@ public class Mapper {
 
         }
         UserDTO dtoUser = new UserDTO();
+        dtoUser.setId(dto.getId());
         dtoUser.setUserName(dto.getUserName());
         dtoUser.setEmail(dto.getEmail());
         dtoUser.setFirstName(dto.getFirstName());

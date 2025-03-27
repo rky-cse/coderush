@@ -8,6 +8,7 @@ import websocketReducer from './slices/websocketSlice';
 import authReducer from './slices/authSlice';
 import tournamentEndTimeReducer from './slices/tournamentEndTimeSlice';
 import tournamentReducer from './slices/tournamentSlice';
+import userReducer from './slices/userSlice';
 
 export const store = configureStore({
   reducer: {
@@ -19,7 +20,7 @@ export const store = configureStore({
     websocket: websocketReducer,
     tournamentEndTime: tournamentEndTimeReducer,
     tournament: tournamentReducer,
-
+    user: userReducer,
   },
 });
 

@@ -31,10 +31,32 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
+
+        // Enables a simple in-memory broker that can be used to send messages to clients on destinations prefixed with "/topic" or "/queue"
+        // If a server wants to send a message to a room of clients, it can send a message to a destination prefixed with "/topic"
+        // If a server wants to send a message to a specific client, it can send a message to a destination prefixed with "/queue"
         config.enableSimpleBroker("/topic", "/queue");
+
+        // The "/app" prefix is used to define the endpoint where the client sends messages to
+        // if a client wants to send a message to the server, it sends the message to a destination prefixed with "/app"
+        // If a client sends a message to a destination prefixed with "/app", the message will be routed to a controller method annotated with @MessageMapping
         config.setApplicationDestinationPrefixes("/app");
+
+
+        // Enables user-specific messaging
+        // If a server wants to send a message to a specific user, it can send a message to a destination prefixed with "/user/{username}/..."
         config.setUserDestinationPrefix("/user"); // Enables user-specific messaging
+
+
+        //The difference between /user and /queue is very subtle.
+        // user is a prefix used for sending messages to specific users.
+        // queue is a destination where private messages are received.
     }
+
+
+
+
+
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {

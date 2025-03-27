@@ -1,0 +1,461 @@
+package me.rkycse.coderush.service;
+import me.rkycse.coderush.dto.MatchRequestDTO;
+import me.rkycse.coderush.dto.MatchResponseDTO;
+import me.rkycse.coderush.dto.PendingMatch;
+import me.rkycse.coderush.dto.PendingMatch.PendingStatus;
+import me.rkycse.coderush.entity.DuelTournamentEntity;
+import me.rkycse.coderush.repository.DuelTournamentRepository;
+import me.rkycse.coderush.repository.UserRepository;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+@Service
+public class MatchmakingService {
+
+    private static final String MATCHMAKING_QUEUE_KEY = "matchmaking:queue";
+    private static final String PENDING_MATCH_KEY_PREFIX = "pending-match:";
+
+    private static final long MATCH_TIMEOUT_MS = 90_000; // 90 seconds
+    private static final int INITIAL_RATING_RANGE = 50;
+    private static final int RATING_EXPANSION_STEP = 25;
+
+//    private final RedisTemplate<String, MatchRequestDTO> redisTemplate;
+//    private final RedisTemplate<String, Object> redisTemplate2;
+//    private final RedisTemplate<String, PendingMatch> pendingRedisTemplate;
+
+    private final RedisTemplate<String, MatchRequestDTO> redisTemplate;
+    private final RedisTemplate<String, Object> stringRedisTemplate; // Changed
+    private final RedisTemplate<String, PendingMatch> pendingRedisTemplate;
+    private final UserRepository userRepository;
+    private final DuelTournamentRepository duelRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
+
+    public MatchmakingService(RedisTemplate<String, MatchRequestDTO> redisTemplate,
+                              RedisTemplate<String, Object> stringRedisTemplate,
+                              RedisTemplate<String, PendingMatch> pendingRedisTemplate,
+                              UserRepository userRepository,
+                              DuelTournamentRepository duelRepository,
+                              SimpMessagingTemplate messagingTemplate) {
+        this.redisTemplate = redisTemplate;
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.pendingRedisTemplate = pendingRedisTemplate;
+        this.userRepository = userRepository;
+        this.duelRepository = duelRepository;
+        this.messagingTemplate = messagingTemplate;
+    }
+
+    @Transactional
+    public MatchResponseDTO processMatchRequest(MatchRequestDTO request) {
+
+        // Check if user is already in a queue and remove them
+        removeUserFromQueue(request.getUserId());
+
+
+        // Proceed to add to new queue
+        long timestamp = System.currentTimeMillis();
+        double score = request.getRating() + (timestamp % 1000000) / 1000000.0;
+
+        request.setRequestTime(timestamp);
+        String queueKey = MATCHMAKING_QUEUE_KEY + ":" + request.getTimeControl().toString();
+        // Add to main matchmaking queue
+        redisTemplate.opsForZSet().add( queueKey , request, score);
+
+        stringRedisTemplate.opsForValue().set("user_queue:" + request.getUserId(), queueKey);
+        redisTemplate.opsForValue().set("user_request:" + request.getUserId(), request);
+
+        // Return a basic response indicating the user is queued
+        return new MatchResponseDTO(
+                "QUEUED",
+                null,           // matchId is null
+                request.getUserId(),
+                null,
+                timestamp,
+                null            // pendingMatchId is also null at this stage
+        );
+    }
+
+    public void removeUserFromQueue(Long userId) {
+        // 1. Get the queue the user is in
+        String queueKey = (String) stringRedisTemplate.opsForValue().get("user_queue:" + userId);
+        if (queueKey == null) return;
+
+        // 2. Get the exact MatchRequestDTO to remove
+        MatchRequestDTO request = (MatchRequestDTO) redisTemplate.opsForValue().get("user_request:" + userId);
+        if (request == null) return;
+
+        System.out.println("[RemoveUserFromQueue Service] Removing User Entry :" + userId + " request.id: " + request.getUserId() + "request.rating: " + request.getRating() + "request.timeControl: " + request.getTimeControl() + "request.requestTime: " + request.getRequestTime() );
+        // 3. Remove from ZSET
+        redisTemplate.opsForZSet().remove(queueKey, request);
+
+        // 4. Cleanup tracking keys
+        stringRedisTemplate.delete("user_queue:" + userId);
+        redisTemplate.delete("user_request:" + userId);
+    }
+
+    @Scheduled(fixedRate = 5000)
+    @Transactional
+    public void processMatchmakingQueue() {
+
+        for (String timeControl : new String[]{"5", "10", "15", "25", "45", "60", "75", "90", "100", "120"}) {
+
+            ZSetOperations<String, MatchRequestDTO> zSetOps = redisTemplate.opsForZSet();
+            String queueKey = MATCHMAKING_QUEUE_KEY + ":" + timeControl;
+            // Create a copy to avoid concurrent modification issues
+            Set<ZSetOperations.TypedTuple<MatchRequestDTO>> queue = new HashSet<>(
+                    zSetOps.rangeWithScores(queueKey , 0, -1)
+            );
+
+            System.out.println("[DEBUG] Processing queue of timeControl " + timeControl + " with " + queue.size() + " entries");
+
+            if (queue == null || queue.isEmpty()) {
+                System.out.println("[DEBUG] Queue is empty");
+                continue;
+            }
+
+            queue.forEach(tuple -> {
+                MatchRequestDTO request = tuple.getValue();
+                long currentTime = System.currentTimeMillis();
+                long timeInQueue = currentTime - request.getRequestTime();
+
+                System.out.printf("[DEBUG] Processing user %d (in queue for %dms)%n",
+                        request.getUserId(), timeInQueue);
+
+                if (timeInQueue >= MATCH_TIMEOUT_MS || findSuitableOpponent(request, currentTime) != null) {
+                    System.out.println("[MATCH] Found candidate for processing: " + request.getUserId());
+                    processMatchCandidate(request, currentTime, zSetOps);
+                }
+            });
+        }
+
+    }
+
+    private MatchRequestDTO findSuitableOpponent(MatchRequestDTO request, long currentTime) {
+        ZSetOperations<String, MatchRequestDTO> zSetOps = redisTemplate.opsForZSet();
+        long timeInQueue = currentTime - request.getRequestTime();
+        int ratingRange = calculateCurrentRatingRange(timeInQueue);
+        String queueKey = MATCHMAKING_QUEUE_KEY + ":" + request.getTimeControl().toString();
+
+        return zSetOps.rangeByScore(
+                        queueKey,
+                        request.getRating() - ratingRange,
+                        request.getRating() + ratingRange
+                )
+                .stream()
+                .filter(candidate -> !candidate.getUserId().equals(request.getUserId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private int calculateCurrentRatingRange(long timeInQueueMs) {
+        if (timeInQueueMs < 30_000) return INITIAL_RATING_RANGE;
+        if (timeInQueueMs < 60_000) return INITIAL_RATING_RANGE + RATING_EXPANSION_STEP;
+        return INITIAL_RATING_RANGE + (2 * RATING_EXPANSION_STEP);
+    }
+
+    private void processMatchCandidate(MatchRequestDTO request, long currentTime,
+                                       ZSetOperations<String, MatchRequestDTO> zSetOps) {
+        MatchRequestDTO opponent = findSuitableOpponent(request, currentTime);
+        long timeInQueue = currentTime - request.getRequestTime();
+        String queueKey = MATCHMAKING_QUEUE_KEY + ":" + request.getTimeControl().toString();
+
+        System.out.printf("[PROCESS] User %d - Time in queue: %dms | Opponent found: %b%n",
+                request.getUserId(), timeInQueue, opponent != null);
+
+        if (opponent != null) {
+            System.out.printf("[MATCH] Found pair: %d vs %d%n",
+                    request.getUserId(), opponent.getUserId());
+
+            // Remove both players from the queue
+            zSetOps.remove(queueKey, request, opponent);
+            System.out.println("[REDIS] Removed users from queue: " +
+                    request.getUserId() + " and " + opponent.getUserId());
+
+            createPendingMatch(request, opponent);
+        }
+        else if (timeInQueue >= MATCH_TIMEOUT_MS) {
+            System.out.printf("[TIMEOUT] User %d exceeded 90s queue time%n", request.getUserId());
+            handleTimeoutFallback(request, zSetOps);
+        }
+    }
+
+    private void handleTimeoutFallback(MatchRequestDTO request,
+                                       ZSetOperations<String, MatchRequestDTO> zSetOps) {
+        System.out.println("[FALLBACK] Handling timeout for user: " + request.getUserId());
+        String queueKey = MATCHMAKING_QUEUE_KEY + ":" + request.getTimeControl().toString();
+
+        zSetOps.range(queueKey, 0, 1)
+                .stream()
+                .filter(opponent -> !opponent.getUserId().equals(request.getUserId()))
+                .findFirst()
+                .ifPresentOrElse(
+                        opponent -> {
+                            System.out.printf("[FALLBACK] Force matching %d with %d%n",
+                                    request.getUserId(), opponent.getUserId());
+                            zSetOps.remove(queueKey, request, opponent);
+                            createPendingMatch(request, opponent);
+                        },
+                        () -> {
+                            // If no opponent found, remove the user from queue
+                            System.out.printf("[FALLBACK] No opponents found, removing user %d%n",
+                                    request.getUserId());
+                            zSetOps.remove(queueKey, request);
+                        }
+                );
+    }
+
+    private void createPendingMatch(MatchRequestDTO p1, MatchRequestDTO p2) {
+        String pendingMatchId = UUID.randomUUID().toString();
+
+        PendingMatch pm = new PendingMatch();
+        pm.setPendingMatchId(pendingMatchId);
+        pm.setPlayer1Id(p1.getUserId());
+        pm.setPlayer2Id(p2.getUserId());
+        pm.setPlayer1Confirmed(false);
+        pm.setPlayer2Confirmed(false);
+        pm.setCreatedAt(System.currentTimeMillis());
+        pm.setStatus(PendingStatus.WAITING_CONFIRMATION);
+
+
+        System.out.println("[MATCH] Created pending match: " + pendingMatchId + " for players " +
+                p1.getUserId() + " and " + p2.getUserId() + " <-------XXXXX------>");
+
+        // Store the pending match in Redis
+        pendingRedisTemplate.opsForValue().set(
+                PENDING_MATCH_KEY_PREFIX + pendingMatchId,
+                pm
+        );
+
+        String username1 = userRepository.findById(p1.getUserId())
+                .orElseThrow().getUserName();
+        String username2 = userRepository.findById(p2.getUserId())
+                .orElseThrow().getUserName();
+
+        // Notify each user with "MATCH_FOUND" + pendingMatchId
+        messagingTemplate.convertAndSendToUser(
+                username1,
+                "/queue/match-notifications",
+                new MatchResponseDTO(
+                        "MATCH_FOUND",
+                        null,                 // matchId is null
+                        p1.getUserId(),
+                        p2.getUserId(),
+                        System.currentTimeMillis(),
+                        pendingMatchId        // pass the pendingMatchId
+                )
+        );
+
+        System.out.println("[Notification for Match found] Player1 notified for a match found<---------");
+
+        messagingTemplate.convertAndSendToUser(
+                username2,
+                "/queue/match-notifications",
+                new MatchResponseDTO(
+                        "MATCH_FOUND",
+                        null,
+                        p2.getUserId(),
+                        p1.getUserId(),
+                        System.currentTimeMillis(),
+                        pendingMatchId
+                )
+        );
+
+        System.out.println("[Notification for Match found] Player2 notified for a match found <---------");
+    }
+
+    public void cancelPendingMatch(String pendingMatchId, Long userId) {
+        System.out.println("[CANCEL] Attempting to cancel pending match: " + pendingMatchId + " by user: " + userId);
+       System.out.println("[ cancelPendingMatch] pendingMatchId: " + pendingMatchId + " userId: " + userId);
+        PendingMatch pm = pendingRedisTemplate.opsForValue().get(PENDING_MATCH_KEY_PREFIX + pendingMatchId);
+        if (pm == null || pm.getStatus() != PendingStatus.WAITING_CONFIRMATION) {
+            System.out.println("[CANCEL] Failed - match not found or invalid status");
+            return;
+        }
+
+        if (pm.getPlayer1Id().equals(userId) || pm.getPlayer2Id().equals(userId)) {
+            System.out.println("[CANCEL] Valid cancellation request from user: " + userId);
+            pm.setStatus(PendingStatus.CANCELLED);
+
+            // Remove from Redis
+            pendingRedisTemplate.delete(PENDING_MATCH_KEY_PREFIX + pendingMatchId);
+            System.out.println("[CANCEL] Removed from Redis: " + pendingMatchId);
+
+            // Notify the other user
+            Long otherId = pm.getPlayer1Id().equals(userId) ? pm.getPlayer2Id() : pm.getPlayer1Id();
+            System.out.println("[CANCEL] Notifying other user ID: " + otherId);
+
+            try {
+                String otherUsername = userRepository.findById(otherId)
+                        .orElseThrow(() -> new RuntimeException("User not found: " + otherId))
+                        .getUserName();
+
+                System.out.println("[CANCEL] Sending notification to username: " + otherUsername);
+
+                messagingTemplate.convertAndSendToUser(
+                        otherUsername,
+                        "/queue/match-notifications",
+                        new MatchResponseDTO(
+                                "MATCH_CANCELLED",
+                                null,
+                                pm.getPlayer1Id(),
+                                pm.getPlayer2Id(),
+                                System.currentTimeMillis(),
+                                pm.getPendingMatchId()
+                        )
+                );
+                System.out.println("[CANCEL] Notification sent successfully to: " + otherUsername);
+            } catch (Exception e) {
+                System.err.println("[CANCEL ERROR] Failed to notify other user: " + e.getMessage());
+            }
+        }
+    }
+
+    public void confirmPendingMatch(String pendingMatchId, Long userId) {
+        System.out.println("[CONFIRM] Processing confirmation for match: " + pendingMatchId + " by user: " + userId);
+
+        PendingMatch pm = pendingRedisTemplate.opsForValue().get(PENDING_MATCH_KEY_PREFIX + pendingMatchId);
+        if (pm == null || pm.getStatus() != PendingStatus.WAITING_CONFIRMATION) {
+            System.out.println("[CONFIRM] Failed - match not found or invalid status");
+            return;
+        }
+
+        System.out.println("[CONFIRM] Current status - P1 confirmed: " + pm.isPlayer1Confirmed()
+                + ", P2 confirmed: " + pm.isPlayer2Confirmed());
+
+        if (pm.getPlayer1Id().equals(userId)) {
+            pm.setPlayer1Confirmed(true);
+            System.out.println("[CONFIRM] Player1 (" + userId + ") confirmed");
+        }
+        if (pm.getPlayer2Id().equals(userId)) {
+            pm.setPlayer2Confirmed(true);
+            System.out.println("[CONFIRM] Player2 (" + userId + ") confirmed");
+        }
+
+        if (pm.isPlayer1Confirmed() && pm.isPlayer2Confirmed()) {
+            System.out.println("[CONFIRM] Both players confirmed match: " + pendingMatchId);
+            pm.setStatus(PendingStatus.CONFIRMED);
+
+            try {
+                System.out.println("[CONFIRM] Retrieving usernames for notification");
+                String username1 = userRepository.findById(pm.getPlayer1Id())
+                        .orElseThrow(() -> new RuntimeException("User not found: " + pm.getPlayer1Id()))
+                        .getUserName();
+                String username2 = userRepository.findById(pm.getPlayer2Id())
+                        .orElseThrow(() -> new RuntimeException("User not found: " + pm.getPlayer2Id()))
+                        .getUserName();
+
+                System.out.println("[CONFIRM] Sending MATCH_OK to: " + username1 + " and " + username2);
+
+                messagingTemplate.convertAndSendToUser(
+                        username1,
+                        "/queue/match-notifications",
+                        new MatchResponseDTO(
+                                "MATCH_OK",
+                                null,
+                                pm.getPlayer1Id(),
+                                pm.getPlayer2Id(),
+                                System.currentTimeMillis(),
+                                pm.getPendingMatchId()
+                        )
+                );
+                messagingTemplate.convertAndSendToUser(
+                        username2,
+                        "/queue/match-notifications",
+                        new MatchResponseDTO(
+                                "MATCH_OK",
+                                null,
+                                pm.getPlayer2Id(),
+                                pm.getPlayer1Id(),
+                                System.currentTimeMillis(),
+                                pm.getPendingMatchId()
+                        )
+                );
+                System.out.println("[CONFIRM] Notifications sent successfully");
+
+                long scheduledTime = System.currentTimeMillis() + 10_000;
+                pm.setScheduledStartTime(scheduledTime);
+                System.out.println("[CONFIRM] Scheduled tournament creation at: " + scheduledTime);
+
+                pendingRedisTemplate.opsForValue().set(PENDING_MATCH_KEY_PREFIX + pendingMatchId, pm);
+                scheduler.schedule(() -> createDuelTournament(pm), 10, TimeUnit.SECONDS);
+
+            } catch (Exception e) {
+                System.err.println("[CONFIRM ERROR] Failed to process confirmation: " + e.getMessage());
+            }
+        } else {
+            System.out.println("[CONFIRM] Partial confirmation - updating status");
+            pendingRedisTemplate.opsForValue().set(PENDING_MATCH_KEY_PREFIX + pendingMatchId, pm);
+        }
+    }
+
+    private void createDuelTournament(PendingMatch pm) {
+
+        PendingMatch current = pendingRedisTemplate.opsForValue().get(
+                PENDING_MATCH_KEY_PREFIX + pm.getPendingMatchId()
+        );
+        if (current == null) return; // possibly canceled
+
+        if (current.getStatus() != PendingStatus.CONFIRMED) return;
+
+        DuelTournamentEntity duel = new DuelTournamentEntity();
+        duel.setPlayer1(current.getPlayer1Id());
+        duel.setPlayer2(current.getPlayer2Id());
+        duel.setStartTime(current.getScheduledStartTime()); // now + 10s
+        duel.setRated(true);
+        duel.setDurationInSeconds(1800);
+
+        // We will add kafka message queue here in order to achieve scalability, fault-tolerance and loose coupling
+        //DuelTournamentEntity savedDuel = duelRepository.save(duel);
+
+        // "MATCH_CREATED" with real DB matchId
+        MatchResponseDTO response = new MatchResponseDTO(
+                "MATCH_CREATED",
+                12345L, // savedDuel.getId(),
+                current.getPlayer1Id(),
+                current.getPlayer2Id(),
+                duel.getStartTime(),
+                current.getPendingMatchId()
+        );
+
+        // Get usernames for notifications
+        String username1 = userRepository.findById(current.getPlayer1Id())
+                .orElseThrow().getUserName();
+        String username2 = userRepository.findById(current.getPlayer2Id())
+                .orElseThrow().getUserName();
+
+        messagingTemplate.convertAndSendToUser(
+                username1,  // Changed to username
+                "/queue/match-notifications",
+                response
+        );
+        System.out.println("Player1 notified <---------");
+
+        messagingTemplate.convertAndSendToUser(
+                username2,  // Changed to username
+                "/queue/match-notifications",
+                response
+        );
+        System.out.println("Player2 notified <---------");
+
+
+        // remove from Redis or mark as complete
+        pendingRedisTemplate.delete(PENDING_MATCH_KEY_PREFIX + pm.getPendingMatchId());
+    }
+
+    // optional method to check status
+    public PendingMatch getPendingMatch(String pendingMatchId) {
+        return pendingRedisTemplate.opsForValue().get(PENDING_MATCH_KEY_PREFIX + pendingMatchId);
+    }
+}

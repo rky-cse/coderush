@@ -1,9 +1,7 @@
 package me.rkycse.coderush.dto;
 
-
-
-
 public class DuelTournamentDTO extends TournamentBaseDTO {
+
     private Long player1; // userId of player1
     private Long player2; // userId of player2
 
