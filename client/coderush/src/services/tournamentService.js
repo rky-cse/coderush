@@ -11,13 +11,14 @@ export function submitTournament({
   code,
   toast,
   onComplete,
+  userOutput,
 }) {
   try {
     if (tournamentType === 'FREE_STYLE') {
       const payload = {
         index,
         tournamentId,
-        userOutput: '', // In FREE_STYLE, you may send output directly; adjust as needed.
+        userOutput: userOutput, // In FREE_STYLE, you may send output directly; adjust as needed.
       };
       console.log('Submitting payload (FREE_STYLE):', payload);
       webSocketService.send('/app/tournament/freeStyleSubmit', payload);

@@ -5,39 +5,40 @@ public class ClassicSubmissionDTO {
     private int index;
     private String username;
     private Long tournamentId;
-    private Long questionId;
     private String code;
+    private Long maxTimeTaken;
+    private Long maxMemoryUsed;// in milliseconds
+    private Long questionId;
     private String language;
-    private String verdict;
+    private String verdict;//AC,CE,WA,RE,TLE,MLE
     private Long submissionTime; // in milliseconds
-    private Long executionTime; // in milliseconds
-    private Long judgeTime; // in milliseconds
+    private Long judgingTime;// time when judging starts
 
-    public int getIndex() {
-        return index;
+    public Long getMaxTimeTaken() {
+        return maxTimeTaken;
     }
 
-    public void setIndex(int index) {
-        this.index = index;
+    public void setMaxTimeTaken(Long maxTimeTaken) {
+        this.maxTimeTaken = maxTimeTaken;
     }
 
-    private Long memory; // in KB or MB
-
-    public ClassicSubmissionDTO() {}
-
-    public ClassicSubmissionDTO(Long id, String username, Long tid, Long questionId, String code, String language, String verdict, Long submissionTime, Long executionTime, Long judgeTime, Long memory) {
-        this.id = id;
-        this.username = username;
-        this.tournamentId = tid;
-        this.questionId = questionId;
-        this.code = code;
-        this.language = language;
-        this.verdict = verdict;
-        this.submissionTime = submissionTime;
-        this.executionTime = executionTime;
-        this.judgeTime = judgeTime;
-        this.memory = memory;
+    public Long getJudgingTime() {
+        return judgingTime;
     }
+
+    public void setJudgingTime(Long judgingTime) {
+        this.judgingTime = judgingTime;
+    }
+
+    public Long getMaxMemoryUsed() {
+        return maxMemoryUsed;
+    }
+
+    public void setMaxMemoryUsed(Long maxMemoryUsed) {
+        this.maxMemoryUsed = maxMemoryUsed;
+    }
+
+
 
     public Long getId() {
         return id;
@@ -45,6 +46,14 @@ public class ClassicSubmissionDTO {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     public String getUsername() {
@@ -59,8 +68,8 @@ public class ClassicSubmissionDTO {
         return tournamentId;
     }
 
-    public void setTournamentId(Long tid) {
-        this.tournamentId = tid;
+    public void setTournamentId(Long tournamentId) {
+        this.tournamentId = tournamentId;
     }
 
     public Long getQuestionId() {
@@ -69,14 +78,6 @@ public class ClassicSubmissionDTO {
 
     public void setQuestionId(Long questionId) {
         this.questionId = questionId;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
     }
 
     public String getLanguage() {
@@ -98,54 +99,17 @@ public class ClassicSubmissionDTO {
     public Long getSubmissionTime() {
         return submissionTime;
     }
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
 
     public void setSubmissionTime(Long submissionTime) {
         this.submissionTime = submissionTime;
     }
 
-    public Long getExecutionTime() {
-        return executionTime;
-    }
 
-    public void setExecutionTime(Long executionTime) {
-        this.executionTime = executionTime;
-    }
-
-    public Long getJudgeTime() {
-        return judgeTime;
-    }
-
-    public void setJudgeTime(Long judgeTime) {
-        this.judgeTime = judgeTime;
-    }
-
-
-
-    public Long getMemory() {
-        return memory;
-    }
-
-    public void setMemory(Long memory) {
-        this.memory = memory;
-    }
-
-    @Override
-    public String toString() {
-        return "ClassicSubmissionDTO{" +
-                "id=" + id +
-                ", index=" + index +
-                ", username='" + username + '\'' +
-                ", tournamentId=" + tournamentId +
-                ", questionId=" + questionId +
-                ", code='" + code + '\'' +
-                ", language='" + language + '\'' +
-                ", verdict='" + verdict + '\'' +
-                ", submissionTime=" + submissionTime +
-                ", executionTime=" + executionTime +
-                ", judgeTime=" + judgeTime +
-                ", memory=" + memory +
-                '}';
-    }
 }
-
-

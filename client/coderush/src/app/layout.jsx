@@ -59,10 +59,7 @@ import Head from 'next/head';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import { getCookie } from 'cookies-next';
-<<<<<<< Updated upstream
 import { usePathname } from 'next/navigation';
-=======
->>>>>>> Stashed changes
 
 const InitAuth = () => {
   const dispatch = useDispatch();
@@ -119,14 +116,9 @@ const Layout = ({ children }) => {
         <Provider store={store}>
           <InitAuth />
           <div className="min-h-screen bg-gray-100">
-<<<<<<< Updated upstream
             {/* Conditionally render Navbar */}
             { !hideNavbar && <Navbar /> }
             <main className="container mx-auto">
-=======
-            <Navbar />
-            <main className="container mx-auto py-8 px-4">
->>>>>>> Stashed changes
               <Toaster position="top-right" reverseOrder={false} />
               {children}
             </main>

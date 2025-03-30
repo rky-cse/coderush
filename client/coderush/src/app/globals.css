@@ -1,3 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --split-gutter-bg: #e5e7eb;
+  }
+  
+  .dark {
+    --split-gutter-bg: #374151;
+  }
+  
+  .gutter {
+    transition: background-color 0.2s;
+  }
+    
+  .gutter:hover {
+    background-color: #3b82f6;
+  }
+    
+  .gutter:active {
+    background-color: #2563eb;
+  }

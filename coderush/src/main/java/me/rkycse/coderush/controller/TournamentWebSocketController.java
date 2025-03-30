@@ -2,18 +2,23 @@ package me.rkycse.coderush.controller;
 
 import me.rkycse.coderush.dto.*;
 import me.rkycse.coderush.kafka.Producer;
+import me.rkycse.coderush.service.ClassicSubmissionService;
+import me.rkycse.coderush.service.TournamentService;
 import me.rkycse.coderush.service.TournamentWebSocketService;
 import me.rkycse.coderush.util.JsonConverter;
 import me.rkycse.coderush.util.TimeUtil;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.security.Principal;
+import java.util.List;
 
 @Controller
 public class TournamentWebSocketController {
@@ -22,12 +27,18 @@ public class TournamentWebSocketController {
     private final TournamentWebSocketService tournamentWebSocketService;
     private final RedisTemplate<String,Object>redisTemplate;
     private final Producer producer;
+    private final ClassicSubmissionService classicSubmissionService;
+    private final TournamentService tournamentService;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
-    public TournamentWebSocketController(SimpMessagingTemplate messagingTemplate, TournamentWebSocketService tournamentWebSocketService, RedisTemplate<String, Object> redisTemplate, Producer producer) {
+    public TournamentWebSocketController(SimpMessagingTemplate messagingTemplate, TournamentWebSocketService tournamentWebSocketService, RedisTemplate<String, Object> redisTemplate, Producer producer, ClassicSubmissionService classicSubmissionService, TournamentService tournamentService, SimpMessagingTemplate simpMessagingTemplate) {
         this.messagingTemplate = messagingTemplate;
         this.tournamentWebSocketService = tournamentWebSocketService;
         this.redisTemplate = redisTemplate;
         this.producer = producer;
+        this.classicSubmissionService = classicSubmissionService;
+        this.tournamentService = tournamentService;
+        this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
 
@@ -90,12 +101,21 @@ public class TournamentWebSocketController {
         classicSubmissionDTO.setSubmissionTime(submissionTime);
         classicSubmissionDTO.setUsername(userName);
         System.out.println("received response from user "+classicSubmissionDTO);
-
-
         producer.sendClassicSubmission(JsonConverter.toJson(classicSubmissionDTO));
-
         Boolean res=null;// to complete
 
+    }
+
+    @MessageMapping("/tournament/getClassicSubmissionsByTournamentIdAndUsername")
+    public void getClassicSubmissionsByTournamentIdAndUsername(@Payload Long tournamentId, Principal principal) {
+        System.out.println("Received request for tournament " + tournamentId);
+        if (principal == null) {
+            throw new IllegalStateException("No principal found in security context");
+        }
+        UserDetails userDetails = (UserDetails) ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
+        String userName = userDetails.getUsername();
+        List<ClassicSubmissionDTO> classicSubmissionDTOS = classicSubmissionService.getClassicSubmissionsByTournamentIdAndUsername(tournamentId, userName);
+        simpMessagingTemplate.convertAndSend("/topic/tournament/classicSubmissions/" + tournamentId + "/" + userName, classicSubmissionDTOS);
     }
 
 

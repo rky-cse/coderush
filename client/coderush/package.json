@@ -29,6 +29,8 @@
     "react-monaco-editor": "^0.58.0",
     "react-pdf": "^9.2.1",
     "react-redux": "^9.2.0",
+    "react-split": "^2.0.14",
+    "react-syntax-highlighter": "^15.6.1",
     "sockjs-client": "^1.6.1",
     "tailwind-variants": "^0.3.1"
   },

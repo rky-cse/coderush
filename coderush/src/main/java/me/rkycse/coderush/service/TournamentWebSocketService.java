@@ -216,7 +216,7 @@ public class TournamentWebSocketService {
         return false;
     }
 
-    public void classicRankAndSubUpdate(ClassicSubmissionResponseDTO classicDTO) {
+    public void classicRankAndSubUpdate(ClassicSubmissionDTO classicDTO) {
         Long tournamentId = classicDTO.getTournamentId();
         String userName = classicDTO.getUsername();
         int index = classicDTO.getIndex();
