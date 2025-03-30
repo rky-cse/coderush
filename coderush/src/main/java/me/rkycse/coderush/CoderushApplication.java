@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class CoderushApplication {
 	@Autowired
 	private MTMTournamentSchedulerService schedulerService;
+	@Autowired
 	private RankListSchedulerService rankListSchedulerService;
 
 	public static void main(String[] args) {

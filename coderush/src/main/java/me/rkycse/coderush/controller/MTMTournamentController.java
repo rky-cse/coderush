@@ -5,6 +5,10 @@ import me.rkycse.coderush.dto.MTMTournamentDTO;
 import me.rkycse.coderush.entity.MTMTournamentEntity;
 import me.rkycse.coderush.service.MTMTournamentService;
 import me.rkycse.coderush.util.TimeUtil;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -55,6 +59,16 @@ public class MTMTournamentController {
     @GetMapping("/getUpcomingMTMTournaments")
     public ResponseEntity<List<MTMTournamentDTO>> getUpcomingMTMTournaments() {
         return ResponseEntity.ok(mtmTournamentService.getUpcomingMTMTournaments());
+    }
+    @GetMapping("/getPastMTMTournaments")
+    public ResponseEntity<Page<MTMTournamentDTO>> getPastTournaments(
+            @PageableDefault(
+                    size = 10,
+                    sort = "startTime",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        return ResponseEntity.ok(mtmTournamentService.findPastTournaments(pageable));
     }
     @GetMapping("/registeredTournamentsByUser")
     public ResponseEntity<List<Long>> getRegisteredTournamentsByUser() {

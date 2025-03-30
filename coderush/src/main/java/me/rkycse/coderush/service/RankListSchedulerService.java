@@ -17,11 +17,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class RankListSchedulerService {
 
-<<<<<<< Updated upstream
     private static final Logger logger = LoggerFactory.getLogger(RankListSchedulerService.class);
 
-=======
->>>>>>> Stashed changes
     private final RedisTemplate<String, Object> redisTemplate;
     private final SimpMessagingTemplate messagingTemplate;
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(6);
@@ -34,7 +31,7 @@ public class RankListSchedulerService {
     }
 
     public void startScheduling() {
-        executorService.scheduleAtFixedRate(this::checkAndSendRankLists, 0, 5, TimeUnit.SECONDS);
+        executorService.scheduleAtFixedRate(this::checkAndSendRankLists, 0, 20, TimeUnit.SECONDS);
         logger.info("Started rank list scheduling.");
     }
 

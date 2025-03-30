@@ -5,12 +5,16 @@ import me.rkycse.coderush.entity.*;
 import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.*;
 import me.rkycse.coderush.util.TimeUtil;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import me.rkycse.coderush.mapper.Mapper;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -263,6 +267,13 @@ public class MTMTournamentService {
 
     public MTMTournamentDTO getMTMTournamentById(Long tournamentId) {
         return Mapper.toDTO(mtmTournamentRepository.findByTournamentId(tournamentId));
+    }
+
+    public Page<MTMTournamentDTO> findPastTournaments(Pageable pageable) {
+//        Instant now = Instant.now();
+        Page<MTMTournamentEntity> mtmtournamentsEntities =
+                mtmTournamentRepository.findPastTournaments(TimeUtil.getCurrentEpochMillis(), pageable);
+        return mtmtournamentsEntities.map(Mapper::toDTO);
     }
 
 
