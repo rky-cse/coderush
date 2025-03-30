@@ -5,6 +5,7 @@ import me.rkycse.coderush.dto.*;
 import me.rkycse.coderush.entity.*;
 import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.*;
+import me.rkycse.coderush.service.ClassicSubmissionService;
 import me.rkycse.coderush.service.TournamentWebSocketService;
 import me.rkycse.coderush.util.JsonConverter;
 import me.rkycse.coderush.util.TimeUtil;
@@ -31,12 +32,13 @@ public class Consumer {
     private final TournamentQuestionRepository tournamentQuestionRepository;
     private final TournamentWebSocketService tournamentWebSocketService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ClassicSubmissionService classicSubmissionService;
 
     private final RankRepository rankRepository;
     private final UserRepository userRepository;
     private final SubmissionStatusRepository submissionStatusRepository;
 
-    public Consumer(RedisTemplate<String, Object> redisTemplate, QuestionRepository questionRepository, TestcaseRepository testcaseRepository, TournamentPlayerRepository tournamentPlayerRepository, TournamentQuestionRepository tournamentQuestionRepository, TournamentWebSocketService tournamentWebSocketService, SimpMessagingTemplate messagingTemplate, RankRepository rankRepository, UserRepository userRepository, SubmissionStatusRepository submissionStatusRepository) {
+    public Consumer(RedisTemplate<String, Object> redisTemplate, QuestionRepository questionRepository, TestcaseRepository testcaseRepository, TournamentPlayerRepository tournamentPlayerRepository, TournamentQuestionRepository tournamentQuestionRepository, TournamentWebSocketService tournamentWebSocketService, SimpMessagingTemplate messagingTemplate, ClassicSubmissionService classicSubmissionService, RankRepository rankRepository, UserRepository userRepository, SubmissionStatusRepository submissionStatusRepository) {
         this.redisTemplate = redisTemplate;
         this.questionRepository = questionRepository;
         this.testcaseRepository = testcaseRepository;
@@ -44,6 +46,7 @@ public class Consumer {
         this.tournamentQuestionRepository = tournamentQuestionRepository;
         this.tournamentWebSocketService = tournamentWebSocketService;
         this.messagingTemplate = messagingTemplate;
+        this.classicSubmissionService = classicSubmissionService;
         this.rankRepository = rankRepository;
         this.userRepository = userRepository;
         this.submissionStatusRepository = submissionStatusRepository;
@@ -261,14 +264,16 @@ public class Consumer {
         logger.info("ClassicSubmissionResponse: {}", classicSubmissionResponse);
         // convert to object
 
-        ClassicSubmissionResponseDTO classicSubmissionResponseDTO =
+        ClassicSubmissionDTO classicSubmissionDTO =
                 JsonConverter.fromJson(classicSubmissionResponse,
-                        ClassicSubmissionResponseDTO.class);
+                        ClassicSubmissionDTO.class);
 
-        tournamentWebSocketService.classicRankAndSubUpdate(classicSubmissionResponseDTO);
-        String userName = classicSubmissionResponseDTO.getUsername();
-        int index = classicSubmissionResponseDTO.getIndex();
-        messagingTemplate.convertAndSend("/topic/tournament/classicSubmit/" + userName + "/" + index, classicSubmissionResponseDTO);
+        tournamentWebSocketService.classicRankAndSubUpdate(classicSubmissionDTO);
+        String userName = classicSubmissionDTO.getUsername();
+        int index = classicSubmissionDTO.getIndex();
+        messagingTemplate.convertAndSend("/topic/tournament/classicSubmit/" + userName + "/" + index, classicSubmissionDTO);
+        classicSubmissionService.saveToDB(classicSubmissionDTO);
         logger.info("Sent classic submission response via WebSocket for user: {} at index: {}", userName, index);
+
     }
 }

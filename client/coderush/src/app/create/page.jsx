@@ -5,6 +5,7 @@ import { getCookie } from 'cookies-next';
 import { FaChevronLeft, FaSave, FaInfoCircle, FaLock, FaGlobe, FaClock, FaTrophy, FaCog, FaUserTag, FaChartLine } from 'react-icons/fa';
 import { Toaster, toast } from 'react-hot-toast';
 
+
 export default function CreateTournament() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -12,7 +13,7 @@ export default function CreateTournament() {
     name: '',
     description: '',
     startTime: '',
-    durationInSeconds: 7200, 
+    durationInSeconds: 7200,
     visibility: 'PUBLIC',
     password: '',
     tournamentType: 'FREE_STYLE',
@@ -28,7 +29,7 @@ export default function CreateTournament() {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
-    
+
     setFormData((prev) => ({
       ...prev,
       [name]: newValue,
@@ -36,61 +37,69 @@ export default function CreateTournament() {
 
     // Clear the error when the field is edited
     if (errors[name]) {
-      setErrors(prev => ({...prev, [name]: ''}));
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
   // Handle duration change in hours and minutes
   const handleDurationChange = (hours, minutes) => {
-    const totalSeconds = (parseInt(hours) * 3600) + (parseInt(minutes) * 60);
+    // Remove leading zeros from strings (if any)
+    const sanitizedHours = hours.toString().replace(/^0+(?!$)/, "");
+    const sanitizedMinutes = minutes.toString().replace(/^0+(?!$)/, "");
+    // Parse the numbers safely
+    const hoursInt = parseInt(sanitizedHours, 10);
+    const minutesInt = parseInt(sanitizedMinutes, 10);
+    const validHours = isNaN(hoursInt) ? 0 : hoursInt;
+    const validMinutes = isNaN(minutesInt) ? 0 : minutesInt;
+
     setFormData(prev => ({
       ...prev,
-      durationInSeconds: totalSeconds
+      durationInSeconds: (validHours * 3600) + (validMinutes * 60)
     }));
   };
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = 'Tournament name is required';
     }
-    
+
     if (!formData.startTime) {
       newErrors.startTime = 'Start time is required';
     }
-    
+
     if (formData.visibility === 'PRIVATE' && !formData.password.trim()) {
       newErrors.password = 'Password is required for private tournaments';
     }
-    
+
     if (formData.durationInSeconds < 1800) {
       newErrors.durationInSeconds = 'Duration must be at least 30 minutes';
     }
-    
+
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const formErrors = validateForm();
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors);
       return;
     }
-    
+
     setIsSubmitting(true);
     const startTimeMs = new Date(formData.startTime).getTime();
-    
+
     const payload = {
       ...formData,
       startTime: startTimeMs
     };
-    
+
     try {
       const toastId = toast.loading('Creating tournament...');
-      
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tournament/mtm/createMTMTournament`, {
         method: 'POST',
         headers: {
@@ -99,9 +108,9 @@ export default function CreateTournament() {
         },
         body: JSON.stringify(payload),
       });
-      
+
       const result = await response.json();
-      
+
       if (response.ok) {
         toast.success('Tournament created successfully!', { id: toastId });
         router.push('/tournaments');
@@ -125,7 +134,7 @@ export default function CreateTournament() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Toaster position="top-right" />
-      
+
       <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <button
@@ -135,23 +144,23 @@ export default function CreateTournament() {
             <FaChevronLeft className="mr-2" />
             <span>Back</span>
           </button>
-          
+
           <h1 className="text-2xl font-bold flex items-center">
             <FaTrophy className="mr-3 text-indigo-500" />
             Create New Tournament
           </h1>
-          
+
           <div className="w-20"></div> {/* Spacer for centering */}
         </div>
       </header>
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {errors.submit && (
           <div className="mb-8 bg-red-50 border-l-4 border-red-500 p-4 dark:bg-red-900/20 dark:border-red-700 rounded">
             <p className="text-red-700 dark:text-red-400">{errors.submit}</p>
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Basic Information */}
           <div className="lg:col-span-2 space-y-8">
@@ -160,7 +169,7 @@ export default function CreateTournament() {
                 <FaInfoCircle className="mr-2 text-indigo-500" />
                 Basic Information
               </h2>
-              
+
               <div className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium mb-1">
@@ -177,7 +186,7 @@ export default function CreateTournament() {
                   />
                   {errors.name && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name}</p>}
                 </div>
-                
+
                 <div>
                   <label htmlFor="description" className="block text-sm font-medium mb-1">
                     Description
@@ -194,13 +203,13 @@ export default function CreateTournament() {
                 </div>
               </div>
             </section>
-            
+
             <section className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
               <h2 className="text-xl font-medium mb-6 flex items-center">
                 <FaClock className="mr-2 text-indigo-500" />
                 Schedule
               </h2>
-              
+
               <div className="space-y-6">
                 <div>
                   <label htmlFor="startTime" className="block text-sm font-medium mb-1">
@@ -217,7 +226,7 @@ export default function CreateTournament() {
                   {errors.startTime && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.startTime}</p>}
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Your local timezone will be used</p>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-1">
                     Duration*
@@ -255,13 +264,13 @@ export default function CreateTournament() {
                 </div>
               </div>
             </section>
-            
+
             <section className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
               <h2 className="text-xl font-medium mb-6 flex items-center">
                 <FaCog className="mr-2 text-indigo-500" />
                 Tournament Settings
               </h2>
-              
+
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
@@ -284,7 +293,7 @@ export default function CreateTournament() {
                           <span className="text-gray-500 dark:text-gray-400 text-xs">Solve problems in any order</span>
                         </label>
                       </div>
-                      
+
                       <div className="flex items-center p-3 border border-gray-200 dark:border-gray-700 rounded-md cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                         <input
                           id="type-classic"
@@ -302,7 +311,7 @@ export default function CreateTournament() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <label htmlFor="penaltyFactor" className="block text-sm font-medium mb-1">
                       Penalty Per Wrong Submission (seconds)
@@ -322,7 +331,7 @@ export default function CreateTournament() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium mb-2">
@@ -343,7 +352,7 @@ export default function CreateTournament() {
                           <span className="text-gray-500 dark:text-gray-400 text-xs">Results will affect participant ratings</span>
                         </label>
                       </div>
-                      
+
                       <div className="flex items-center p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                         <input
                           id="teamStyle"
@@ -364,7 +373,7 @@ export default function CreateTournament() {
               </div>
             </section>
           </div>
-          
+
           {/* Right Column: Access Settings */}
           <div className="space-y-8">
             <section className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
@@ -372,7 +381,7 @@ export default function CreateTournament() {
                 <FaGlobe className="mr-2 text-indigo-500" />
                 Access Control
               </h2>
-              
+
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -395,7 +404,7 @@ export default function CreateTournament() {
                       </label>
                       <FaGlobe className="text-gray-400" />
                     </div>
-                    
+
                     <div className="flex items-center p-3 border border-gray-200 dark:border-gray-700 rounded-md cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
                       <input
                         id="visibility-private"
@@ -414,7 +423,7 @@ export default function CreateTournament() {
                     </div>
                   </div>
                 </div>
-                
+
                 {formData.visibility === 'PRIVATE' && (
                   <div className="transition-all duration-200 ease-in-out">
                     <label htmlFor="password" className="block text-sm font-medium mb-1">
@@ -439,13 +448,13 @@ export default function CreateTournament() {
                 )}
               </div>
             </section>
-            
+
             <section className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
               <h2 className="text-xl font-medium mb-6 flex items-center">
                 <FaUserTag className="mr-2 text-indigo-500" />
                 Participant Requirements
               </h2>
-              
+
               <div className="space-y-6">
                 <div>
                   <label htmlFor="minRatingReq" className="block text-sm font-medium mb-1">
@@ -462,7 +471,7 @@ export default function CreateTournament() {
                     placeholder="0"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="maxRatingReq" className="block text-sm font-medium mb-1">
                     Maximum Rating (0 = no maximum)
@@ -480,17 +489,17 @@ export default function CreateTournament() {
                 </div>
               </div>
             </section>
-            
+
             <section className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
               <h2 className="text-xl font-medium mb-6 flex items-center">
                 <FaChartLine className="mr-2 text-indigo-500" />
                 Create Tournament
               </h2>
-              
+
               <div className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 Review your tournament details before submitting. Once created, some settings cannot be changed.
               </div>
-              
+
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -506,7 +515,7 @@ export default function CreateTournament() {
                   </>
                 ) : (
                   <>
-                    <FaSave className="mr-2" /> 
+                    <FaSave className="mr-2" />
                     Create Tournament
                   </>
                 )}

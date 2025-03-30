@@ -2,7 +2,7 @@ package me.rkycse.judge.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import me.rkycse.judge.dto.ClassicSubmissionResponseDTO;
+import me.rkycse.judge.dto.ClassicSubmissionDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -72,7 +72,7 @@ public class CodeExecutionService {
                     verdict = "Compilation Error (CE)\n" + compilationError;
                     // Build response with verdict "CE" (after mapping) and zero time/memory.
                     return buildResponse(null, index, username, tournamentId, Long.parseLong(questionId), language,
-                            verdict, submissionTime, judgeStart, 0L, 0L);
+                            code,verdict, submissionTime, judgeStart, 0L, 0L);
                 }
                 logger.info("Compilation succeeded");
             }
@@ -84,7 +84,7 @@ public class CodeExecutionService {
                 logger.error(errorMsg);
                 verdict = "Error: " + errorMsg;
                 return buildResponse(null, index, username, tournamentId, Long.parseLong(questionId), language,
-                        verdict, submissionTime, judgeStart, 0L, 0L);
+                        code,verdict, submissionTime, judgeStart, 0L, 0L);
             }
             logger.info("Found {} test case directories", testCaseDirs.size());
 
@@ -182,11 +182,11 @@ public class CodeExecutionService {
             // Build and return the response DTO as JSON;
             // judgeTime is the timestamp when judging started.
             return buildResponse(null, index, username, tournamentId, Long.parseLong(questionId), language,
-                    verdict, submissionTime, judgeStart, maxTimeTaken, maxMemoryUsed);
+                    code,verdict, submissionTime, judgeStart, maxTimeTaken, maxMemoryUsed);
         } catch (Exception e) {
             logger.error("Error during code execution", e);
             return buildResponse(null, -1, null, null, null, null,
-                    "Error: " + e.getMessage(),judgeStart, judgeStart, 0L, 0L);
+                    "","Error: " + e.getMessage(),judgeStart, judgeStart, 0L, 0L);
         } finally {
             if (tempDir != null) {
                 try {
@@ -200,7 +200,7 @@ public class CodeExecutionService {
     }
 
     private String buildResponse(Long id, int index, String username, Long tournamentId, Long questionId,
-                                 String language, String verdict, long submissionTime,
+                                 String language,String code, String verdict, long submissionTime,
                                  long judgingTime, long maxTimeTaken, long maxMemoryUsed) {
         try {
             // Map the verbose verdict to the required abbreviations
@@ -219,8 +219,9 @@ public class CodeExecutionService {
                     verdict = "AC";
                 }
             }
-            ClassicSubmissionResponseDTO response = new ClassicSubmissionResponseDTO();
+            ClassicSubmissionDTO response = new ClassicSubmissionDTO();
             response.setId(id);
+            response.setCode(code);
             response.setIndex(index);
             response.setUsername(username);
             response.setTournamentId(tournamentId);

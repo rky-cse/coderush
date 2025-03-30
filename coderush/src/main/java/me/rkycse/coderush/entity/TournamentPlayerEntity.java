@@ -19,6 +19,17 @@ public class TournamentPlayerEntity {
     @Column(name = "player_username", nullable = false)
     private String playerUserName;
 
+    @Column(name = "rating", nullable = false)
+    private Long rating;
+
+    public Long getRating() {
+        return rating;
+    }
+
+    public void setRating(Long rating) {
+        this.rating = rating;
+    }
+
     public Long getId() {
         return id;
     }

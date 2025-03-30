@@ -61,7 +61,6 @@ import { Toaster } from 'react-hot-toast';
 import { getCookie } from 'cookies-next';
 import { usePathname } from 'next/navigation';
 
-
 const InitAuth = () => {
   const dispatch = useDispatch();
   const token = getCookie('token');

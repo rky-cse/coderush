@@ -5,71 +5,23 @@ import { setQuestion, clearQuestion } from '@/redux/slices/questionSlice';
 import { setTestcase, clearTestcase } from '@/redux/slices/testcaseSlice';
 import webSocketService from '@/services/webSocketService';
 import { getCookie } from 'cookies-next';
-import { FaQuestionCircle, FaClipboardList, FaInfoCircle, FaCode, FaFileAlt } from 'react-icons/fa';
 
-// Component for section headers with consistent styling
-const SectionHeader = ({ icon: Icon, title }) => (
-  <div className="flex items-center border-b border-gray-200 dark:border-gray-700 pb-3 mb-4">
-    <Icon className="text-xl mr-3 text-indigo-500 dark:text-indigo-400" />
-    <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
-  </div>
+// Simplified section header
+const SectionHeader = ({ title }) => (
+  <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
+    {title}
+  </h2>
 );
 
-// Component for code blocks with consistent styling
+// Minimal code block with content focus
 const CodeBlock = ({ label, content }) => (
   <div className="mb-4">
-    <h3 className="text-md font-medium mb-2 text-gray-700 dark:text-gray-300 flex items-center">
-      <FaCode className="mr-2 text-indigo-500 dark:text-indigo-400" /> {label}
-    </h3>
-    <pre className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap overflow-auto shadow-sm">
+    <div className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+      {label}
+    </div>
+    <pre className="p-2 bg-gray-50 dark:bg-gray-800 border-l-2 border-gray-300 dark:border-gray-600 text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap overflow-auto">
       {content}
     </pre>
-  </div>
-);
-
-// Component for the problem description
-const ProblemDescription = ({ question, index }) => (
-  <div className="mb-8 bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800">
-    <SectionHeader 
-      icon={FaQuestionCircle} 
-      title={`Q${index+1}: ${question?.name || 'Problem Statement'}`} 
-    />
-    <p className="text-base leading-relaxed whitespace-pre-wrap text-gray-700 dark:text-gray-300 mb-6">
-      {question?.legend || 'Loading problem description...'}
-    </p>
-    
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <CodeBlock label="Input Format" content={question?.inputFormat || 'Loading...'} />
-      <CodeBlock label="Output Format" content={question?.outputFormat || 'Loading...'} />
-    </div>
-    
-    {question?.notes && (
-      <div className="mt-6 border-l-4 border-indigo-500 dark:border-indigo-400 pl-4 bg-indigo-50 dark:bg-indigo-900/30 p-3 rounded-r-md">
-        <h3 className="text-md font-medium flex items-center text-gray-700 dark:text-gray-300">
-          <FaInfoCircle className="mr-2 text-indigo-500 dark:text-indigo-400" /> Note
-        </h3>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{question.notes}</p>
-      </div>
-    )}
-  </div>
-);
-
-// Component for test cases
-const TestCases = ({ testcase }) => (
-  <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800">
-    <SectionHeader icon={FaClipboardList} title="Test Cases" />
-    
-    {testcase ? (
-      <div className="space-y-5">
-        <CodeBlock label="Input" content={testcase.input} />
-        <CodeBlock label="Expected Output" content={testcase.expectedOutput} />
-      </div>
-    ) : (
-      <div className="animate-pulse space-y-4">
-        <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
-        <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
-      </div>
-    )}
   </div>
 );
 
@@ -118,18 +70,80 @@ export default function Question({ tournamentId }) {
     };
   }, [tournamentId, index, token, dispatch]);
 
+  // Load state indicator
+  if (!question) {
+    return (
+      <div className="max-w-4xl mx-auto p-4">
+        <div className="animate-pulse space-y-3">
+          <div className="h-6 w-1/3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-4 w-2/3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 transition-all duration-300 py-6 px-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Navigation breadcrumb */}
-        <div className="text-sm text-gray-500 dark:text-gray-400 mb-4 flex items-center">
-          <FaFileAlt className="mr-2" />
-          <span>Tournament / Question {index + 1}</span>
+    <div className="max-w-4xl mx-auto px-3 py-2 text-gray-800 dark:text-gray-200">
+      {/* Problem header with question number */}
+      <div className="mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          Q{index+1}: {question?.name || 'Problem Statement'}
+        </h1>
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          Problem {index + 1}
+        </div>
+      </div>
+      
+      {/* Problem statement */}
+      <div className="mb-6">
+        <div className="text-base text-gray-700 dark:text-gray-300 whitespace-pre-wrap mb-6 leading-relaxed">
+          {question?.legend || 'Loading problem description...'}
         </div>
         
-        {/* Main content sections */}
-        <ProblemDescription question={question} index={index} />
-        <TestCases testcase={testcase} />
+        {/* Input/Output formats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <SectionHeader title="Input Format" />
+            <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700">
+              {question?.inputFormat || 'Not provided'}
+            </div>
+          </div>
+          
+          <div>
+            <SectionHeader title="Output Format" />
+            <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700">
+              {question?.outputFormat || 'Not provided'}
+            </div>
+          </div>
+        </div>
+        
+        {/* Notes section - only shown if notes exist */}
+        {question?.notes && (
+          <div className="mt-4">
+            <SectionHeader title="Notes" />
+            <div className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700">
+              {question.notes}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Test cases section */}
+      <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
+        <SectionHeader title="Test Cases" />
+        
+        {testcase ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CodeBlock label="Input" content={testcase.input} />
+            <CodeBlock label="Expected Output" content={testcase.expectedOutput} />
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Test cases not available
+          </div>
+        )}
       </div>
     </div>
   );

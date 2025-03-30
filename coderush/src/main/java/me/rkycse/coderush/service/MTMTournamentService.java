@@ -86,6 +86,8 @@ public class MTMTournamentService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String userName = userDetails.getUsername();
+        Optional<UserEntity> user = userRepository.findByUserName(userName);
+        Long rating = user.get().getRating();
 
         // Retrieve tournament details
         MTMTournamentEntity tournament = mtmTournamentRepository.findById(tournamentId)
@@ -109,6 +111,7 @@ public class MTMTournamentService {
             tournamentPlayer = new TournamentPlayerEntity();
             tournamentPlayer.setTournamentId(tournamentId);
             tournamentPlayer.setPlayerUserName(userName);
+            tournamentPlayer.setRating(rating);
             tournamentPlayerRepository.save(tournamentPlayer);
         }
 
@@ -119,11 +122,11 @@ public class MTMTournamentService {
         }
 
         // Return the join tournament response
-        return getJoinTournamentResponseDTO(tournamentId, userName);
+        return getJoinTournamentResponseDTO(tournamentId, userName, rating);
     }
 
 
-    private JoinTournamentResponseDTO getJoinTournamentResponseDTO(Long tournamentId, String userName) {
+    private JoinTournamentResponseDTO getJoinTournamentResponseDTO(Long tournamentId, String userName, Long rating) {
         List<TournamentPlayerEntity> tournamentPlayerEntities =
                 tournamentPlayerRepository
                         .findByTournamentId(tournamentId);
@@ -131,7 +134,10 @@ public class MTMTournamentService {
         RankEntity rankEntity = new RankEntity();
         rankEntity.setUserName(userName);
         rankEntity.setTournamentId(tournamentId);
+
+
         rankRepository.save(rankEntity);
+
         JoinTournamentResponseDTO joinTournamentResponseDTO = new JoinTournamentResponseDTO();
         for (TournamentPlayerEntity tournamentPlayerEntity : tournamentPlayerEntities) {
             joinTournamentResponseDTO.setTournamentId(tournamentId);

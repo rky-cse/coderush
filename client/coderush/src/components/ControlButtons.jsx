@@ -6,12 +6,12 @@ import { runCode } from '@/services/codeRunner';
 import { submitTournament } from '@/services/tournamentService';
 import { FaChevronLeft, FaChevronRight, FaPlay, FaCheck, FaSpinner, FaKeyboard } from 'react-icons/fa';
 
-export default function ControlButtons({ tournamentId, token, setOutput, customInput, submitFlag, setSubmitFlag }) {
+export default function ControlButtons({ tournamentId, token, output, customInput, submitFlag, setSubmitFlag }) {
   const dispatch = useDispatch();
   const { language, code } = useSelector((state) => state.editor) || {};
   const index = useSelector((state) => state.index) ?? 0;
   const question = useSelector((state) => state.question.data) || {};
-  const tournamentType = useSelector((state) => state.tournament?.tournamentData?.tournament?.tournamentType) || 'CLASSIC';
+  const tournamentType = useSelector((state) => state.tournament?.tournamentData?.tournamentType) || 'CLASSIC';
   console.log(tournamentType);
   const username = useSelector((state) => state.auth.user) || 'anonymous';
   
@@ -91,7 +91,7 @@ export default function ControlButtons({ tournamentId, token, setOutput, customI
       question,
       language,
       code,
-      output: setOutput,
+      userOutput: output,
       toast,
       onComplete: () => {
         setSubmitFlag(true);

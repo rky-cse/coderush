@@ -5,6 +5,15 @@ public class TournamentPlayerDTO {
     private Long id;
     private Long tournamentId;
     private String playerUserName;
+    private Long rating;
+
+    public Long getRating() {
+        return rating;
+    }
+
+    public void setRating(Long rating) {
+        this.rating = rating;
+    }
 
     public Long getId() {
         return id;

@@ -79,6 +79,7 @@ public class Mapper {
         dto.setId(entity.getId());
         dto.setPlayerUserName(entity.getPlayerUserName());
         dto.setTournamentId(entity.getTournamentId());
+        dto.setRating(entity.getRating());
         return dto;
     }
 
@@ -188,6 +189,122 @@ public class Mapper {
         dto.setTournamentId(entity.getTournamentId());
 
         return dto;
+    }
+
+    /**
+     * Convert DTO to Entity
+     *
+     * @param dto The DTO to convert
+     * @return The converted entity, or null if dto is null
+     */
+    public static ClassicSubmissionEntity toEntity(ClassicSubmissionDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+
+        ClassicSubmissionEntity entity = new ClassicSubmissionEntity();
+        entity.setId(dto.getId());
+        entity.setIndex(dto.getIndex());
+        entity.setUsername(dto.getUsername());
+        entity.setTournamentId(dto.getTournamentId());
+        entity.setCode(dto.getCode());
+        entity.setMaxTimeTaken(dto.getMaxTimeTaken());
+        entity.setMaxMemoryUsed(dto.getMaxMemoryUsed());
+        entity.setQuestionId(dto.getQuestionId());
+        entity.setLanguage(dto.getLanguage());
+        entity.setVerdict(dto.getVerdict());
+        entity.setSubmissionTime(dto.getSubmissionTime());
+        entity.setJudgingTime(dto.getJudgingTime());
+
+        return entity;
+    }
+
+    /**
+     * Convert Entity to DTO
+     *
+     * @param entity The entity to convert
+     * @return The converted DTO, or null if entity is null
+     */
+    public static ClassicSubmissionDTO toDTO(ClassicSubmissionEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        ClassicSubmissionDTO dto = new ClassicSubmissionDTO();
+        dto.setId(entity.getId());
+        dto.setIndex(entity.getIndex());
+        dto.setUsername(entity.getUsername());
+        dto.setTournamentId(entity.getTournamentId());
+        dto.setCode(entity.getCode());
+        dto.setMaxTimeTaken(entity.getMaxTimeTaken());
+        dto.setMaxMemoryUsed(entity.getMaxMemoryUsed());
+        dto.setQuestionId(entity.getQuestionId());
+        dto.setLanguage(entity.getLanguage());
+        dto.setVerdict(entity.getVerdict());
+        dto.setSubmissionTime(entity.getSubmissionTime());
+        dto.setJudgingTime(entity.getJudgingTime());
+
+        return dto;
+    }
+
+
+
+    public static ClassicSubmissionEntity toNewEntity(ClassicSubmissionDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+
+        ClassicSubmissionEntity entity = toEntity(dto);
+        entity.setId(null); // Ensure ID is null for new entities
+        return entity;
+    }
+
+    /**
+     * Update an existing entity with values from a DTO
+     *
+     * @param existingEntity The existing entity to update
+     * @param dto The DTO containing new values
+     * @return The updated entity, or a new entity if existingEntity is null
+     */
+    public static ClassicSubmissionEntity updateEntityFromDTO(
+            ClassicSubmissionEntity existingEntity,
+            ClassicSubmissionDTO dto) {
+
+        if (existingEntity == null) {
+            return toEntity(dto);
+        }
+
+        if (dto == null) {
+            return existingEntity;
+        }
+
+        // We keep the ID from the existing entity
+        // Long id = existingEntity.getId();
+
+        // Update all other fields
+        existingEntity.setIndex(dto.getIndex());
+        existingEntity.setUsername(dto.getUsername());
+        existingEntity.setTournamentId(dto.getTournamentId());
+        existingEntity.setCode(dto.getCode());
+        existingEntity.setMaxTimeTaken(dto.getMaxTimeTaken());
+        existingEntity.setMaxMemoryUsed(dto.getMaxMemoryUsed());
+        existingEntity.setQuestionId(dto.getQuestionId());
+        existingEntity.setLanguage(dto.getLanguage());
+        existingEntity.setVerdict(dto.getVerdict());
+        existingEntity.setSubmissionTime(dto.getSubmissionTime());
+        existingEntity.setJudgingTime(dto.getJudgingTime());
+
+        return existingEntity;
+    }
+
+    /**
+     * Create a copy of a DTO
+     *
+     * @param source The DTO to copy
+     * @return A new DTO with the same values, or null if source is null
+     */
+    public static ClassicSubmissionDTO copyDTO(ClassicSubmissionDTO source) {
+        return source == null ? null : toDTO(toEntity(source));
     }
 
 

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { getCookie } from 'cookies-next';
@@ -7,6 +7,8 @@ import {
   FaCalendarAlt, FaClock, FaEye, FaShieldAlt, FaTrophy, 
   FaExclamationTriangle, FaLock, FaStar, FaUsers, FaUser
 } from 'react-icons/fa';
+import {useDispatch, useSelector } from 'react-redux';
+import { setTournamentData } from '@/redux/slices/tournamentSlice';
 
 // Utility function to format time
 const formatTime = (ms) => {
@@ -345,6 +347,7 @@ const TournamentPage = ({ params: { tournamentId } }) => {
   const [error, setError] = useState('');
   const [timeRemaining, setTimeRemaining] = useState(0);
   const token = getCookie('token');
+  const dispatch=useDispatch();
 
   useEffect(() => {
     const fetchTournamentData = async () => {
@@ -367,6 +370,7 @@ const TournamentPage = ({ params: { tournamentId } }) => {
         }
         
         setTournament(tournamentData);
+        dispatch(setTournamentData(tournamentData));
         
         // Fetch registered tournaments
         if (token) {
@@ -376,7 +380,7 @@ const TournamentPage = ({ params: { tournamentId } }) => {
           );
           
           if (userTournaments) {
-            const registeredIds = userTournaments.map(t => t.tournamentId);
+            const registeredIds = userTournaments;
             setRegisteredTournaments(registeredIds);
           }
         }
@@ -448,17 +452,9 @@ const TournamentPage = ({ params: { tournamentId } }) => {
   const tournamentEnd = tournamentStart + tournament.durationInSeconds * 1000;
   const isLive = now >= tournamentStart && now <= tournamentEnd;
   const isEnded = now > tournamentEnd;
-  const isRegistered = ()=>{
-    reg = false;
-    registeredTournaments.forEach((t)=>{
-      if(t === tournament.tournamentId){
-        reg = true;
-      }
-    });
-
-    return reg;
-
-  }
+  const isRegistered = registeredTournaments.includes(Number(tournament.tournamentId));
+  console.log(registeredTournaments, tournament, isRegistered);
+  console.log("tournament end", tournamentEnd, "now", now, "isLive", isLive, "isEnded", isEnded);
   
 
   return (
