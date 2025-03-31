@@ -148,7 +148,6 @@ public class TournamentWebSocketService {
             submissionStatusDTO.setSolved(true);
             submissionStatusDTO.setNumberOfAttempts(submissionStatusDTO.getNumberOfAttempts() + 1);
 //            rank.setPenalty(rank.getPenalty() + (TimeUtil.getCurrentEpochMillis()) / (60000L));
-
             Long timeFromStart = (submissionTime-startTime)/1000L;
             rank.setPenalty(rank.getPenalty() + timeFromStart);
 

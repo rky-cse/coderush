@@ -35,7 +35,7 @@ public class Producer {
 
     private static final String ratingUpdateTopic="rating-update";
     public void sendRatingUpdate(Long tournamentId){
-        kafkaTemplate.send(rankUpdateTopic,tournamentId);
+        kafkaTemplate.send(ratingUpdateTopic,tournamentId);
     }
 
 }

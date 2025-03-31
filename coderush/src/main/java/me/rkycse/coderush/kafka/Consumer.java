@@ -294,57 +294,5 @@ public class Consumer {
         logger.info("Sent classic submission response via WebSocket for user: {} at index: {}", userName, index);
 
     }
-    @KafkaListener(topics = "rating-update", groupId = "myGroup")
-    public void consumeRatingUpdate(Long tournamentId) {
-        // 1. Fetch rank list for the tournament
-        List<RankEntity> ranks = rankRepository.findByTournamentId(tournamentId);
-
-        // 2. Sort the ranks: higher score first, and lower penalty if scores are equal
-        ranks.sort((r1, r2) -> {
-            int scoreCompare = Long.compare(r2.getScore(), r1.getScore());
-            if (scoreCompare != 0) {
-                return scoreCompare;
-            }
-            return Long.compare(r1.getPenalty(), r2.getPenalty());
-        });
-
-        int totalPlayers = ranks.size();
-        double[] expectedRanks = new double[totalPlayers];
-
-        // 3. Calculate expected rank for each player
-        for (int i = 0; i < totalPlayers; i++) {
-            RankEntity player = ranks.get(i);
-            double expectedRank = 0.5; // self-match contribution
-            for (int j = 0; j < totalPlayers; j++) {
-                if (i == j) {
-                    continue;
-                }
-                RankEntity opponent = ranks.get(j);
-                double ratingDiff = opponent.getRating() - player.getRating();
-                double probability = 1.0 / (1.0 + Math.pow(10, ratingDiff / 400.0));
-                expectedRank += probability;
-            }
-            expectedRanks[i] = expectedRank;
-        }
-
-        // 4. Compute rating change and update each player's rating
-        // The actual rank is determined by the sorted order (1-indexed)
-        final double K = 20.0;
-        for (int i = 0; i < totalPlayers; i++) {
-            RankEntity player = ranks.get(i);
-            int actualRank = i + 1; // 1-indexed rank
-            double ratingChange = K * (expectedRanks[i] - actualRank);
-            long newRating = Math.round(player.getRating() + ratingChange);
-            player.setRating(newRating);
-            Optional<UserEntity> user = userRepository.findByUserName(player.getUserName());
-            if(user.isPresent()){
-                user.get().setRating(newRating);
-                userRepository.save(user.get());
-            }
-        }
-
-        // 5. Persist the updated ranks (or update the user ratings as needed)
-        rankRepository.saveAll(ranks);
-    }
 
 }

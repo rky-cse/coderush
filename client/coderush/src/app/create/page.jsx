@@ -251,7 +251,7 @@ export default function CreateTournament() {
                         type="number"
                         min="0"
                         max="59"
-                        step="5"
+                        step="1"
                         value={durationMinutes}
                         onChange={(e) => handleDurationChange(durationHours, e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-gray-700 transition-colors"

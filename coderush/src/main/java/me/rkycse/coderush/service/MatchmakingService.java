@@ -110,10 +110,10 @@ public class MatchmakingService {
                     redisTemplate.opsForZSet().rangeWithScores(queueKey, 0, -1)
             );
 
-            System.out.println("[DEBUG] Processing queue of timeControl " + timeControl + " with " + tuples.size() + " entries");
+//            System.out.println("[DEBUG] Processing queue of timeControl " + timeControl + " with " + tuples.size() + " entries");
 
             if (tuples == null || tuples.isEmpty()) {
-                System.out.println("[DEBUG] Queue is empty");
+//                System.out.println("[DEBUG] Queue is empty");
                 continue;
             }
 
@@ -129,8 +129,8 @@ public class MatchmakingService {
                 long currentTime = System.currentTimeMillis();
                 long timeInQueue = currentTime - request.getRequestTime();
 
-                System.out.printf("[DEBUG] Processing user %d (in queue for %dms)%n",
-                        request.getUserId(), timeInQueue);
+//                System.out.printf("[DEBUG] Processing user %d (in queue for %dms)%n",
+//                        request.getUserId(), timeInQueue);
 
                 if (timeInQueue >= MATCH_TIMEOUT_MS || findSuitableOpponent(request, currentTime) != null) {
                     System.out.println("[MATCH] Found candidate for processing: " + request.getUserId());
