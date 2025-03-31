@@ -7,6 +7,27 @@ public class RankDTO {
     private Long tournamentId;
     private Long penalty=0L;
     private long score;
+    private Long rating;
+
+    @Override
+    public String toString() {
+        return "RankDTO{" +
+                "id=" + id +
+                ", userName='" + userName + '\'' +
+                ", tournamentId=" + tournamentId +
+                ", penalty=" + penalty +
+                ", score=" + score +
+                ", rating=" + rating +
+                '}';
+    }
+
+    public Long getRating() {
+        return rating;
+    }
+
+    public void setRating(Long rating) {
+        this.rating = rating;
+    }
 
     public Long getId() {
         return id;

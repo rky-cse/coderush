@@ -25,6 +25,29 @@ public class RankEntity {
     @Column(name="penalty", nullable = false)
     private Long penalty=0L;
 
+    @Column(name="rating", nullable = false)
+    private Long rating=0L;
+
+    public Long getRating() {
+        return rating;
+    }
+
+    public void setRating(Long rating) {
+        this.rating = rating;
+    }
+
+    @Override
+    public String toString() {
+        return "RankEntity{" +
+                "id=" + id +
+                ", tournamentId=" + tournamentId +
+                ", userName='" + userName + '\'' +
+                ", score=" + score +
+                ", penalty=" + penalty +
+                ", rating=" + rating +
+                '}';
+    }
+
     // Getters and setters
     public Long getId() {
         return id;

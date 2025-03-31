@@ -82,8 +82,11 @@ public class TournamentWebSocketService {
 
     public Boolean isCorrect(String userName, int index, UserResponseDTO answer) {
         Long tournamentId = answer.getTournamentId();
+
         logger.info("Validating answer for userName: {}, tournamentId: {}, index: {}", userName, tournamentId, index);
+
         TournamentCacheDTO cacheDTO = (TournamentCacheDTO) redisTemplate.opsForValue().get("$" + tournamentId);
+
         if (cacheDTO == null) {
             logger.error("Tournament not found for tournamentId: {}", tournamentId);
             throw new NoSuchElementException("Tournament not found");
@@ -92,6 +95,7 @@ public class TournamentWebSocketService {
         Long startTime = cacheDTO.getStartTime();
         Long endTime = startTime + cacheDTO.getDurationInSeconds() * 1000L;
         Long submissionTime = TimeUtil.getCurrentEpochMillis();
+
 
         if (submissionTime > endTime) {
             logger.error("Tournament already ended for tournamentId: {} (submissionTime: {}, endTime: {})", tournamentId, submissionTime, endTime);
@@ -115,6 +119,7 @@ public class TournamentWebSocketService {
 
         // Fetch rank details
         logger.info("Fetching rank for user: {} and tournamentId: {}", userName, answer.getTournamentId());
+
         RankDTO rank = (RankDTO) redisTemplate
                 .opsForValue().get("rankDTO/" + answer.getTournamentId() + "/" + userName);
         if (rank == null) {
@@ -142,7 +147,10 @@ public class TournamentWebSocketService {
             // Mark as solved and update attempts
             submissionStatusDTO.setSolved(true);
             submissionStatusDTO.setNumberOfAttempts(submissionStatusDTO.getNumberOfAttempts() + 1);
-            rank.setPenalty(rank.getPenalty() + (TimeUtil.getCurrentEpochMillis()) / (60000L));
+//            rank.setPenalty(rank.getPenalty() + (TimeUtil.getCurrentEpochMillis()) / (60000L));
+
+            Long timeFromStart = (submissionTime-startTime)/1000L;
+            rank.setPenalty(rank.getPenalty() + timeFromStart);
 
             // Update SubmissionStatusDTO in Redis without changing TTL
             String key = "SubmissionStatusDTO/" + answer.getTournamentId() + "/" + userName + "/" + index;

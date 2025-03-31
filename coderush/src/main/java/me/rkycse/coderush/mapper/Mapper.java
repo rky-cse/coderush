@@ -19,6 +19,7 @@ public class Mapper {
         dto.setScore(entity.getScore());
         dto.setTournamentId(entity.getTournamentId());
         dto.setPenalty(entity.getPenalty());
+        dto.setRating(entity.getRating());
         return dto;
     }
 
@@ -33,6 +34,8 @@ public class Mapper {
         entity.setScore(dto.getScore());
         entity.setTournamentId(dto.getTournamentId());
         entity.setPenalty(dto.getPenalty());
+        entity.setRating(dto.getRating());
+
         return entity;
     }
 

@@ -46,14 +46,14 @@ public class MTMTournamentSchedulerService {
 
     public void startScheduling() {
         logger.info("Starting tournament scheduler...");
-        executorService.scheduleAtFixedRate(this::fetchAndStoreTournaments, 0, 20, TimeUnit.SECONDS);
-        executorService.scheduleAtFixedRate(this::scheduleTournaments, 0, 4, TimeUnit.SECONDS);
+        executorService.scheduleAtFixedRate(this::fetchAndStoreTournaments, 0, 5, TimeUnit.SECONDS);
+        executorService.scheduleAtFixedRate(this::scheduleTournaments, 0, 1, TimeUnit.SECONDS);
     }
 
     private void fetchAndStoreTournaments() {
         try {
             Long now = TimeUtil.getCurrentEpochMillis();
-            Long upperLimit = now + 28000L;
+            Long upperLimit = now + 7000L;
             List<Object[]> tournaments = tournamentBaseRepository.findTournamentsBetween(now, upperLimit);
 
             if (tournaments.isEmpty()) {
@@ -79,7 +79,7 @@ public class MTMTournamentSchedulerService {
                     cacheDTO.setTournamentType(tournamentType);
                     cacheDTO.setScheduled(Boolean.FALSE);
                     cacheDTO.setPenaltyFactor(penaltyFactor);
-                    redisTemplate.opsForValue().set(key, cacheDTO, 28, TimeUnit.SECONDS);
+                    redisTemplate.opsForValue().set(key, cacheDTO, 7, TimeUnit.SECONDS);
 
                     logger.info("Stored tournament {} in Redis with key {}", tournamentId, key);
                 }
@@ -113,7 +113,7 @@ public class MTMTournamentSchedulerService {
                     );
 
                     cacheDTO.setScheduled(true);
-                    redisTemplate.opsForValue().set(key, cacheDTO, 28, TimeUnit.SECONDS);
+                    redisTemplate.opsForValue().set(key, cacheDTO, 7, TimeUnit.SECONDS);
                     logger.info("Scheduled tournament {} to start at {}", cacheDTO.getTournamentId(), cacheDTO.getStartTime());
                 }
             }

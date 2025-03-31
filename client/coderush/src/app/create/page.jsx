@@ -73,7 +73,7 @@ export default function CreateTournament() {
       newErrors.password = 'Password is required for private tournaments';
     }
 
-    if (formData.durationInSeconds < 1800) {
+    if (formData.durationInSeconds <=0) {
       newErrors.durationInSeconds = 'Duration must be at least 30 minutes';
     }
 

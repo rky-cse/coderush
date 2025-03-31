@@ -2,6 +2,7 @@ package me.rkycse.coderush.service;
 
 import me.rkycse.coderush.dto.*;
 import me.rkycse.coderush.repository.UserRepository;
+import me.rkycse.coderush.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -31,7 +32,7 @@ public class RankListSchedulerService {
     }
 
     public void startScheduling() {
-        executorService.scheduleAtFixedRate(this::checkAndSendRankLists, 0, 20, TimeUnit.SECONDS);
+        executorService.scheduleAtFixedRate(this::checkAndSendRankLists, 0, 5, TimeUnit.SECONDS);
         logger.info("Started rank list scheduling.");
     }
 
@@ -108,6 +109,11 @@ public class RankListSchedulerService {
                         userRankDTO.setRankWithFreeStyleSubmissionDTO(rankWithFreeStyleSubmissionDTO.get(i));
 
                         messagingTemplate.convertAndSend("/topic/userRank/"+tournamentId+"/"+userName, userRankDTO);
+                        //4999
+                        if(userRankDTO.getEndTime()- TimeUtil.getCurrentEpochMillis()<=5000
+                                && userRankDTO.getEndTime()- TimeUtil.getCurrentEpochMillis()>0){
+
+                        }
 
                     }
 

@@ -24,6 +24,8 @@ export default function TournamentPage({ params }) {
   const [mainSplitSizes, setMainSplitSizes] = useState([60, 40]);
   const [ioSplitSizes, setIoSplitSizes] = useState([50, 50]);
   const [activeSection, setActiveSection] = useState('problem');
+  const [registeredTournaments, setRegisteredTournaments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Refs for scrolling to sections
   const questionSectionRef = useRef(null);
@@ -98,7 +100,7 @@ export default function TournamentPage({ params }) {
         
         setTournament(tournamentData);
         dispatch(setTournamentData(tournamentData));
-        
+
         // Fetch registered tournaments
         if (token) {
           const { data: userTournaments } = await axios.get(
@@ -107,7 +109,7 @@ export default function TournamentPage({ params }) {
           );
           
           if (userTournaments) {
-            const registeredIds = userTournaments.map(t => t.tournamentId);
+            const registeredIds = userTournaments;
             setRegisteredTournaments(registeredIds);
           }
         }

@@ -14,7 +14,8 @@ public class Producer {
     private KafkaTemplate<String, Object> kafkaTemplate;
     public void sendRankUpdate(RankEntity rank) {
         kafkaTemplate.send(rankUpdateTopic, rank);
-        System.out.println("Produced message: " + rank);
+        System.out.println("Produced message\n\n\n\n\n\n\n\n\n\n: " + rank);
+        System.out.println("kya mila ?????????????????????????????" + rank);
     }
     private static final String SubmissionStatusUpdateTopic = "user-testcase-update";
 
@@ -32,5 +33,9 @@ public class Producer {
         kafkaTemplate.send(classicSubmissionUpdateTopic, classicSubmissionDTO);
     }
 
+    private static final String ratingUpdateTopic="rating-update";
+    public void sendRatingUpdate(Long tournamentId){
+        kafkaTemplate.send(rankUpdateTopic,tournamentId);
+    }
 
 }
