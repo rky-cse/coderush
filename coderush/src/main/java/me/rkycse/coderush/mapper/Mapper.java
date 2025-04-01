@@ -311,5 +311,34 @@ public class Mapper {
     }
 
 
+    public static UserTournamentRatingDTO toDto(UserTournamentRatingEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        UserTournamentRatingDTO dto = new UserTournamentRatingDTO();
+        dto.setId(entity.getId());
+        dto.setTournamentId(entity.getTournamentId());
+        dto.setUsername(entity.getUsername());
+        dto.setOldRating(entity.getOldRating());
+        dto.setNewRating(entity.getNewRating());
+        dto.setRatingUpdateTimestamp(entity.getRatingUpdateTimestamp());
+        return dto;
+    }
+
+    public static UserTournamentRatingEntity toEntity(UserTournamentRatingDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        UserTournamentRatingEntity entity = new UserTournamentRatingEntity();
+        entity.setId(dto.getId());
+        entity.setTournamentId(dto.getTournamentId());
+        entity.setUsername(dto.getUsername());
+        entity.setOldRating(dto.getOldRating());
+        entity.setNewRating(dto.getNewRating());
+        entity.setRatingUpdateTimestamp(dto.getRatingUpdateTimestamp());
+        return entity;
+    }
+
+
 
 }
