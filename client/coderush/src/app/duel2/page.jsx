@@ -660,20 +660,23 @@ export default function DuelPage() {
       case 'MATCH_OK': {
         setWaitingForOpponent(false);
         setMatchConfirmed(true);
+        break;
+      }
+      case 'MATCH_CREATED': {
         setCountdown(10);
+        console.log("Redirecting to gameboard with ID" , matchId);
+        console.log("Match ID:", matchId, "Pending Match ID:", pendingMatchId, "User ID:", userId );
         const timer = setInterval(() => {
           setCountdown((prev) => {
             if (prev <= 1) {
               clearInterval(timer);
-              router.push('/duel/gameboard');
+              
+              router.push(`/duelTournamentPage/${matchId}`);
               return 0;
             }
             return prev - 1;
           });
         }, 1000);
-        break;
-      }
-      case 'MATCH_CREATED': {
         resetMatchState();
         break;
       }

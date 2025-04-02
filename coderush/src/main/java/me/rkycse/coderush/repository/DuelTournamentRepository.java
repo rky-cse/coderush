@@ -1,6 +1,7 @@
 package me.rkycse.coderush.repository;
 
 import me.rkycse.coderush.entity.DuelTournamentEntity;
+import me.rkycse.coderush.entity.MTMTournamentEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,4 +15,8 @@ public interface DuelTournamentRepository extends JpaRepository<DuelTournamentEn
     @Query("SELECT d FROM DuelTournamentEntity d WHERE d.player1 = :player1 AND d.player2 = :player2")
     List<DuelTournamentEntity> findDuelsBetweenPlayers(@Param("player1") Long player1,
                                                        @Param("player2") Long player2);
+
+
+    DuelTournamentEntity findByTournamentId(long tournamentId);
+
 }

@@ -163,6 +163,22 @@ public class Mapper {
         return dto;
     }
 
+    public static DuelTournamentDTO toDTO(DuelTournamentEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        DuelTournamentDTO dto = new DuelTournamentDTO();
+        dto.setTournamentId(entity.getTournamentId());
+        dto.setPassword(entity.getPassword());
+        dto.setDurationInSeconds(entity.getDurationInSeconds());
+        dto.setRated(entity.getRated());
+        dto.setStartTime(entity.getStartTime());
+        dto.setVisibility(entity.getVisibility());
+        dto.setTournamentType(entity.getTournamentType());
+        dto.setPenaltyFactor(entity.getPenaltyFactor());
+        return dto;
+    }
+
     public static UserDTO toDTO(UserEntity dto) {
         if (dto == null) {
             return null;
