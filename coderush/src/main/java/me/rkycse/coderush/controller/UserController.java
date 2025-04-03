@@ -1,5 +1,6 @@
 package me.rkycse.coderush.controller;
 
+import me.rkycse.coderush.dto.RecentActivityDTO;
 import me.rkycse.coderush.dto.UserDTO;
 import me.rkycse.coderush.dto.UserTournamentRatingDTO;
 import me.rkycse.coderush.entity.UserTournamentRatingEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLOutput;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @CrossOrigin("*")
@@ -43,6 +45,19 @@ public class UserController {
         String userName = userDetails.getUsername();
         return ResponseEntity.ok(userService.getUserTournamentRating(userName));
 
+    }
+    @GetMapping("/getRecentActivity/{userName}")
+    public ResponseEntity<RecentActivityDTO> getRecentActivity(@PathVariable String userName) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) auth.getPrincipal();
+        String username = userDetails.getUsername();
+        if(!Objects.equals(username, userName)) System.out.println("I will check that auth stuff later!");
+        else System.out.println("WHATS GOING ON!!!!!!!!!!!!\n\n\n\n\n\n\n");
+        RecentActivityDTO dto = userService.getRecentActivityForUser(userName);
+        if (dto == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(dto);
     }
 
 }

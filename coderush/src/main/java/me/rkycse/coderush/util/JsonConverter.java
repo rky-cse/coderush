@@ -1,6 +1,7 @@
 package me.rkycse.coderush.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonConverter {
@@ -16,7 +17,7 @@ public class JsonConverter {
         }
     }
 
-    // Convert JSON String to Java Object
+    // Convert JSON String to Java Object using Class
     public static <T> T fromJson(String json, Class<T> clazz) {
         try {
             return objectMapper.readValue(json, clazz);
@@ -25,5 +26,16 @@ public class JsonConverter {
             return null;
         }
     }
+
+    // New method: Convert JSON String to Java Object using TypeReference
+    public static <T> T fromJson(String json, TypeReference<T> typeRef) {
+        try {
+            return objectMapper.readValue(json, typeRef);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
+
 

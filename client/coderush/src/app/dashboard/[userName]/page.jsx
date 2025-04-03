@@ -5,6 +5,7 @@ import axios from 'axios';
 import { getCookie } from 'cookies-next';
 import Image from 'next/image';
 import RatingGraph from '@/components/RatingGraph';
+import RecentActivity from '@/components/RecentActivity';
 import { FaUser, FaCalendarAlt, FaCode, FaTrophy, FaMedal, FaChartLine, FaSpinner } from 'react-icons/fa';
 import Link from 'next/link';
 
@@ -234,7 +235,8 @@ export default function Profile() {
             <RatingGraph/>
             
             {/* Recent Activity */}
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+            <RecentActivity userName={userName}/>
+            {/* <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
               <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Recent Activity</h3>
               </div>
@@ -264,7 +266,7 @@ export default function Profile() {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

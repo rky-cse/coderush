@@ -182,7 +182,7 @@ public class MTMTournamentService {
                     "rankDTO/" + tournamentId + "/" + rankDTO.getUserName(),
                     rankDTO,
 
-                    remainingTime,
+                    remainingTime+20000000L,
                     TimeUnit.SECONDS
             );
 

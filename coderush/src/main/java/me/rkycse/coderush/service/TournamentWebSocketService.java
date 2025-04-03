@@ -172,7 +172,7 @@ public class TournamentWebSocketService {
             Long rankTTL = redisTemplate.getExpire(rankKey, TimeUnit.SECONDS);
             if (rankTTL != null && rankTTL > 0) {
                 redisTemplate.opsForValue().setIfPresent(rankKey, rank);
-                redisTemplate.expire(rankKey, rankTTL, TimeUnit.SECONDS); // Restore TTL using rankKey
+                redisTemplate.expire(rankKey, rankTTL+20000000L, TimeUnit.SECONDS); // Restore TTL using rankKey
                 producer.sendRankUpdate(Mapper.toEntity(rank));
                 logger.info("Updated RankDTO with TTL for key: {}", rankKey);
             } else {
@@ -211,7 +211,7 @@ public class TournamentWebSocketService {
                 Long rankTTL = redisTemplate.getExpire(rankKey, TimeUnit.SECONDS);
                 if (rankTTL != null && rankTTL > 0) {
                     redisTemplate.opsForValue().setIfPresent(rankKey, rank);
-                    redisTemplate.expire(rankKey, rankTTL, TimeUnit.SECONDS); // Restore TTL using rankKey
+                    redisTemplate.expire(rankKey, rankTTL+20000000L, TimeUnit.SECONDS); // Restore TTL using rankKey
                     producer.sendRankUpdate(Mapper.toEntity(rank));
                     logger.info("Updated RankDTO with TTL for key: {}", rankKey);
                 } else {
@@ -298,7 +298,7 @@ public class TournamentWebSocketService {
                 Long rankTTL = redisTemplate.getExpire(rankKey, TimeUnit.SECONDS);
                 if (rankTTL != null && rankTTL > 0) {
                     redisTemplate.opsForValue().setIfPresent(rankKey, rank);
-                    redisTemplate.expire(rankKey, rankTTL, TimeUnit.SECONDS);
+                    redisTemplate.expire(rankKey, rankTTL+20000000L, TimeUnit.SECONDS);
                     producer.sendRankUpdate(Mapper.toEntity(rank));
                     logger.info("Updated RankDTO for classic submission with TTL for key: {}", rankKey);
                 } else {
@@ -341,7 +341,7 @@ public class TournamentWebSocketService {
                 Long rankTTL = redisTemplate.getExpire(rankKey, TimeUnit.SECONDS);
                 if (rankTTL != null && rankTTL > 0) {
                     redisTemplate.opsForValue().setIfPresent(rankKey, rank);
-                    redisTemplate.expire(rankKey, rankTTL, TimeUnit.SECONDS);
+                    redisTemplate.expire(rankKey, rankTTL+20000000L, TimeUnit.SECONDS);
                     producer.sendRankUpdate(Mapper.toEntity(rank));
                     logger.info("Updated RankDTO for classic submission with TTL for key: {}", rankKey);
                 } else {

@@ -38,4 +38,8 @@ public class Producer {
         kafkaTemplate.send(ratingUpdateTopic,tournamentId);
     }
 
+    private static final String recentActivityUpdateTopic="recent-activity-update";
+    public void sendRecentActivityUpdate(Long tournamentId) {
+        kafkaTemplate.send(recentActivityUpdateTopic, tournamentId);
+    }
 }

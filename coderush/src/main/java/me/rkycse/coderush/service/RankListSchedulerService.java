@@ -67,6 +67,7 @@ public class RankListSchedulerService {
                     logger.info("Time to update ratings for tournament: {}", tournamentCacheDTO.getTournamentId());
                     redisTemplate.delete(key);
                     producer.sendRatingUpdate(tournamentCacheDTO.getTournamentId());
+                    producer.sendRecentActivityUpdate(tournamentCacheDTO.getTournamentId());
                 }
             }
         }
