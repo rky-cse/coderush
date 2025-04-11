@@ -28,6 +28,17 @@ public class RankEntity {
     @Column(name="rating", nullable = false)
     private Long rating=0L;
 
+    @Column(name = "start_time", nullable = true)
+    private Long startTime;
+
+    public Long getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Long startTime) {
+        this.startTime = startTime;
+    }
+
     public Long getRating() {
         return rating;
     }

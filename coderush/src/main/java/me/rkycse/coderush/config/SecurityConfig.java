@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/ws/**").permitAll()  // Public endpoints
                         .anyRequest().authenticated()                  // Secure all other endpoints
                 )
+
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )

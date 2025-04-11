@@ -122,11 +122,11 @@ public class MTMTournamentService {
         }
 
         // Return the join tournament response
-        return getJoinTournamentResponseDTO(tournamentId, userName, rating);
+        return getJoinTournamentResponseDTO(tournamentId, userName, rating, startTime);
     }
 
 
-    private JoinTournamentResponseDTO getJoinTournamentResponseDTO(Long tournamentId, String userName, Long rating) {
+    private JoinTournamentResponseDTO getJoinTournamentResponseDTO(Long tournamentId, String userName, Long rating, Long startTime) {
         List<TournamentPlayerEntity> tournamentPlayerEntities =
                 tournamentPlayerRepository
                         .findByTournamentId(tournamentId);
@@ -134,6 +134,7 @@ public class MTMTournamentService {
         RankEntity rankEntity = new RankEntity();
         rankEntity.setUserName(userName);
         rankEntity.setTournamentId(tournamentId);
+        rankEntity.setStartTime(startTime);
 
 
         rankRepository.save(rankEntity);

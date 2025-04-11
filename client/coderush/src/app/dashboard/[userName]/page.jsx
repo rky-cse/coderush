@@ -178,6 +178,12 @@ export default function Profile() {
                   Edit Profile
                 </button>
               )}
+              <Link 
+              href={`/dashboard/${userName}/tournaments`}
+              className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-650 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900">
+              <FaTrophy className="mr-1.5 h-4 w-4" />
+              Tournaments
+            </Link>
             </div>
           </div>
         </div>

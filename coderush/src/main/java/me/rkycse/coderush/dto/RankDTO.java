@@ -8,6 +8,7 @@ public class RankDTO {
     private Long penalty=0L;
     private long score;
     private Long rating;
+    private Long startTime;
 
     @Override
     public String toString() {
@@ -18,6 +19,7 @@ public class RankDTO {
                 ", penalty=" + penalty +
                 ", score=" + score +
                 ", rating=" + rating +
+                ", startTime="+startTime+
                 '}';
     }
 
@@ -69,6 +71,14 @@ public class RankDTO {
 
     public void setPenalty(Long penalty) {
         this.penalty = penalty;
+    }
+    
+    public Long getStartTime() {
+        return startTime;
+    }
+    
+    public void setStartTime(Long startTime) {
+        this.startTime = startTime;
     }
 
 

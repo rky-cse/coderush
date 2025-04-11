@@ -6,13 +6,16 @@ import me.rkycse.coderush.dto.UserTournamentRatingDTO;
 import me.rkycse.coderush.entity.UserTournamentRatingEntity;
 import me.rkycse.coderush.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLOutput;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @RestController
@@ -59,5 +62,14 @@ public class UserController {
         }
         return ResponseEntity.ok(dto);
     }
+    @GetMapping("/{userName}/tournaments")
+    public ResponseEntity<?> getUserTournaments(@PathVariable String userName,@RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(defaultValue = "startDate") String sortBy,
+        @RequestParam(defaultValue = "desc") String direction) {
 
+        return ResponseEntity.ok(userService.getUserTournaments(userName, page, size, sortBy, direction));
+    }
+
+    
 }
