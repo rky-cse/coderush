@@ -3,6 +3,7 @@ package me.rkycse.coderush.dto;
 public class MTMTournamentTabDTO extends TournamentBaseDTO {
     private String name;
     private Long creatorId;
+    private String creatorUserName;
     private String description;
     private long minRatingReq;
     private long maxRatingReq;
@@ -18,7 +19,13 @@ public class MTMTournamentTabDTO extends TournamentBaseDTO {
     public String getName() {
         return name;
     }
-
+    public String getCreatorUserName() {
+        return creatorUserName;
+    }
+    
+    public void setCreatorUserName(String creatorUserName) {
+        this.creatorUserName = creatorUserName;
+    }
     public void setName(String name) {
         this.name = name;
     }

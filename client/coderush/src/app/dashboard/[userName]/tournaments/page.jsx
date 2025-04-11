@@ -1,13 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import { getCookie } from 'cookies-next';
 import Link from 'next/link';
-import { FaSpinner, FaTrophy, FaCalendarAlt, FaUsers, FaClock, FaArrowLeft, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaSpinner, FaTrophy, FaCalendarAlt, FaUsers, FaClock, FaArrowLeft, FaChevronLeft, FaChevronRight, FaUser } from 'react-icons/fa';
 
 export default function UserTournaments() {
   const { userName } = useParams();
+  const router = useRouter();
   const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,6 +20,28 @@ export default function UserTournaments() {
   const [pageSize, setPageSize] = useState(20);
   const [sortBy, setSortBy] = useState("startDate");
   const [sortDirection, setSortDirection] = useState("desc");
+
+  // Helper function to format duration
+  const formatDuration = (seconds) => {
+    if (!seconds) return 'Not specified';
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0) {
+      return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
+    } else if (minutes > 0) {
+      return `${minutes} minutes`;
+    } else {
+      return `${seconds} seconds`;
+    }
+  };
+
+  // Calculate end time from startTime + duration
+  const calculateEndTime = (startTime, duration) => {
+    if (!startTime || !duration) return null;
+    return new Date(startTime + (duration * 1000));
+  };
 
   const fetchTournaments = async (page = currentPage) => {
     try {
@@ -43,7 +66,7 @@ export default function UserTournaments() {
         }
       );
 
-      // Assuming the API returns a Spring Page object
+      // Process the API response
       const pageData = response.data;
       setTournaments(pageData.content);
       setTotalPages(pageData.totalPages);
@@ -52,19 +75,20 @@ export default function UserTournaments() {
     } catch (error) {
       console.error('Error fetching tournaments:', error);
       // Handle 401 specifically
-    if (error.response?.status === 401) {
-      setError('Your session has expired. Please log in again.');
-      // Redirect to login page or refresh token
-    } else {
-      setError(error.response?.data?.message || 'Failed to load tournaments');
-    }
+      if (error.response?.status === 401) {
+        setError('Your session has expired. Please log in again.');
+        // Could add auto-redirect to login page here
+        // setTimeout(() => router.push('/login'), 3000);
+      } else {
+        setError(error.response?.data?.message || 'Failed to load tournaments');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTournaments(0); // Start at page 0 when component mounts
+    fetchTournaments(0); // Start at page 0 when component mounts or sort/filter changes
   }, [userName, pageSize, sortBy, sortDirection]);
 
   const handlePageChange = (newPage) => {
@@ -73,7 +97,7 @@ export default function UserTournaments() {
     }
   };
 
-  // Loading and error states remain the same...
+  // Loading state for initial load
   if (loading && currentPage === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -86,8 +110,8 @@ export default function UserTournaments() {
     );
   }
 
+  // Error state
   if (error) {
-    // Error state remains the same...
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
@@ -123,7 +147,7 @@ export default function UserTournaments() {
               </h1>
             </div>
             
-            {/* Add sorting options */}
+            {/* Sorting options */}
             <div className="flex items-center">
               <select 
                 value={sortBy}
@@ -152,53 +176,73 @@ export default function UserTournaments() {
         {tournaments.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {tournaments.map((tournament) => (
-                <Link href={`/tournaments/${tournament._id}`} key={tournament._id}>
+              {tournaments.map((tournament) => {
+                const endTime = calculateEndTime(tournament.startTime, tournament.duration);
+                
+                return (
+                <Link href={`/tournaments/${tournament.tournamentId}`} key={tournament.tournamentId}>
                   <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300">
                     <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
                       <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 truncate">{tournament.name}</h3>
-                      <div className="mt-1 flex items-center">
-                        <span className={`px-2 py-1 text-xs font-medium rounded ${
-                          !tournament.status
-                            ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
-                            : tournament.status === 'upcoming' 
-                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
-                              : tournament.status === 'ongoing' 
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-                        }`}>
-                          {tournament.status 
-                            ? tournament.status.charAt(0).toUpperCase() + tournament.status.slice(1)
-                            : 'Unknown'}
+                      <div className="mt-1 flex items-center justify-between">
+                        <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                          Completed
                         </span>
+                        {tournament.creatorUserName && (
+                          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                            <FaUser className="mr-1 h-3 w-3" />
+                            <span>@{tournament.creatorUserName}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
+                    
                     <div className="px-6 py-4 space-y-3">
+                      {/* Date information */}
                       <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                         <FaCalendarAlt className="mr-2 h-4 w-4" />
                         <span>
-                          {new Date(tournament.startDate).toLocaleDateString()} - {new Date(tournament.endDate).toLocaleDateString()}
+                          {tournament.startTime ? new Date(tournament.startTime).toLocaleDateString() : 'N/A'}
+                          {endTime ? ` - ${endTime.toLocaleDateString()}` : ''}
                         </span>
                       </div>
+                      
+                      {/* Description if available */}
+                      {tournament.description && (
+                        <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                          {tournament.description}
+                        </div>
+                      )}
+                      
+                      {/* Rating requirements */}
                       <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                         <FaUsers className="mr-2 h-4 w-4" />
-                        <span>{tournament.participantCount || 0} participants</span>
+                        <span>Rating required: {tournament.minRatingReq || 0} - {tournament.maxRatingReq || 'any'}</span>
                       </div>
-                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                        <FaClock className="mr-2 h-4 w-4" />
-                        <span>Duration: {tournament.duration || 'Not specified'}</span>
-                      </div>
+                      
+                      {/* Duration */}
+                      {tournament.duration && (
+                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                          <FaClock className="mr-2 h-4 w-4" />
+                          <span>Duration: {formatDuration(tournament.duration)}</span>
+                        </div>
+                      )}
                     </div>
-                    {tournament.userRole && (
-                      <div className="px-6 py-3 bg-gray-50 dark:bg-gray-750">
+                    
+                    {/* User performance */}
+                    <div className="px-6 py-3 bg-gray-50 dark:bg-gray-750">
+                      <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Your role: {tournament.userRole}
+                          Score: {tournament.score || 0}
+                        </span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Penalty: {tournament.penalty || 0}
                         </span>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </Link>
-              ))}
+              )})}
             </div>
 
             {/* Pagination controls */}
@@ -219,7 +263,7 @@ export default function UserTournaments() {
                   Previous
                 </button>
                 <div className="text-sm text-gray-700 dark:text-gray-300">
-                  Page <span className="font-medium">{currentPage + 1}</span> of <span className="font-medium">{totalPages}</span>
+                  Page <span className="font-medium">{currentPage + 1}</span> of <span className="font-medium">{totalPages || 1}</span>
                 </div>
                 <button 
                   onClick={() => handlePageChange(currentPage + 1)}

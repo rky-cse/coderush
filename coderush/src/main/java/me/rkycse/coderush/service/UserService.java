@@ -117,13 +117,20 @@ public class UserService {
             dto.setDescription(tournament.getDescription());
             dto.setStartTime(tournament.getStartTime());
             dto.setTournamentId(tournament.getTournamentId()); // Make sure to set ID for frontend linking
-            
+            dto.setDurationInSeconds(tournament.getDurationInSeconds());
+
             // Copy MTM-specific fields
             dto.setCreatorId(tournament.getCreatorId());
             dto.setMinRatingReq(tournament.getMinRatingReq());
             dto.setMaxRatingReq(tournament.getMaxRatingReq());
             dto.setTeamStyle(tournament.getTeamStyle());
-            
+            // Get creator username from repository
+            if (tournament.getCreatorId() != null) {
+                UserEntity creator = userRepository.findById(tournament.getCreatorId()).orElse(null);
+                if (creator != null) {
+                    dto.setCreatorUserName(creator.getUserName());
+                }
+            }
             // // Set status based on dates
             // if (tournament.getStartTime() != null) {
             //     if (tournament.getStartTime().after(new Date())) {
