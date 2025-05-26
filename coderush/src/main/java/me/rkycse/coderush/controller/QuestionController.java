@@ -22,11 +22,12 @@ public class QuestionController {
 
     // Create a new question
     @PostMapping("/createQuestion")
-    public ResponseEntity<String> createQuestion(@RequestBody QuestionDTO question) {
-        if (questionService.createQuestion(question)) {
-            return new ResponseEntity<>("Question created", HttpStatus.CREATED);
+    public ResponseEntity<QuestionDTO> createQuestion(@RequestBody QuestionDTO question) {
+        QuestionDTO questionDTO = questionService.createQuestion(question);
+        if (questionDTO!=null) {
+            return new ResponseEntity<QuestionDTO>(questionDTO, HttpStatus.CREATED);
         }
-        return new ResponseEntity<>("Question not created", HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<QuestionDTO>(questionDTO, HttpStatus.BAD_REQUEST);
     }
 
     // Update an existing question

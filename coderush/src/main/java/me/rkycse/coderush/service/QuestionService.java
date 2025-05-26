@@ -3,6 +3,7 @@ package me.rkycse.coderush.service;
 import me.rkycse.coderush.dto.QuestionDTO;
 import me.rkycse.coderush.entity.QuestionEntity;
 import me.rkycse.coderush.entity.UserEntity;
+import me.rkycse.coderush.mapper.Mapper;
 import me.rkycse.coderush.repository.QuestionRepository;
 import me.rkycse.coderush.repository.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,7 +48,7 @@ public class QuestionService {
                 .orElseThrow(() -> new RuntimeException("Question not found"));
         return convertToDTO(question);
     }
-    public Boolean createQuestion(QuestionDTO question) {
+    public QuestionDTO createQuestion(QuestionDTO question) {
         if (question != null) {
             String username = getCurrentUsername();
             UserEntity user = userRepository.findByUserName(username)
@@ -59,7 +60,7 @@ public class QuestionService {
             if (rated && !user.getRoles().contains("ROLE_QUESTION_SETTER")) {
                 throw new RuntimeException("Only users with role 'question_setter' can create rated questions.");
             }
-            if (question.getName() != null && !question.getLegend().isEmpty()) {
+            if (question.getName() != null ) {
 
                 QuestionEntity newQuestion = new QuestionEntity();
                 newQuestion.setCreatorId(user.getId());
@@ -71,11 +72,11 @@ public class QuestionService {
                 newQuestion.setTutorial(question.getTutorial());
                 newQuestion.setRated(rated);
 
-                questionRepository.save(newQuestion);
-                return true;
+                QuestionEntity saved =questionRepository.save(newQuestion);
+                return Mapper.toDTO(saved);
             }
         }
-        return false;
+        return null;
     }
 
     public List<QuestionDTO> getQuestionsByUsername(String username) {

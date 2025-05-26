@@ -101,7 +101,8 @@ public class TournamentWebSocketController {
         classicSubmissionDTO.setSubmissionTime(submissionTime);
         classicSubmissionDTO.setUsername(userName);
         System.out.println("received response from user "+classicSubmissionDTO);
-        producer.sendClassicSubmission(JsonConverter.toJson(classicSubmissionDTO));
+        //check karna, tournamentId, real or reel
+        producer.sendClassicSubmission(JsonConverter.toJson(classicSubmissionDTO),classicSubmissionDTO.getTournamentId());
         Boolean res=null;// to complete
 
     }

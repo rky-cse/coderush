@@ -25,7 +25,7 @@ public class ClassicSubmissionController {
     ResponseEntity<String>response(@RequestBody ClassicSubmissionDTO submission, @PathVariable long tournamentId, @PathVariable long questionId) {
         String stringSubmission = JsonConverter.toJson(submission);
         System.out.println("stringSubmission: " + stringSubmission);
-        producer.sendClassicSubmission(stringSubmission);
+        producer.sendClassicSubmission(stringSubmission,tournamentId);
 
         return ResponseEntity.ok().body("Classic Submission Submitted");
 

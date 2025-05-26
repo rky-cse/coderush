@@ -62,12 +62,17 @@ public class RankListSchedulerService {
                 Long tournamentDuration = tournamentCacheDTO.getDurationInSeconds() * 1000L;
                 long endTime = startTime + tournamentDuration;
                 System.out.println("Updating rank list: " + key+"currentTime: "+currentTime+" endTime: "+endTime);
+                Long count=(Long)redisTemplate.opsForValue().get("judgeCount/"+tournamentCacheDTO.getTournamentId());
+                if(count==null) {
+                    count =0L;
+                }
 
-                if (currentTime > endTime+7777L) {
+                if (currentTime > endTime+7777L && count ==0L ) {
                     logger.info("Time to update ratings for tournament: {}", tournamentCacheDTO.getTournamentId());
                     redisTemplate.delete(key);
                     producer.sendRatingUpdate(tournamentCacheDTO.getTournamentId());
                     producer.sendRecentActivityUpdate(tournamentCacheDTO.getTournamentId());
+                    redisTemplate.delete("judgeCount/"+tournamentCacheDTO.getTournamentId());
                 }
             }
         }

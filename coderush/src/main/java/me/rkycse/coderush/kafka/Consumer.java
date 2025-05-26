@@ -280,13 +280,21 @@ public class Consumer {
     @KafkaListener(topics = "classical-submission-response", groupId = "myGroup")
     public void consumeClassicSubmissionResponse(String classicSubmissionResponse) {
         logger.info("ClassicSubmissionResponse: {}", classicSubmissionResponse);
+
         // convert to object
 
         ClassicSubmissionDTO classicSubmissionDTO =
                 JsonConverter.fromJson(classicSubmissionResponse,
                         ClassicSubmissionDTO.class);
+        Long count=(Long)redisTemplate.opsForValue().get("judgeCount/"+classicSubmissionDTO.getTournamentId());
+        if(count==null) {
+            count=0L;
+        }
+        count=Math.max(count-1L,0L);
+        redisTemplate.opsForValue().set("judgeCount/"+classicSubmissionDTO.getTournamentId(),count);
 
         tournamentWebSocketService.classicRankAndSubUpdate(classicSubmissionDTO);
+
         String userName = classicSubmissionDTO.getUsername();
         int index = classicSubmissionDTO.getIndex();
         messagingTemplate.convertAndSend("/topic/tournament/classicSubmit/" + userName + "/" + index, classicSubmissionDTO);

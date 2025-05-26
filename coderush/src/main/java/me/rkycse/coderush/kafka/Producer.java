@@ -4,14 +4,22 @@ import me.rkycse.coderush.dto.TournamentCacheDTO;
 import me.rkycse.coderush.entity.SubmissionStatus;
 import me.rkycse.coderush.entity.RankEntity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
 public class Producer {
+
     private static final String rankUpdateTopic = "rank-update";
-    @Autowired
-    private KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    public Producer(KafkaTemplate<String, Object> kafkaTemplate, RedisTemplate<String, Object> redisTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+        this.redisTemplate = redisTemplate;
+    }
+
     public void sendRankUpdate(RankEntity rank) {
         kafkaTemplate.send(rankUpdateTopic, rank);
         System.out.println("Produced message\n\n\n\n\n\n\n\n\n\n: " + rank);
@@ -29,8 +37,14 @@ public class Producer {
 
     }
     private static final  String classicSubmissionUpdateTopic="classical-submission";
-    public void sendClassicSubmission(String classicSubmissionDTO) {
+    public void sendClassicSubmission(String classicSubmissionDTO,Long tournamentId) {
+
         kafkaTemplate.send(classicSubmissionUpdateTopic, classicSubmissionDTO);
+        Long count=(Long)redisTemplate.opsForValue().get("judgeCount/"+tournamentId);
+        if(count==null) {
+            count=0L;
+        }
+        redisTemplate.opsForValue().set("judgeCount/"+tournamentId,count+1);
     }
 
     private static final String ratingUpdateTopic="rating-update";

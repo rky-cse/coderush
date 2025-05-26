@@ -162,29 +162,29 @@ public class UserService {
     return new PageImpl<>(dtoList, pageable, tournamentIdPage.getTotalElements());
     }
 
-    /**
- * Migration method to populate startTime field in RankEntity from tournament data
- * @return Number of records updated
- */
-    @Transactional
-    public int migrateStartTimeToRankEntities() {
-        List<RankEntity> allRanks = rankRepository.findAll();
-        int updatedCount = 0;
-        
-        for (RankEntity rank : allRanks) {
-            if (rank.getStartTime() == null) { // Only update if not already set
-                MTMTournamentEntity tournament = mtmTournamentRepository.findById(rank.getTournamentId())
-                    .orElse(null);
-                
-                if (tournament != null && tournament.getStartTime() != null) {
-                    rank.setStartTime(tournament.getStartTime());
-                    updatedCount++;
-                }
-            }
-        }
-        
-        rankRepository.saveAll(allRanks);
-        System.out.println("Migration completed: " + updatedCount + " rank records updated with startTime.");
-        return updatedCount;
-    }
+//    /**
+// * Migration method to populate startTime field in RankEntity from tournament data
+// * @return Number of records updated
+// */
+//    @Transactional
+//    public int migrateStartTimeToRankEntities() {
+//        List<RankEntity> allRanks = rankRepository.findAll();
+//        int updatedCount = 0;
+//
+//        for (RankEntity rank : allRanks) {
+//            if (rank.getStartTime() == null) { // Only update if not already set
+//                MTMTournamentEntity tournament = mtmTournamentRepository.findById(rank.getTournamentId())
+//                    .orElse(null);
+//
+//                if (tournament != null && tournament.getStartTime() != null) {
+//                    rank.setStartTime(tournament.getStartTime());
+//                    updatedCount++;
+//                }
+//            }
+//        }
+//
+//        rankRepository.saveAll(allRanks);
+//        System.out.println("Migration completed: " + updatedCount + " rank records updated with startTime.");
+//        return updatedCount;
+//    }
 }
