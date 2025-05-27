@@ -8,9 +8,12 @@ export default function QuestionNav({ questionId, activeTab, onTabChange }) {
     { id: 'problem', label: 'Problem Statement' },
     { id: 'checker', label: 'Checker' },
     { id: 'validator', label: 'Validator' },
+    { id: 'solution', label: 'Solution' },
     { id: 'tests', label: 'Tests' },
+    
     { id: 'invocation', label: 'Invocation' },
     { id: 'access', label: 'Access Control' },
+    ,
   ];
 
   return (
