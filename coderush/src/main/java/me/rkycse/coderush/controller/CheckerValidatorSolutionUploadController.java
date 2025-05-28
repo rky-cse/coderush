@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -99,44 +100,46 @@ public class CheckerValidatorSolutionUploadController {
         if (opt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
+
         CheckerValidatorSolutionEntity ent = opt.get();
 
-        String path;
-        switch (type) {
-            case "checker":   path = ent.getCheckerFilePath();   break;
-            case "validator": path = ent.getValidatorFilePath(); break;
-            case "solution":  path = ent.getSolutionFilePath();  break;
-            default: return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        // Resolve file path based on type
+        String path = switch (type) {
+            case "checker" -> ent.getCheckerFilePath();
+            case "validator" -> ent.getValidatorFilePath();
+            case "solution" -> ent.getSolutionFilePath();
+            default -> null;
+        };
 
         if (path == null || path.isBlank()) {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
+
         File file = new File(path);
-        if (!file.exists()) {
+        if (!file.exists() || !file.isFile()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
         FileSystemResource resource = new FileSystemResource(file);
 
-        // ——— CORRECTED MIME HANDLING ———
+        // Determine MIME type
         String mime;
         try {
             mime = Files.probeContentType(file.toPath());
-            if (mime == null) {
-                mime = MediaType.APPLICATION_OCTET_STREAM_VALUE;
-            }
-        } catch (Exception e) {
+        } catch (IOException e) {
+            mime = null;
+        }
+        if (mime == null) {
             mime = MediaType.APPLICATION_OCTET_STREAM_VALUE;
         }
-        // ——————————————————————————————
 
+        // Return the file with headers
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + file.getName() + "\"")
                 .contentType(MediaType.parseMediaType(mime))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
                 .body(resource);
     }
+
 
     private ResponseEntity<?> handleUpload(
             HttpServletRequest request,
