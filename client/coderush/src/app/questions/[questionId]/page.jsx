@@ -10,6 +10,7 @@ import Tests from '@/components/Tests';
 import Solution from '@/components/Solution';
 import Checker from '@/components/Checker';
 import Validator from '@/components/Validator';
+import Invocation from '@/components/Invocation';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -112,55 +113,6 @@ function GeneralInfo({ questionData }) {
 }
 
 
-
-
-
-function Invocation({ questionId }) {
-  return (
-    <div className="bg-white p-6 rounded-lg shadow-sm">
-      <h2 className="text-xl font-semibold mb-4">Invocation</h2>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Time Limit (seconds)</label>
-          <input 
-            type="number" 
-            className="w-full p-2 border rounded-md"
-            min="0.1"
-            step="0.1"
-            defaultValue="1.0"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Memory Limit (MB)</label>
-          <input 
-            type="number" 
-            className="w-full p-2 border rounded-md"
-            min="16"
-            step="16"
-            defaultValue="256"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Allowed Languages</label>
-          <div className="grid grid-cols-3 gap-2">
-            <label className="flex items-center">
-              <input type="checkbox" className="mr-2" defaultChecked />
-              Java
-            </label>
-            <label className="flex items-center">
-              <input type="checkbox" className="mr-2" defaultChecked />
-              C++
-            </label>
-            <label className="flex items-center">
-              <input type="checkbox" className="mr-2" defaultChecked />
-              Python
-            </label>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function AccessControl({ questionId }) {
   return (

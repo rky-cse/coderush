@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -284,6 +285,7 @@ public class TestsController {
                     questionId.toString(),
                     "testcases",
                     testcase.getId().toString()
+                    ,"input"
             );
             Files.createDirectories(targetDir);
             File dest = targetDir.resolve(originalName).toFile();
@@ -291,6 +293,20 @@ public class TestsController {
 
             // 6) Update database with actual file path
             testcase.setInputFilePath(dest.getAbsolutePath());
+
+            // 7) Create output.txt file with empty content
+            Path outputDir = Paths.get(
+                    "E:/files",
+                    questionId.toString(),
+                    "testcases",
+                    testcase.getId().toString(),
+                    "output"
+            );
+            Files.createDirectories(outputDir);
+            Path outputPath = outputDir.resolve("output.txt");
+            Files.write(outputPath, new byte[0], StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+
+            testcase.setOutputFilePath(outputPath.toAbsolutePath().toString());
             testcaseRepo.save(testcase);
 
             // 7) Return success response
