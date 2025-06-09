@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  judge-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../judge:/app        # Mount full judge project
+      - ../files:/files      # Mount files dir
+    ports:
+      - "8080:8080"
+    working_dir: /app

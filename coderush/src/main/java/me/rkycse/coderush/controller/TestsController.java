@@ -31,12 +31,12 @@ public class TestsController {
 
     private final ClassicTestcaseRepository testcaseRepo;
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;   // 5 MB
+    private static final Path BASE_DIR = Paths.get("..", "files").toAbsolutePath().normalize();
 
     public TestsController(ClassicTestcaseRepository testcaseRepo) {
         this.testcaseRepo = testcaseRepo;
     }
 
-    // CREATE / UPLOAD new test case
     @PostMapping("/{questionId}/tests")
     public ResponseEntity<?> uploadTest(
             @PathVariable Long questionId,
@@ -45,7 +45,6 @@ public class TestsController {
         return handleTestUpload(request, questionId, null);
     }
 
-    // UPDATE existing test case
     @PutMapping("/{questionId}/tests/{testcaseId}")
     public ResponseEntity<?> updateTest(
             @PathVariable Long questionId,
@@ -55,7 +54,6 @@ public class TestsController {
         return handleTestUpload(request, questionId, testcaseId);
     }
 
-    // GET all test cases for a question
     @GetMapping("/{questionId}/tests")
     public ResponseEntity<?> getAllTests(@PathVariable Long questionId) {
         try {
@@ -67,26 +65,24 @@ public class TestsController {
                         long fileSize = 0;
 
                         if (tc.getInputFilePath() != null && !tc.getInputFilePath().isEmpty()) {
-                            File file = new File(tc.getInputFilePath());
+                            File file = BASE_DIR.resolve(tc.getInputFilePath()).toFile();
                             if (file.exists()) {
                                 fileName = file.getName();
                                 fileSize = file.length();
                             }
                         }
 
-                        // Use HashMap instead of Map.of() to avoid type inference issues
                         Map<String, Object> testMap = new HashMap<>();
                         testMap.put("id", tc.getId());
                         testMap.put("fileName", fileName);
                         testMap.put("size", fileSize);
-                        testMap.put("inputFilePath", tc.getInputFilePath() != null ? tc.getInputFilePath() : "");
-                        testMap.put("outputFilePath", tc.getOutputFilePath() != null ? tc.getOutputFilePath() : "");
+                        testMap.put("inputFilePath", tc.getInputFilePath());
+                        testMap.put("outputFilePath", tc.getOutputFilePath());
 
                         return testMap;
                     })
                     .collect(Collectors.toList());
 
-            // Reverse the list to show newest first
             Collections.reverse(testcaseList);
 
             return ResponseEntity.ok(Map.of("tests", testcaseList));
@@ -97,7 +93,6 @@ public class TestsController {
         }
     }
 
-    // GET specific test case file for download
     @GetMapping("/{questionId}/tests/{testcaseId}")
     public ResponseEntity<Resource> downloadTest(
             @PathVariable Long questionId,
@@ -110,7 +105,6 @@ public class TestsController {
 
         ClassicTestcaseEntity testcase = opt.get();
 
-        // Verify the testcase belongs to the correct question
         if (!testcase.getQuestionId().equals(questionId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -120,14 +114,12 @@ public class TestsController {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
 
-        File file = new File(inputPath);
+        File file = BASE_DIR.resolve(inputPath).toFile();
         if (!file.exists() || !file.isFile()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
         FileSystemResource resource = new FileSystemResource(file);
-
-        // Determine MIME type
         String mime;
         try {
             mime = Files.probeContentType(file.toPath());
@@ -144,7 +136,6 @@ public class TestsController {
                 .body(resource);
     }
 
-    // DELETE specific test case
     @DeleteMapping("/{questionId}/tests/{testcaseId}")
     public ResponseEntity<?> deleteTest(
             @PathVariable Long questionId,
@@ -158,47 +149,41 @@ public class TestsController {
 
         ClassicTestcaseEntity testcase = opt.get();
 
-        // Verify the testcase belongs to the correct question
         if (!testcase.getQuestionId().equals(questionId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("Test case does not belong to this question");
         }
 
-        // Delete the physical file
         try {
             if (testcase.getInputFilePath() != null) {
-                new File(testcase.getInputFilePath()).delete();
+                Files.deleteIfExists(BASE_DIR.resolve(testcase.getInputFilePath()));
             }
             if (testcase.getOutputFilePath() != null) {
-                new File(testcase.getOutputFilePath()).delete();
+                Files.deleteIfExists(BASE_DIR.resolve(testcase.getOutputFilePath()));
             }
         } catch (Exception ignored) {}
 
-        // Delete from database
         testcaseRepo.delete(testcase);
 
         return ResponseEntity.ok(Map.of("message", "Test case deleted successfully"));
     }
 
-    // DELETE all test cases for a question
     @DeleteMapping("/{questionId}/tests")
     public ResponseEntity<?> deleteAllTests(@PathVariable Long questionId) {
         try {
             List<ClassicTestcaseEntity> testcases = testcaseRepo.findByQuestionId(questionId);
 
-            // Delete physical files
             for (ClassicTestcaseEntity testcase : testcases) {
                 try {
                     if (testcase.getInputFilePath() != null) {
-                        new File(testcase.getInputFilePath()).delete();
+                        Files.deleteIfExists(BASE_DIR.resolve(testcase.getInputFilePath()));
                     }
                     if (testcase.getOutputFilePath() != null) {
-                        new File(testcase.getOutputFilePath()).delete();
+                        Files.deleteIfExists(BASE_DIR.resolve(testcase.getOutputFilePath()));
                     }
                 } catch (Exception ignored) {}
             }
 
-            // Delete from database
             testcaseRepo.deleteByQuestionId(questionId);
 
             return ResponseEntity.ok(Map.of("message", "All test cases deleted successfully"));
@@ -209,13 +194,11 @@ public class TestsController {
         }
     }
 
-    // --- Internal Helper ---
     private ResponseEntity<?> handleTestUpload(
             HttpServletRequest request,
             Long questionId,
-            Long testcaseId // null for new upload, non-null for update
+            Long testcaseId
     ) {
-        // 1) Wrap servlet request for Commons FileUpload
         RequestContext ctx = new RequestContext() {
             @Override public String getCharacterEncoding() { return request.getCharacterEncoding(); }
             @Override public String getContentType()       { return request.getContentType(); }
@@ -225,19 +208,16 @@ public class TestsController {
             }
         };
 
-        // 2) Ensure multipart/form-data
         if (!ServletFileUpload.isMultipartContent(ctx)) {
             return ResponseEntity.badRequest().body("Form must be multipart/form-data");
         }
 
-        // 3) Configure Commons FileUpload for mid-stream abort if size exceeds limit
         DiskFileItemFactory factory = new DiskFileItemFactory();
         factory.setRepository(new File(System.getProperty("java.io.tmpdir")));
         ServletFileUpload upload = new ServletFileUpload(factory);
         upload.setFileSizeMax(MAX_FILE_SIZE);
 
         try {
-            // 4) Parse request
             List<org.apache.commons.fileupload.FileItem> items = upload.parseRequest(ctx);
             org.apache.commons.fileupload.FileItem fileItem = items.stream()
                     .filter(i -> !i.isFormField())
@@ -251,7 +231,6 @@ public class TestsController {
             ClassicTestcaseEntity testcase;
 
             if (testcaseId != null) {
-                // Update existing testcase
                 Optional<ClassicTestcaseEntity> opt = testcaseRepo.findById(testcaseId);
                 if (opt.isEmpty()) {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -259,62 +238,56 @@ public class TestsController {
                 }
                 testcase = opt.get();
 
-                // Verify it belongs to the correct question
                 if (!testcase.getQuestionId().equals(questionId)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
                             .body("Test case does not belong to this question");
                 }
 
-                // Delete old file if exists
                 if (testcase.getInputFilePath() != null) {
-                    new File(testcase.getInputFilePath()).delete();
+                    Files.deleteIfExists(BASE_DIR.resolve(testcase.getInputFilePath()));
                 }
             } else {
-                // Create new testcase
                 testcase = new ClassicTestcaseEntity();
                 testcase.setQuestionId(questionId);
-                testcase.setInputFilePath("");  // placeholder
-                testcase.setOutputFilePath(""); // placeholder (empty as per requirement)
-                testcase = testcaseRepo.save(testcase); // Get the generated ID
+                testcase.setInputFilePath("");
+                testcase.setOutputFilePath("");
+                testcase = testcaseRepo.save(testcase);
             }
 
-            // 5) Save file to disk
             String originalName = Paths.get(fileItem.getName()).getFileName().toString();
-            Path targetDir = Paths.get(
-                    "E:/files",
+            Path targetDir = BASE_DIR.resolve(Paths.get(
                     questionId.toString(),
                     "testcases",
-                    testcase.getId().toString()
-                    ,"input"
-            );
+                    testcase.getId().toString(),
+                    "input"
+            ));
             Files.createDirectories(targetDir);
-            File dest = targetDir.resolve(originalName).toFile();
-            fileItem.write(dest);
+            Path destPath = targetDir.resolve(originalName);
+            fileItem.write(destPath.toFile());
 
-            // 6) Update database with actual file path
-            testcase.setInputFilePath(dest.getAbsolutePath());
+            Path relativeInputPath = BASE_DIR.relativize(destPath);
+            testcase.setInputFilePath(relativeInputPath.toString().replace("\\", "/"));
 
-            // 7) Create output.txt file with empty content
-            Path outputDir = Paths.get(
-                    "E:/files",
+            Path outputDir = BASE_DIR.resolve(Paths.get(
                     questionId.toString(),
                     "testcases",
                     testcase.getId().toString(),
                     "output"
-            );
+            ));
             Files.createDirectories(outputDir);
             Path outputPath = outputDir.resolve("output.txt");
             Files.write(outputPath, new byte[0], StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
-            testcase.setOutputFilePath(outputPath.toAbsolutePath().toString());
+            Path relativeOutputPath = BASE_DIR.relativize(outputPath);
+            testcase.setOutputFilePath(relativeOutputPath.toString().replace("\\", "/"));
+
             testcaseRepo.save(testcase);
 
-            // 7) Return success response
             return ResponseEntity.ok(Map.of(
                     "message", testcaseId != null ? "Test case updated successfully" : "Test case uploaded successfully",
                     "testcaseId", testcase.getId(),
                     "fileName", originalName,
-                    "filePath", dest.getAbsolutePath()
+                    "filePath", relativeInputPath.toString()
             ));
 
         } catch (FileUploadBase.FileSizeLimitExceededException ex) {
