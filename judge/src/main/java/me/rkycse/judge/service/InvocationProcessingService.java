@@ -64,11 +64,12 @@ public class InvocationProcessingService {
                 log.info("Validating testcaseId={}", tc.getTestcaseId());
                 Path in = resolvePath(tc.getInputFilePath());
                 try {
+                    log.info("Reading input file {}", in);
                     int exit = runValidator(validatorArt, in);
                     log.info("Validator exit code for testcaseId={} = {}", tc.getTestcaseId(), exit);
                     if (exit != 0) {
                         log.warn("Validation failed on testcaseId={} exit={}", tc.getTestcaseId(), exit);
-                        result.setVerdict("Validation Failed");
+                        result.setVerdict("Validation Failed on testcaseId=" + tc.getTestcaseId());
                         sendResult(result);
                         return;
                     }
@@ -205,31 +206,50 @@ public class InvocationProcessingService {
 
     private int runValidator(CompiledArtifact art, Path input)
             throws IOException, InterruptedException, TimeoutException {
+        log.info("runValidator on input path: {}", input);
         ProcessBuilder pb;
+
         switch (art.type) {
             case PYTHON:
                 pb = new ProcessBuilder("python3", art.scriptPath.toString(), input.toString());
                 break;
+
             case CPP:
-                pb = new ProcessBuilder(art.exePath.toString(), input.toString());
+                // 🔥 Run the executable and redirect stdin from input file
+                pb = new ProcessBuilder(art.exePath.toString());
+                pb.redirectInput(input.toFile());  // 👈 sends input file into cin
                 break;
+
             case JAVA:
-                pb = new ProcessBuilder("java", "-cp", art.classesDir.toString(), art.className, input.toString());
+                pb = new ProcessBuilder(
+                        "java",
+                        "-cp", art.classesDir.toString(),
+                        art.className,
+                        input.toString()
+                );
                 pb.directory(art.classesDir.toFile());
                 break;
+
             default:
                 throw new IllegalStateException("Unknown validator type");
         }
+
+        // Combine stdout and stderr so we can read both easily if needed
         log.debug("Running validator: {}", String.join(" ", pb.command()));
         pb.redirectErrorStream(true);
+
         Process p = pb.start();
+
+        // Wait for process to complete within timeout
         if (!p.waitFor(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
             p.destroyForcibly();
             throw new TimeoutException("Validator execution timeout");
         }
+
         log.debug("Validator exit code: {}", p.exitValue());
         return p.exitValue();
     }
+
 
     private byte[] runSolutionWithInput(CompiledArtifact art, Path input, TestcaseResultDTO tcRes)
             throws IOException, InterruptedException, TimeoutException, ExecutionException {

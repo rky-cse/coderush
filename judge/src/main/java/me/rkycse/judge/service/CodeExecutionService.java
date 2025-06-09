@@ -91,8 +91,9 @@ public class CodeExecutionService {
             // Process each test case
             for (Path testCaseDir : testCaseDirs) {
                 logger.info("Processing test case directory: {}", testCaseDir);
-                Path inputFile = testCaseDir.resolve("input.txt");
-                Path expectedOutputFile = testCaseDir.resolve("output.txt");
+                Path inputFile = testCaseDir.resolve(Paths.get("input", "input.txt"));
+                Path expectedOutputFile = testCaseDir.resolve(Paths.get("output", "output.txt"));
+
                 // Use unique temporary files per test case
                 Path tempOutputFile = tempDir.resolve("tempOutput_" + testCaseDir.getFileName() + ".txt");
                 Path tempTimeFile = tempDir.resolve("tempTime_" + testCaseDir.getFileName() + ".txt");
@@ -284,11 +285,26 @@ public class CodeExecutionService {
         }
         return null;
     }
+//
+//    private List<Path> getTestCaseDirectories(String questionId) throws IOException {
+//        Path testcasesPath = Paths.get("testcases", questionId);
+//        try (Stream<Path> paths = Files.list(testcasesPath)) {
+//            return paths.filter(Files::isDirectory).collect(Collectors.toList());
+//        }
+//    }
 
     private List<Path> getTestCaseDirectories(String questionId) throws IOException {
-        Path testcasesPath = Paths.get("testcases", questionId);
+        // Navigate to ../files/{questionId}/testcases
+        Path testcasesPath = Paths.get("..", "files", questionId, "testcases").normalize();
+
+        if (Files.notExists(testcasesPath)) {
+            return Collections.emptyList();  // Or throw exception depending on use-case
+        }
+
         try (Stream<Path> paths = Files.list(testcasesPath)) {
-            return paths.filter(Files::isDirectory).collect(Collectors.toList());
+            return paths
+                    .filter(Files::isDirectory)  // {testcaseId}
+                    .collect(Collectors.toList());
         }
     }
 

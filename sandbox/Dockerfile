@@ -11,8 +11,4 @@ RUN apt-get update && apt-get install -y \
     time && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy application files into the container
-COPY . .
 
-# Set default command to run the application
-CMD ["java", "-jar", "judge.jar"]

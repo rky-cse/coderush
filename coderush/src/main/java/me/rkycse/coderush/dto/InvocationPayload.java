@@ -39,11 +39,14 @@ public class InvocationPayload {
     public static class TestcaseInfo {
         private String inputFilePath;
         private String outputFilePath;
+        private Long testcaseId;
 
         public TestcaseInfo() {}
-        public TestcaseInfo(String inputFilePath, String outputFilePath) {
+
+        public TestcaseInfo(String inputFilePath, String outputFilePath, Long testcaseId) {
             this.inputFilePath = inputFilePath;
             this.outputFilePath = outputFilePath;
+            this.testcaseId = testcaseId;
         }
 
         public String getInputFilePath() { return inputFilePath; }
@@ -51,5 +54,7 @@ public class InvocationPayload {
 
         public String getOutputFilePath() { return outputFilePath; }
         public void setOutputFilePath(String outputFilePath) { this.outputFilePath = outputFilePath; }
+        public Long getTestcaseId() { return testcaseId; }
+        public void setTestcaseId(Long testcaseId) { this.testcaseId = testcaseId; }
     }
 }

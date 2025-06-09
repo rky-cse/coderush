@@ -67,7 +67,9 @@ public class InvocationService {
                 testcases.stream()
                         .map(tc -> new InvocationPayload.TestcaseInfo(
                                 tc.getInputFilePath(),
-                                tc.getOutputFilePath()))
+                                tc.getOutputFilePath(),
+                                tc.getId()
+                        ))
                         .collect(Collectors.toList())
         );
 

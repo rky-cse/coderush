@@ -8,7 +8,7 @@ public class JudgeApplication {
 
     public static void main(String[] args) {
 
-        System.out.println("mai judge hun");
+        System.out.println("mai judge hi hun");
 
 
         SpringApplication.run(JudgeApplication.class, args);

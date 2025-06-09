@@ -36,12 +36,13 @@ public class InvocationPayload {
     public void setTestcases(List<TestcaseInfo> testcases) { this.testcases = testcases; }
 
     public static class TestcaseInfo {
-        Long testcaseId;
         private String inputFilePath;
         private String outputFilePath;
+        private Long testcaseId;
 
         public TestcaseInfo() {}
-        public TestcaseInfo(Long testcaseId,String inputFilePath, String outputFilePath) {
+
+        public TestcaseInfo(String inputFilePath, String outputFilePath, Long testcaseId) {
             this.inputFilePath = inputFilePath;
             this.outputFilePath = outputFilePath;
             this.testcaseId = testcaseId;
@@ -52,7 +53,7 @@ public class InvocationPayload {
 
         public String getOutputFilePath() { return outputFilePath; }
         public void setOutputFilePath(String outputFilePath) { this.outputFilePath = outputFilePath; }
-
         public Long getTestcaseId() { return testcaseId; }
+        public void setTestcaseId(Long testcaseId) { this.testcaseId = testcaseId; }
     }
 }

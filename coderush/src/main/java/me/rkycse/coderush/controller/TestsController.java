@@ -262,7 +262,7 @@ public class TestsController {
                     "input"
             ));
             Files.createDirectories(targetDir);
-            Path destPath = targetDir.resolve(originalName);
+            Path destPath = targetDir.resolve("input.txt");
             fileItem.write(destPath.toFile());
 
             Path relativeInputPath = BASE_DIR.relativize(destPath);

@@ -46,6 +46,9 @@ services:
     volumes:
       # Mount the host testcases directory as read-only into /testcases in the container.
       - E:\testcases:/testcases:ro
+      - E:\coderush:/coderush
+    working_dir: /coderush/sandbox
+    command: ["java", "-jar", "judge.jar"]
     deploy:
       resources:
         limits:
