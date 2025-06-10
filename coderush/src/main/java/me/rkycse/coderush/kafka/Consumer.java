@@ -286,10 +286,20 @@ public class Consumer {
         ClassicSubmissionDTO classicSubmissionDTO =
                 JsonConverter.fromJson(classicSubmissionResponse,
                         ClassicSubmissionDTO.class);
-        Long count=(Long)redisTemplate.opsForValue().get("judgeCount/"+classicSubmissionDTO.getTournamentId());
-        if(count==null) {
-            count=0L;
+//        Long count=(Long)redisTemplate.opsForValue().get("judgeCount/"+classicSubmissionDTO.getTournamentId());
+//        if(count==null) {
+//            count=0L;
+//        }
+
+        Object value = redisTemplate.opsForValue().get("judgeCount/" + classicSubmissionDTO.getTournamentId());
+        Long count = 0L;
+
+        if (value instanceof Integer) {
+            count = ((Integer) value).longValue();
+        } else if (value instanceof Long) {
+            count = (Long) value;
         }
+
         count=Math.max(count-1L,0L);
         redisTemplate.opsForValue().set("judgeCount/"+classicSubmissionDTO.getTournamentId(),count);
 

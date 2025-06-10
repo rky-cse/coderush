@@ -40,11 +40,16 @@ public class Producer {
     public void sendClassicSubmission(String classicSubmissionDTO,Long tournamentId) {
 
         kafkaTemplate.send(classicSubmissionUpdateTopic, classicSubmissionDTO);
-        Long count=(Long)redisTemplate.opsForValue().get("judgeCount/"+tournamentId);
-        if(count==null) {
-            count=0L;
+        Object value = redisTemplate.opsForValue().get("judgeCount/" + tournamentId);
+        Long count = 0L;
+
+        if (value instanceof Integer) {
+            count = ((Integer) value).longValue();
+        } else if (value instanceof Long) {
+            count = (Long) value;
         }
-        redisTemplate.opsForValue().set("judgeCount/"+tournamentId,count+1);
+
+        redisTemplate.opsForValue().set("judgeCount/"+tournamentId,count+1L);
     }
 
     private static final String ratingUpdateTopic="rating-update";

@@ -321,7 +321,7 @@ const TournamentControlBox = () => {
   // Get tournamentId from route params
   const params = useParams();
   const tournamentId = params?.tournamentId;
-  
+  console.log("tournamentId from params in tournament control box: ", tournamentId);
   const [tournamentEndTime, setTournamentEndTime] = useState(null);
   const [tournamentData, setTournamentData] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -340,13 +340,16 @@ const TournamentControlBox = () => {
     webSocketService.connect(wsUrl, token);
     
     const destination = `/topic/userRank/${tournamentId}/${userName}`;
+    console.log("📡 Subscribing to user rank topic:", destination);
     webSocketService.subscribe(destination, (message) => {
       if (message && message.endTime) {
         setTournamentEndTime(message.endTime);
         setTournamentData(message);
+        console.log("📊 Received tournament data:", message);
         setLoading(false);
       }
     });
+   
 
     webSocketService.send('/app/userRank', `${tournamentId}/${userName}`);
 

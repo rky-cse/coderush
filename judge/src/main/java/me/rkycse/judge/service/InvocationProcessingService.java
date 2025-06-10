@@ -131,9 +131,7 @@ public class InvocationProcessingService {
             result.setElapsedMillis(System.currentTimeMillis() - startTime);
             log.info("Total elapsed time={}ms", result.getElapsedMillis());
             sendResult(result);
-            deleteArtifactQuietly(checkerArt);
-            deleteArtifactQuietly(validatorArt);
-            deleteArtifactQuietly(solutionArt);
+            // Do not delete compiled artifacts; leave them next to original sources
         }
     }
 
@@ -148,17 +146,16 @@ public class InvocationProcessingService {
     private CompiledArtifact prepareArtifact(String sourcePath, String label)
             throws IOException, InterruptedException, TimeoutException {
         Path src = resolvePath(sourcePath);
-        String s = src.toString();
-        log.info("Preparing {} artifact from '{}'", label, s);
+        log.info("Preparing {} artifact from '{}'", label, src);
 
-        if (s.endsWith(".py")) {
-            log.debug("{} is a Python script", label);
-            return new CompiledArtifact(s);
+        if (sourcePath.endsWith(".py")) {
+            return new CompiledArtifact(src);
         }
-        if (s.endsWith(".cpp")) {
-            Path exe = Files.createTempFile("temp_" + label + "_", "");
+
+        if (sourcePath.endsWith(".cpp")) {
+            Path exe = src.getParent().resolve(src.getFileName().toString().replace(".cpp", "_exe"));
             log.debug("Compiling C++ {} -> {}", label, exe);
-            ProcessBuilder pb = new ProcessBuilder("g++", s, "-O2", "-o", exe.toString());
+            ProcessBuilder pb = new ProcessBuilder("g++", src.toString(), "-O2", "-o", exe.toString());
             pb.redirectErrorStream(true);
             Process p = pb.start();
             if (!p.waitFor(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
@@ -167,25 +164,22 @@ public class InvocationProcessingService {
             }
             if (p.exitValue() != 0) {
                 String err = readStream(p.getInputStream(), MAX_OUTPUT_BYTES);
-                log.error("{} compilation failed: {}", label, err);
                 throw new RuntimeException(label + " compilation failed: " + err);
             }
-            log.info("{} compiled successfully to {}", label, exe);
             try {
                 Set<PosixFilePermission> perms = EnumSet.of(
                         PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
-                        PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
-                        PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.OTHERS_READ,
-                        PosixFilePermission.OTHERS_EXECUTE
+                        PosixFilePermission.OWNER_EXECUTE
                 );
                 Files.setPosixFilePermissions(exe, perms);
-            } catch (UnsupportedOperationException ignored) { }
+            } catch (UnsupportedOperationException ignored) {}
             return new CompiledArtifact(exe);
         }
-        if (s.endsWith(".java")) {
-            Path dir = Files.createTempDirectory("temp_" + label + "_classes_");
-            log.debug("Compiling Java {} -> {}", label, dir);
-            ProcessBuilder pb = new ProcessBuilder("javac", "-d", dir.toString(), s);
+
+        if (sourcePath.endsWith(".java")) {
+            Path outputDir = src.getParent();
+            log.debug("Compiling Java {} -> {}", label, outputDir);
+            ProcessBuilder pb = new ProcessBuilder("javac", "-d", outputDir.toString(), src.toString());
             pb.redirectErrorStream(true);
             Process p = pb.start();
             if (!p.waitFor(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
@@ -194,14 +188,13 @@ public class InvocationProcessingService {
             }
             if (p.exitValue() != 0) {
                 String err = readStream(p.getInputStream(), MAX_OUTPUT_BYTES);
-                log.error("{} compilation failed: {}", label, err);
                 throw new RuntimeException(label + " compilation failed: " + err);
             }
             String cls = src.getFileName().toString().replace(".java", "");
-            log.info("{} compiled successfully, main class={}", label, cls);
-            return new CompiledArtifact(dir, cls);
+            return new CompiledArtifact(outputDir, cls);
         }
-        throw new IllegalArgumentException("Unsupported extension: " + s);
+
+        throw new IllegalArgumentException("Unsupported extension: " + sourcePath);
     }
 
     private int runValidator(CompiledArtifact art, Path input)
