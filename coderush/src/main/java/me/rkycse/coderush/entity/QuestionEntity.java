@@ -19,6 +19,14 @@ public class QuestionEntity {
     @Column(name = "input_format", columnDefinition = "TEXT")
     private String inputFormat;
 
+    public boolean isFreeStyle() {
+        return freeStyle;
+    }
+
+    public void setFreeStyle(boolean freeStyle) {
+        this.freeStyle = freeStyle;
+    }
+
     @Column(name = "output_format", columnDefinition = "TEXT")
     private String outputFormat;
 
@@ -33,6 +41,8 @@ public class QuestionEntity {
 
     @Column(name = "rated")
     private boolean rated=false;
+    @Column(name = "free_style")
+    private boolean freeStyle=false;
 
 //    // One-to-Many relationship with TestcaseEntity
 //    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)

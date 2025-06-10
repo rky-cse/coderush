@@ -171,9 +171,23 @@ public class Consumer {
         List<QuestionEntity> selectedQuestions = new ArrayList<>();
         Collections.shuffle(allQuestions);
         int numQuestions = Math.min(5, allQuestions.size());
-        for (int i = 0; i < numQuestions; i++) {
-            selectedQuestions.add(allQuestions.get(i));
+
+        int ct=numQuestions;
+
+        for(QuestionEntity questionEntity : allQuestions) {
+            if(ct==0)break;
+            if(TournamentBaseEntity.TournamentType.FREE_STYLE.equals(cacheDTO.getTournamentType())){
+                if(questionEntity.isFreeStyle()){
+                    selectedQuestions.add(questionEntity);
+                    ct--;
+                }
+            }
+            else{
+                selectedQuestions.add(questionEntity);
+                ct--;
+            }
         }
+
 
         int index = 0;
         // Process each selected question

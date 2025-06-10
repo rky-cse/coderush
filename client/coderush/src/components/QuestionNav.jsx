@@ -10,6 +10,7 @@ export default function QuestionNav({ questionId, activeTab, onTabChange }) {
     { id: 'validator', label: 'Validator' },
     { id: 'solution', label: 'Solution' },
     { id: 'tests', label: 'Tests' },
+    { id: 'freeStyleTests', label: 'Free Style Tests' },
     
     { id: 'invocation', label: 'Invocation' },
     { id: 'access', label: 'Access Control' },

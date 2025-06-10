@@ -128,8 +128,14 @@ export default function Navbar() {
                   Tournaments
                 </NavLink>
                 <NavLink href="/create" icon={FiPlusCircle}>
-                  Create
+                  Create Tournament
                 </NavLink>
+
+                <NavLink href="/questions/create" icon={FiPlusCircle}>
+                  Create Question
+                </NavLink>
+
+
                 <NavLink href="/myQuestions" icon={FiFileText}>
                   My Questions
                 </NavLink>
@@ -156,6 +162,10 @@ export default function Navbar() {
                 </NavLink>
                 <NavLink href="/create" icon={FiPlusCircle} onClick={closeMenu}>
                   Create Tournament
+                </NavLink>
+
+                <NavLink href="/questions/create" icon={FiPlusCircle} onClick={closeMenu}>
+                  Create Question
                 </NavLink>
                 <NavLink href="/myQuestions" icon={FiFileText} onClick={closeMenu}>
                   My Questions

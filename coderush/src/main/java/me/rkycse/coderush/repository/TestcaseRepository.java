@@ -10,10 +10,9 @@ import java.util.List;
 @Repository
 public interface TestcaseRepository extends JpaRepository<TestcaseEntity, Long> {
 
-    // Ensure the field name matches 'questionId' in TestcaseEntity
     @Query("SELECT t FROM TestcaseEntity t WHERE t.questionId = :questionId")
     List<TestcaseEntity> findByQuestionId(long questionId);
-    //List<TestcaseEntity> findByQuestion_QuestionId(Long questionId);
 
-
+    @Query("SELECT COUNT(t) FROM TestcaseEntity t WHERE t.questionId = :questionId")
+    long countByQuestionId(long questionId);
 }

@@ -25,7 +25,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Optional;
 
-
 @Service
 @Transactional
 public class TestcaseService {
@@ -40,7 +39,8 @@ public class TestcaseService {
         this.classicTestcaseRepository = classicTestcaseRepository;
     }
 
-    public Boolean createTestcase(TestcaseDTO testcase) {
+    // Updated to return TestcaseDTO instead of Boolean
+    public TestcaseDTO createTestcase(TestcaseDTO testcase) {
         if (testcase == null || testcase.getInput() == null || testcase.getOutput() == null) {
             throw new IllegalArgumentException("Testcase input/output cannot be null");
         }
@@ -53,11 +53,114 @@ public class TestcaseService {
         testcaseEntity.setInput(testcase.getInput());
         testcaseEntity.setOutput(testcase.getOutput());
         testcaseEntity.setRating(testcase.getRating());
-        testcaseRepository.save(testcaseEntity);
 
-        return true;
+        TestcaseEntity savedEntity = testcaseRepository.save(testcaseEntity);
+        return Mapper.toDTO(savedEntity);
     }
 
+    // New method: Get testcase by ID
+    public Optional<TestcaseDTO> getTestcaseById(Long testcaseId) {
+        if (testcaseId == null) {
+            return Optional.empty();
+        }
+
+        Optional<TestcaseEntity> testcaseEntity = testcaseRepository.findById(testcaseId);
+        return testcaseEntity.map(Mapper::toDTO);
+    }
+
+    // Existing method (already implemented)
+    public List<TestcaseDTO> getTestcasesByQuestionId(Long questionId) {
+        List<TestcaseEntity> testcaseEntities = testcaseRepository.findByQuestionId(questionId);
+
+        List<TestcaseDTO> testcaseDTOS = new ArrayList<>();
+        for (TestcaseEntity testcaseEntity : testcaseEntities) {
+            testcaseDTOS.add(Mapper.toDTO(testcaseEntity));
+        }
+        return testcaseDTOS;
+    }
+
+    // New method: Get all testcases
+    public List<TestcaseDTO> getAllTestcases() {
+        List<TestcaseEntity> testcaseEntities = testcaseRepository.findAll();
+
+        List<TestcaseDTO> testcaseDTOS = new ArrayList<>();
+        for (TestcaseEntity testcaseEntity : testcaseEntities) {
+            testcaseDTOS.add(Mapper.toDTO(testcaseEntity));
+        }
+        return testcaseDTOS;
+    }
+
+    // New method: Update testcase
+    public TestcaseDTO updateTestcase(TestcaseDTO testcase) {
+        if (testcase == null || testcase.getTestcaseId() == null) {
+            throw new IllegalArgumentException("Testcase and testcase ID cannot be null");
+        }
+
+        TestcaseEntity existingEntity = testcaseRepository.findById(testcase.getTestcaseId())
+                .orElseThrow(() -> new ResourceNotFoundException("Testcase not found with id: " + testcase.getTestcaseId()));
+
+        // Validate question exists if questionId is being updated
+        if (testcase.getQuestionId() != null && !testcase.getQuestionId().equals(existingEntity.getQuestionId())) {
+            questionRepository.findById(testcase.getQuestionId())
+                    .orElseThrow(() -> new IllegalArgumentException("Question not found with id: " + testcase.getQuestionId()));
+        }
+
+        // Update fields
+        if (testcase.getQuestionId() != null) {
+            existingEntity.setQuestionId(testcase.getQuestionId());
+        }
+        if (testcase.getInput() != null) {
+            existingEntity.setInput(testcase.getInput());
+        }
+        if (testcase.getOutput() != null) {
+            existingEntity.setOutput(testcase.getOutput());
+        }
+        if (testcase.getRating()!=0) {
+            existingEntity.setRating(testcase.getRating());
+        }
+
+        TestcaseEntity updatedEntity = testcaseRepository.save(existingEntity);
+        return Mapper.toDTO(updatedEntity);
+    }
+
+    // New method: Delete testcase by ID
+    public boolean deleteTestcase(Long testcaseId) {
+        if (testcaseId == null) {
+            return false;
+        }
+
+        if (!testcaseRepository.existsById(testcaseId)) {
+            return false;
+        }
+
+        try {
+            testcaseRepository.deleteById(testcaseId);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // New method: Delete all testcases by question ID
+    public boolean deleteTestcasesByQuestionId(Long questionId) {
+        if (questionId == null) {
+            return false;
+        }
+
+        try {
+            List<TestcaseEntity> testcases = testcaseRepository.findByQuestionId(questionId);
+            if (!testcases.isEmpty()) {
+                testcaseRepository.deleteAll(testcases);
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Existing Classic Testcase methods (unchanged)
     public Boolean createClassicTestcase(ClassicTestcaseDTO classicTestcase) {
         try {
             // Step 0: Check if the questionId exists
@@ -144,15 +247,5 @@ public class TestcaseService {
         dto.setOutput(output);
 
         return dto;
-    }
-
-    public List<TestcaseDTO> getTestcasesByQuestionId(Long questionId) {
-        List<TestcaseEntity> testcaseEntities = testcaseRepository.findByQuestionId(questionId);
-
-        List<TestcaseDTO> testcaseDTOS = new ArrayList<>();
-        for (TestcaseEntity testcaseEntity : testcaseEntities) {
-            testcaseDTOS.add(Mapper.toDTO(testcaseEntity));
-        }
-        return testcaseDTOS;
     }
 }

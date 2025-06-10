@@ -118,6 +118,8 @@ public class Mapper {
         dto.setName(entity.getName());
         dto.setNotes(entity.getNotes());
         dto.setTutorial(entity.getTutorial());
+        dto.setFreeStyle(entity.isFreeStyle());
+        dto.setRated(entity.isRated());
         return dto;
 
     }

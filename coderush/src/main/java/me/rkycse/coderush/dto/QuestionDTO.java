@@ -15,6 +15,16 @@ public class QuestionDTO {
     private String outputFormat;
     private String notes;
 
+    public Boolean getFreeStyle() {
+        return freeStyle;
+    }
+
+    public void setFreeStyle(Boolean freeStyle) {
+        this.freeStyle = freeStyle;
+    }
+
+    private Boolean freeStyle=false;
+
     public Long getQuestionId() {
         return questionId;
     }

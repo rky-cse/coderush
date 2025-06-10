@@ -11,6 +11,7 @@ import Solution from '@/components/Solution';
 import Checker from '@/components/Checker';
 import Validator from '@/components/Validator';
 import Invocation from '@/components/Invocation';
+import FreeStyleTests from '@/components/FreeStyleTests';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -56,6 +57,8 @@ useEffect(() => {
         return <Checker questionId={questionId} />;
       case 'validator':
         return <Validator questionId={questionId} />;
+      case 'freeStyleTests':
+        return <FreeStyleTests questionId={questionId} />;
       case 'tests':
         return <Tests questionId={questionId} />;
       case 'solution':

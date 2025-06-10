@@ -2,8 +2,12 @@ package me.rkycse.coderush.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import me.rkycse.coderush.dto.InvocationResultDTO;
+import me.rkycse.coderush.entity.QuestionEntity;
 import me.rkycse.coderush.exception.ResourceNotFoundException;
+import me.rkycse.coderush.repository.QuestionRepository;
+import me.rkycse.coderush.repository.TestcaseRepository;
 import me.rkycse.coderush.service.InvocationService;
+import me.rkycse.coderush.service.TestcaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -31,15 +35,21 @@ public class InvocationController {
     private final ConsumerFactory<String,String> consumerFactory;
     private final SimpMessagingTemplate messagingTemplate;
     private final ObjectMapper objectMapper;
+    private final TestcaseService testcaseService;
+    private final TestcaseRepository testcaseRepository;
+    private final QuestionRepository questionRepository;
 
     public InvocationController(InvocationService invocationService,
                                 ConsumerFactory<String,String> consumerFactory,
                                 SimpMessagingTemplate messagingTemplate,
-                                ObjectMapper objectMapper) {
+                                ObjectMapper objectMapper, TestcaseService testcaseService, TestcaseRepository testcaseRepository, QuestionRepository questionRepository) {
         this.invocationService  = invocationService;
         this.consumerFactory    = consumerFactory;
         this.messagingTemplate  = messagingTemplate;
         this.objectMapper       = objectMapper;
+        this.testcaseService = testcaseService;
+        this.testcaseRepository = testcaseRepository;
+        this.questionRepository = questionRepository;
     }
 
     @PostMapping("/invocation/{questionId}")
@@ -48,6 +58,24 @@ public class InvocationController {
 
         // 1) send invocation to Kafka
         try {
+
+            long freeStyleTestcasesCount=testcaseRepository.countByQuestionId(questionId);
+            QuestionEntity questionEntity = questionRepository.findById(questionId).orElse(null);
+            if(freeStyleTestcasesCount==0L) {
+
+                if(questionEntity!=null) {
+                    questionEntity.setFreeStyle(Boolean.FALSE);
+
+                }
+
+            }
+            else{
+                assert questionEntity != null;
+                questionEntity.setFreeStyle(Boolean.TRUE);
+            }
+            assert questionEntity != null;
+            questionEntity = questionRepository.save(questionEntity);
+
             invocationService.handleInvocation(questionId);
         } catch (ResourceNotFoundException rnfe) {
             log.warn("Resource not found for questionId={}", questionId);
