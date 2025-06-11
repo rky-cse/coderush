@@ -70,14 +70,13 @@ export function submitTournament({
             toast.error('WRONG ANSWER!');
           } else if(response && response.verdict === "TLE"){
             toast.error('TIME LIMIT EXCEEDED!');
-          } else if(response && response.verdict === "CE"){
-            toast.error('COMPILATION ERROR!');
-          } else if(response && response.verdict === "RE"){
+          }  else if(response && response.verdict === "RE"){
             toast.error('RUNTIME ERROR!');
           } else if(response && response.verdict === "MLE"){
             toast.error('MEMORY LIMIT EXCEEDED!');
           } else {
-            toast.error('Unexpected response. Please contact support.');
+            toast.error('Compilation Error!');
+            window.alert(response?.verdict);
           }
         }
       );

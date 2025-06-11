@@ -292,6 +292,7 @@ export default function TournamentPage({ params }) {
               <ControlButtons 
                 tournamentId={tournamentId}
                 token={token}
+                setOutput={setOutput}
                 output={output}
                 customInput={customInput}
                 submitFlag={submitFlag}

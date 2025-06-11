@@ -6,7 +6,7 @@ import { runCode } from '@/services/codeRunner';
 import { submitTournament } from '@/services/tournamentService';
 import { FaChevronLeft, FaChevronRight, FaPlay, FaCheck, FaSpinner, FaKeyboard } from 'react-icons/fa';
 
-export default function ControlButtons({ tournamentId, token, output, customInput, submitFlag, setSubmitFlag }) {
+export default function ControlButtons({ tournamentId, token, setOutput,output, customInput, submitFlag, setSubmitFlag }) {
   const dispatch = useDispatch();
   const { language, code } = useSelector((state) => state.editor) || {};
   const index = useSelector((state) => state.index) ?? 0;
@@ -14,6 +14,8 @@ export default function ControlButtons({ tournamentId, token, output, customInpu
   const tournamentType = useSelector((state) => state.tournament?.tournamentData?.tournamentType) || 'CLASSIC';
   console.log(tournamentType);
   const username = useSelector((state) => state.auth.user) || 'anonymous';
+  const [tempOutput,setTempOutput] = useState('');
+  
   
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,6 +56,7 @@ export default function ControlButtons({ tournamentId, token, output, customInpu
     try {
       const result = await runCode({ language, code, customInput });
       setOutput(result.output);
+      setTempOutput(result.output);
 
       if (result.error) {
         toast.error(result.errorMessage, { id: 'run-code' });

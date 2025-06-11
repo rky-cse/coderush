@@ -42,7 +42,7 @@ public class ClassicSubmissionEntity {
     @Column(length = 20, nullable = false)
     private String language;
 
-    @Column(length = 10)
+    @Column(name="verdict")
     private String verdict; // AC,CE,WA,RE,TLE,MLE
 
     @Column(name = "submission_time", nullable = false)
