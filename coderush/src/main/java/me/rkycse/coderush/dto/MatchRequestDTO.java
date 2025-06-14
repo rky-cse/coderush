@@ -1,20 +1,21 @@
 package me.rkycse.coderush.dto;
 
-import java.time.LocalDateTime;
 public class MatchRequestDTO {
     private Long userId;
     private Long rating;
     private Long requestTime;
     private Long timeControl;
+    private String tournamentType;
 
     // Constructors
     public MatchRequestDTO() {}
 
-    public MatchRequestDTO(Long userId, Long rating, Long requestTime, Long timeControl) {
+    public MatchRequestDTO(Long userId, Long rating, Long requestTime, Long timeControl, String tournamentType) {
         this.userId = userId;
         this.rating = rating;
         this.requestTime = requestTime;
         this.timeControl = timeControl;
+        this.tournamentType = tournamentType;
     }
 
     // Getters/Setters
@@ -29,4 +30,8 @@ public class MatchRequestDTO {
 
     public Long getTimeControl() { return timeControl; }
     public void setTimeControl(Long timeControl) { this.timeControl = timeControl; }
+
+    public String getTournamentType() { return tournamentType; }
+    public void setTournamentType(String tournamentType) { this.tournamentType = tournamentType; }
 }
+

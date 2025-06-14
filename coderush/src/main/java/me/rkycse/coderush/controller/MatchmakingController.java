@@ -39,6 +39,7 @@ public class MatchmakingController {
     @ResponseBody
     public MatchResponseDTO requestMatch(@RequestBody MatchRequestDTO payload) {
         // The service processes the match request, puts the user in the Redis queue
+        payload.setTimeControl((60* payload.getTimeControl())); // Convert minutes to seconds
         System.out.println("Received match request:" + payload.getUserId() +  " rating: {}" + payload.getRating());
         return matchmakingService.processMatchRequest(payload);
     }

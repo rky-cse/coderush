@@ -45,8 +45,8 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: broker:29092
     volumes:
       # Mount the host testcases directory as read-only into /testcases in the container.
-      - E:\testcases:/testcases:ro
-      - E:\coderush:/coderush
+      - /Users/udaynauhbar/Desktop/Project_CodeRush/testcases:/testcases:ro # Adjust the path as needed
+      - /Users/udaynauhbar/Desktop/Project_CodeRush/coderush:/coderush
     working_dir: /coderush/sandbox
     command: ["java", "-jar", "judge.jar"]
     deploy:

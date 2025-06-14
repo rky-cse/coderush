@@ -1,7 +1,6 @@
 package me.rkycse.coderush.dto;
 
 import java.io.Serializable;
-
 public class PendingMatch implements Serializable {
     private String pendingMatchId;
     private Long player1Id;
@@ -10,6 +9,8 @@ public class PendingMatch implements Serializable {
     private boolean player2Confirmed;
     private long createdAt;
     private PendingStatus status;
+    private String tournamentType; // e.g., "DUEL", "MTM"
+    private Long timeControl;
 
     private long scheduledStartTime; // For the eventual DuelTournament start
 
@@ -67,6 +68,10 @@ public class PendingMatch implements Serializable {
         this.createdAt = createdAt;
     }
 
+    public String getTournamentType() { return tournamentType; }
+
+    public void setTournamentType(String tournamentType) { this.tournamentType = tournamentType; }
+
     public PendingStatus getStatus() {
         return status;
     }
@@ -82,4 +87,9 @@ public class PendingMatch implements Serializable {
     public void setScheduledStartTime(long scheduledStartTime) {
         this.scheduledStartTime = scheduledStartTime;
     }
+
+    public Long getTimeControl() { return timeControl; }
+
+    public void setTimeControl(Long timeControl) { this.timeControl = timeControl; }
 }
+

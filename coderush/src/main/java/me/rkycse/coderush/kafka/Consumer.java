@@ -62,7 +62,7 @@ public class Consumer {
         logger.warn("consuming.............................",rank);
         System.out.println(rank);
         if(rank == null){
-            System.out.println("rank null kaise hai iski maa ka bhosda\n\n\n\n");
+            System.out.println("rank null kaise hai ?\n\n\n\n");
         }
         if (rank != null) {
             RankEntity oldRank = rankRepository.findByUserNameAndTournamentId(rank.getUserName(), rank.getTournamentId());
