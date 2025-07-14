@@ -133,7 +133,7 @@ public class RankListSchedulerService {
                                 for (String submissionKey : submissionKeys) {
                                     SubmissionStatusDTO sub = (SubmissionStatusDTO) redisTemplate.opsForValue().get(submissionKey);
                                     if (sub != null) {
-                                        fullDTO.getFreeStyleSubmissionDTOS().add(sub);
+                                        fullDTO.getSubmissionDTOS().add(sub);
                                     }
                                 }
                             }

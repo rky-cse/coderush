@@ -85,8 +85,8 @@ const RankListComponent = ({ tournamentId, token }) => {
                 <td className="py-3 px-4 text-gray-700">{rank.penalty}</td>
                 <td className="py-3 px-4">
                   <div className="flex space-x-2">
-                    {rank.freeStyleSubmissionDTOS && rank.freeStyleSubmissionDTOS.length > 0 ? (
-                      rank.freeStyleSubmissionDTOS.map((testcase, idx) => (
+                    {rank.submissionDTOS && rank.submissionDTOS.length > 0 ? (
+                      rank.submissionDTOS.map((testcase, idx) => (
                         <div key={idx} className="bg-gray-100 p-2 rounded-lg text-sm text-gray-600">
                           <div>
                             <strong>Solved:</strong> {testcase.solved ? '✅' : '❌'}

@@ -431,8 +431,8 @@ const TournamentControlBox = () => {
     );
   }
 
-  const { currentRank, rankWithFreeStyleSubmissionDTO } = tournamentData;
-  const { score, penalty, freeStyleSubmissionDTOS } = rankWithFreeStyleSubmissionDTO || {};
+  const { currentRank, rankWithSubmissionDTO } = tournamentData;
+  const { score, penalty, submissionDTOS } = rankWithSubmissionDTO || {};
   const isTournamentEnded = timeRemaining <= 0;
 
   return (
@@ -466,7 +466,7 @@ const TournamentControlBox = () => {
           {/* Submission status indicators - Larger and more readable */}
           <div className="flex overflow-x-auto max-w-[180px] sm:max-w-[240px] md:max-w-[300px] lg:max-w-[340px] scrollbar-hide">
             <div className="flex space-x-2 whitespace-nowrap">
-              {freeStyleSubmissionDTOS && freeStyleSubmissionDTOS.map((submission, index) => {
+              {submissionDTOS && submissionDTOS.map((submission, index) => {
                 const Icon = submission.solved ? FaCheck : FaTimes;
                 const bgColor = submission.solved ? "bg-emerald-100 dark:bg-emerald-900/40" : "bg-red-100 dark:bg-red-900/40";
                 const textColor = submission.solved ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400";
@@ -482,7 +482,7 @@ const TournamentControlBox = () => {
                   </div>
                 );
               })}
-              {(!freeStyleSubmissionDTOS || freeStyleSubmissionDTOS.length === 0) && (
+              {(!submissionDTOS || submissionDTOS.length === 0) && (
                 <span className="text-sm text-gray-500 dark:text-gray-400">No submissions</span>
               )}
             </div>

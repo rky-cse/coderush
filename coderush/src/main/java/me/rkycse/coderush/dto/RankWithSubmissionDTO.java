@@ -53,11 +53,11 @@ public class RankWithSubmissionDTO {
         this.penalty = penalty;
     }
 
-    public List<SubmissionStatusDTO> getFreeStyleSubmissionDTOS() {
+    public List<SubmissionStatusDTO> getSubmissionDTOS() {
         return SubmissionStatusDTOS;
     }
 
-    public void setFreeStyleSubmissionDTOS(List<SubmissionStatusDTO> SubmissionStatusDTOS) {
+    public void setSubmissionDTOS(List<SubmissionStatusDTO> SubmissionStatusDTOS) {
         this.SubmissionStatusDTOS = SubmissionStatusDTOS;
     }
 }
