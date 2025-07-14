@@ -5,7 +5,7 @@ public class UserRankDTO {
     Long currentRank;
     String userName;
     Long endTime;
-    RankWithFreeStyleSubmissionDTO rankWithFreeStyleSubmissionDTO;
+    RankWithSubmissionDTO rankWithSubmissionDTO;
 
     public Long getTournamentId() {
         return tournamentId;
@@ -39,11 +39,11 @@ public class UserRankDTO {
         this.endTime = endTime;
     }
 
-    public RankWithFreeStyleSubmissionDTO getRankWithFreeStyleSubmissionDTO() {
-        return rankWithFreeStyleSubmissionDTO;
+    public RankWithSubmissionDTO getRankWithSubmissionDTO() {
+        return rankWithSubmissionDTO;
     }
 
-    public void setRankWithFreeStyleSubmissionDTO(RankWithFreeStyleSubmissionDTO rankWithFreeStyleSubmissionDTO) {
-        this.rankWithFreeStyleSubmissionDTO = rankWithFreeStyleSubmissionDTO;
+    public void setRankWithSubmissionDTO(RankWithSubmissionDTO rankWithSubmissionDTO) {
+        this.rankWithSubmissionDTO = rankWithSubmissionDTO;
     }
 }

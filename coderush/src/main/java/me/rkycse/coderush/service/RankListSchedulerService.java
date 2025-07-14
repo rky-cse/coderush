@@ -2,7 +2,7 @@ package me.rkycse.coderush.service;
 
 import me.rkycse.coderush.dto.RankDTO;
 import me.rkycse.coderush.dto.RankListDTO;
-import me.rkycse.coderush.dto.RankWithFreeStyleSubmissionDTO;
+import me.rkycse.coderush.dto.RankWithSubmissionDTO;
 import me.rkycse.coderush.dto.SubmissionStatusDTO;
 import me.rkycse.coderush.dto.TournamentCacheDTO;
 import me.rkycse.coderush.dto.UserRankDTO;
@@ -121,7 +121,7 @@ public class RankListSchedulerService {
                             RankDTO rankDTO = (RankDTO) redisTemplate.opsForValue().get(rankKey);
                             if (rankDTO == null) continue;
 
-                            RankWithFreeStyleSubmissionDTO fullDTO = new RankWithFreeStyleSubmissionDTO();
+                            RankWithSubmissionDTO fullDTO = new RankWithSubmissionDTO();
                             fullDTO.setId(rankDTO.getId());
                             fullDTO.setUserName(rankDTO.getUserName());
                             fullDTO.setScore(rankDTO.getScore());
@@ -150,7 +150,7 @@ public class RankListSchedulerService {
                     }
 
                     rankListDTO.sortByScore();
-                    List<RankWithFreeStyleSubmissionDTO> finalRankList = rankListDTO.getRankList();
+                    List<RankWithSubmissionDTO> finalRankList = rankListDTO.getRankList();
 
                     for (int i = 0; i < finalRankList.size(); i++) {
                         String userName = finalRankList.get(i).getUserName();
@@ -158,7 +158,7 @@ public class RankListSchedulerService {
                         userRankDTO.setUserName(userName);
                         userRankDTO.setCurrentRank((long) (i + 1));
                         userRankDTO.setEndTime(endTime);
-                        userRankDTO.setRankWithFreeStyleSubmissionDTO(finalRankList.get(i));
+                        userRankDTO.setRankWithSubmissionDTO(finalRankList.get(i));
 
                         messagingTemplate.convertAndSend("/topic/userRank/" + tournamentId + "/" + userName, userRankDTO);
                     }

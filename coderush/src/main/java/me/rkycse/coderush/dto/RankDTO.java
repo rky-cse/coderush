@@ -1,11 +1,14 @@
 package me.rkycse.coderush.dto;
 
+import java.util.Comparator;
+import java.util.List;
+
 public class RankDTO {
 
     private Long id;
     private String userName;
     private Long tournamentId;
-    private Long penalty=0L;
+    private Long penalty = 0L;
     private long score;
     private Long rating;
     private Long startTime;
@@ -19,7 +22,7 @@ public class RankDTO {
                 ", penalty=" + penalty +
                 ", score=" + score +
                 ", rating=" + rating +
-                ", startTime="+startTime+
+                ", startTime=" + startTime +
                 '}';
     }
 
@@ -34,8 +37,6 @@ public class RankDTO {
     public Long getId() {
         return id;
     }
-
-
 
     public void setId(Long id) {
         this.id = id;
@@ -72,14 +73,19 @@ public class RankDTO {
     public void setPenalty(Long penalty) {
         this.penalty = penalty;
     }
-    
+
     public Long getStartTime() {
         return startTime;
     }
-    
+
     public void setStartTime(Long startTime) {
         this.startTime = startTime;
     }
 
-
+    public static void sortRankList(List<RankDTO> rankList) {
+        rankList.sort(
+                Comparator.comparingLong(RankDTO::getScore).reversed()
+                        .thenComparingLong(RankDTO::getPenalty)
+        );
+    }
 }
