@@ -6,22 +6,24 @@ public class MatchResponseDTO {
     private Long matchId;
     private Long player1Id;
     private String player1Name;
-    private int  player1Rating;
+    private Long  player1Rating;
     private Long player2Id;
     private String player2Name;
-    private int  player2Rating;
+    private Long  player2Rating;
     private Long startTime;
     private String pendingMatchId;
+    private Long timeControl;
+    private String tournamentType;
 
     public MatchResponseDTO(
             String status,
             Long   matchId,
             Long   player1Id,
             String player1Name,
-            int    player1Rating,
+            Long    player1Rating,
             Long   player2Id,
             String player2Name,
-            int    player2Rating,
+            Long    player2Rating,
             Long   startTime,
             String pendingMatchId
     ) {
@@ -37,6 +39,31 @@ public class MatchResponseDTO {
         this.pendingMatchId = pendingMatchId;
     }
 
+    public MatchResponseDTO(String status, Long player1Id, String tournamentType, Long timeControl) {
+        this.status = status;
+        this.player1Id = player1Id;
+        this.tournamentType = tournamentType;
+        this.timeControl = timeControl;
+
+    }
+
+
+    public Long getTimeControl() {
+        return timeControl;
+    }
+
+    public void setTimeControl(Long timeControl) {
+        this.timeControl = timeControl;
+    }
+
+    public String getTournamentType() {
+        return tournamentType;
+    }
+
+    public void setTournamentType(String tournamentType) {
+        this.tournamentType = tournamentType;
+    }
+
     public String getPlayer1Name() {
         return player1Name;
     }
@@ -45,11 +72,11 @@ public class MatchResponseDTO {
         this.player1Name = player1Name;
     }
 
-    public int getPlayer1Rating() {
+    public Long getPlayer1Rating() {
         return player1Rating;
     }
 
-    public void setPlayer1Rating(int player1Rating) {
+    public void setPlayer1Rating(Long player1Rating) {
         this.player1Rating = player1Rating;
     }
 
@@ -61,11 +88,11 @@ public class MatchResponseDTO {
         this.player2Name = player2Name;
     }
 
-    public int getPlayer2Rating() {
+    public Long getPlayer2Rating() {
         return player2Rating;
     }
 
-    public void setPlayer2Rating(int player2Rating) {
+    public void setPlayer2Rating(Long player2Rating) {
         this.player2Rating = player2Rating;
     }
 

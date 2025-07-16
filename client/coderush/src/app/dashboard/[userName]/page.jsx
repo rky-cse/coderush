@@ -147,18 +147,18 @@ export default function Profile() {
               </div>
               
               <div className="mt-1 flex flex-col sm:flex-row sm:flex-wrap space-y-1 sm:space-y-0 sm:space-x-4">
-                <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                {/* <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
                   <FaCalendarAlt className="mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
                   Joined {new Date(user.createdAt).toLocaleDateString()}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                </div> */}
+                {/* <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
                   <FaCode className="mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
                   {user.solvedProblems || 0} problems solved
                 </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
                   <FaMedal className="mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
                   {user.contestsParticipated || 0} contests
-                </div>
+                </div> */}
               </div>
               
               <div className="mt-3 flex items-center">
@@ -201,10 +201,10 @@ export default function Profile() {
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Profile Details</h3>
               </div>
               <div className="px-6 py-5 space-y-4">
-                {user.bio && (
+                {user.email && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Bio</h4>
-                    <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{user.bio}</p>
+                    <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</h4>
+                    <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{user.email}</p>
                   </div>
                 )}
                 

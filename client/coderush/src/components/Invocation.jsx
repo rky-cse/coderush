@@ -10,7 +10,7 @@ export default function Invocation({ questionId }) {
   const wsConnectedRef            = useRef(false)
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8084'
-  const WS_URL  = `${process.env.NEXT_PUBLIC_WS_URL ||
+  const WS_URL  = `${process.env.NEXT_PUBLIC_API_URL ||
                    'http://localhost:8084'}/ws`
 
   const token = getCookie('token')

@@ -47,9 +47,16 @@ export default function DuelPage() {
   };
 
   const handleWebSocketMessage = (msg) => {
-    const { status, matchId, player1Id, player1Name, player2Name, player1Rating, player2Rating, player2Id, pendingMatchId } = msg;
+    const { status, matchId, player1Id, player1Name, player2Name, player1Rating, player2Rating, player2Id, pendingMatchId,timeControl,tournamentType} = msg;
     
     switch (status) {
+      case 'PENDING_REQUEST':
+        // Handle pending request response - show searching interface
+        setSelectedTime(timeControl);
+        setSelectedTournamentType(tournamentType);
+        setSearchingForMatch(true);
+        setShowModal(true);
+        break;
       case 'MATCH_FOUND':
         clearTimers();
         setPendingMatchId(pendingMatchId);

@@ -47,7 +47,7 @@ public class SecurityConfig {
                 }))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/ws/**").permitAll()  // Public endpoints
+                        .requestMatchers("/api/auth/**", "/ws/**","/api/health").permitAll()  // Public endpoints
                         .anyRequest().authenticated()                  // Secure all other endpoints
                 )
 

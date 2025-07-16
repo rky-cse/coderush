@@ -545,7 +545,7 @@ public class MatchmakingService {
 
     private static final String MATCHMAKING_QUEUE_KEY = "matchmaking:queue";
     private static final String PENDING_MATCH_KEY_PREFIX = "pending-match:";
-    private static final long MATCH_TIMEOUT_MS = 90_000; // 90 seconds
+    private static final long MATCH_TIMEOUT_MS = 60_000; // 60 seconds
     private static final int INITIAL_RATING_RANGE = 50;
     private static final int RATING_EXPANSION_STEP = 25;
     // Define supported tournament types (must match DTO values)
@@ -559,7 +559,7 @@ public class MatchmakingService {
     private final Producer producer;
     private static final Logger logger = LoggerFactory.getLogger(MatchmakingService.class);
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
-    private record PlayerInfo(Long id, String name, int rating) {}
+    private record PlayerInfo(Long id, String name, Long rating) {}
 
     public MatchmakingService(RedisTemplate<String, Object> redisTemplate,
                               DuelTournamentService duelTournamentService,
@@ -579,7 +579,7 @@ public class MatchmakingService {
     private PlayerInfo loadPlayerInfo(Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("Unknown user " + userId));
-        return new PlayerInfo(userId, user.getUserName(), Math.toIntExact(user.getRating()));
+        return new PlayerInfo(userId, user.getUserName(), user.getRating());
     }
 
 
@@ -612,7 +612,7 @@ public class MatchmakingService {
                 "QUEUED",
                 null,                  // no matchId yet
                 me.id, me.name, me.rating,
-                null, "", 0,           // no opponent yet
+                null, "", 0L,           // no opponent yet
                 timestamp,
                 null                   // no pendingMatchId yet
         );
@@ -640,8 +640,8 @@ public class MatchmakingService {
         for (String timeControl : timeControls) {
             for (String type : TOURNAMENT_TYPES) {
                 String queueKey = buildQueueKey((Long.valueOf(timeControl))*(60), type);
-                System.out.println("[processMatchmakingQueue()] KEY : " + queueKey + " size: " +
-                        redisTemplate.opsForZSet().size(queueKey));
+//                System.out.println("[processMatchmakingQueue()] KEY : " + queueKey + " size: " +
+//                        redisTemplate.opsForZSet().size(queueKey));
                 Set<ZSetOperations.TypedTuple<Object>> tuples = new HashSet<>(
                         redisTemplate.opsForZSet().rangeWithScores(queueKey, 0, -1)
                 );
@@ -651,6 +651,7 @@ public class MatchmakingService {
                     Object val = tuple.getValue();
                     if (!(val instanceof MatchRequestDTO)) return;
                     MatchRequestDTO request = (MatchRequestDTO) val;
+
                     System.out.println("[processMatchmakingQueue()] Processing match request for user: " + request.getUserId() +
                             ", timeControl: " + request.getTimeControl() + ", type: " + request.getTournamentType());
                     long now = System.currentTimeMillis();
@@ -660,7 +661,7 @@ public class MatchmakingService {
                         processMatchCandidate(request, now);
                     }
                     else {
-
+                        notifyPendingRequest(request);
                         System.out.println("[processMatchmakingQueue()] No suitable opponent found for user: " +
                                 request.getUserId() + " in queue: " + queueKey);
                         //handleTimeoutFallback(request);
@@ -692,8 +693,8 @@ public class MatchmakingService {
     }
 
     private int calculateCurrentRatingRange(long elapsedMs) {
-        if (elapsedMs < 30_000) return INITIAL_RATING_RANGE;
-        if (elapsedMs < 60_000) return INITIAL_RATING_RANGE + RATING_EXPANSION_STEP;
+        if (elapsedMs < 10_000) return INITIAL_RATING_RANGE;
+        if (elapsedMs < 20_000) return INITIAL_RATING_RANGE + RATING_EXPANSION_STEP;
         return INITIAL_RATING_RANGE + 2 * RATING_EXPANSION_STEP;
     }
 
@@ -815,6 +816,20 @@ public class MatchmakingService {
         messagingTemplate.convertAndSendToUser(p1.name, "/queue/match-notifications", msg1);
         messagingTemplate.convertAndSendToUser(p2.name, "/queue/match-notifications", msg2);
 
+
+    }
+
+    public void notifyPendingRequest(MatchRequestDTO request) {
+
+        MatchResponseDTO response= new MatchResponseDTO(
+                "PENDING_REQUEST",
+                request.getUserId(),
+                request.getTournamentType(),
+                request.getTimeControl()/60L
+        );
+        PlayerInfo p1 = loadPlayerInfo(request.getUserId());
+
+        messagingTemplate.convertAndSendToUser(p1.name, "/queue/match-notifications", response);
 
     }
 
