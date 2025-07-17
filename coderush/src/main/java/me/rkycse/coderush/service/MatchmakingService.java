@@ -538,7 +538,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class MatchmakingService {
@@ -552,7 +555,9 @@ public class MatchmakingService {
     private static final List<String> TOURNAMENT_TYPES = Arrays.asList("classic", "freestyle");
     private final RedisTemplate<String, Object> redisTemplate;
     private final DuelTournamentService duelTournamentService;
-    private static final long AUTO_CANCEL_MS = 15_000;   // 15 seconds
+    private static final long AUTO_CANCEL_MS = 15_000;// 15 seconds
+    private static final long NOTIFY_COUNT=4;
+    private static final long NOTIFY_INTERVAL_MS = 3_000;
     private final UserRepository userRepository;
     private final DuelTournamentRepository duelRepository;
     private final SimpMessagingTemplate messagingTemplate;
@@ -582,9 +587,48 @@ public class MatchmakingService {
         return new PlayerInfo(userId, user.getUserName(), user.getRating());
     }
 
+    private boolean validateRequest(MatchRequestDTO request) {
+
+        if(request==null){
+            logger.warn("Match request is null");
+            return false;
+        }
+        if(request.getUserId()==null){
+            logger.warn("Match request id is null");
+            return false;
+        }
+        if(request.getRating()==null){
+            logger.warn("Match request rating is null");
+            return false;
+
+        }
+        if(!(request.getTournamentType().toLowerCase().equals("classic")
+                || request.getTournamentType().toLowerCase().equals("freestyle"))){
+            logger.warn("Match request type is not classic or freestyle");
+            return false;
+
+        }
+        if(request.getRequestTime()==null){
+            logger.warn("Match request time is null");
+            return false;
+        }
+
+        if(request.getTimeControl()==null){
+            logger.warn("Match request time control is null");
+        }
+        return true;
+    }
+
 
     @Transactional
     public MatchResponseDTO processMatchRequest(MatchRequestDTO request) {
+        if(validateRequest(request)){
+            logger.info("Match request validated");
+        }
+        else{
+            logger.info("Match request invalid");
+            return null;
+        }
         // Remove from any existing queue
         removeUserFromQueue(request.getUserId());
 
@@ -754,27 +798,105 @@ public class MatchmakingService {
 
         redisTemplate.opsForValue().set(PENDING_MATCH_KEY_PREFIX + pendingId, pm);
 
-        notifyMatchFound(pm);
-        scheduleAutoCancel(pendingId);
+        Long startTime = System.currentTimeMillis();
+        notifyMatchFound(pm, startTime);
+        scheduleAutoCancel(pendingId, startTime);
     }
 
     /**
      * Auto-cancel pending match after 15s if still unconfirmed. Does not block other operations.
      */
-    private void scheduleAutoCancel(String pendingMatchId) {
-        scheduler.schedule(() -> {
-            Object obj = redisTemplate.opsForValue().get(PENDING_MATCH_KEY_PREFIX + pendingMatchId);
-            if (!(obj instanceof PendingMatch pm) || pm.getStatus() != PendingStatus.WAITING_CONFIRMATION) {
+//    private void scheduleAutoCancel(String pendingMatchId) {
+//        scheduler.schedule(() -> {
+//            Object obj = redisTemplate.opsForValue().get(PENDING_MATCH_KEY_PREFIX + pendingMatchId);
+//            if (!(obj instanceof PendingMatch pm) || pm.getStatus() != PendingStatus.WAITING_CONFIRMATION) {
+//                return;
+//            }
+//            // ... mark cancelled ...
+//            PlayerInfo p1 = loadPlayerInfo(pm.getPlayer1Id());
+//            PlayerInfo p2 = loadPlayerInfo(pm.getPlayer2Id());
+//
+//            MatchResponseDTO cancel1 = new MatchResponseDTO(
+//                    "AUTO_CANCELLED", null,
+//                    p1.id, p1.name, p1.rating,
+//                    p2.id, p2.name, p2.rating,
+//                    System.currentTimeMillis(),
+//                    pendingMatchId
+//            );
+//            MatchResponseDTO cancel2 = new MatchResponseDTO(
+//                    "AUTO_CANCELLED", null,
+//                    p2.id, p2.name, p2.rating,
+//                    p1.id, p1.name, p1.rating,
+//                    System.currentTimeMillis(),
+//                    pendingMatchId
+//            );
+//
+//            messagingTemplate.convertAndSendToUser(p1.name, "/queue/match-notifications", cancel1);
+//            messagingTemplate.convertAndSendToUser(p2.name, "/queue/match-notifications", cancel2);
+//        }, AUTO_CANCEL_MS, TimeUnit.MILLISECONDS);
+//    }
+
+    private void scheduleAutoCancel(String pendingMatchId, long startTime) {
+        final String key = PENDING_MATCH_KEY_PREFIX + pendingMatchId;
+
+        // Hold onto our notifier so we can cancel it later
+        AtomicReference<ScheduledFuture<?>> notifierRef = new AtomicReference<>();
+        AtomicInteger notifyCount = new AtomicInteger(0);
+
+        // 1) schedule the periodic “match found” notifications
+        Runnable notifierTask = () -> {
+            Object raw = redisTemplate.opsForValue().get(key);
+            if (!(raw instanceof PendingMatch pm)
+                    || pm.getStatus() != PendingStatus.WAITING_CONFIRMATION) {
+                // stop notifying as soon as match is gone or confirmed/cancelled
+                ScheduledFuture<?> f = notifierRef.get();
+                if (f != null) f.cancel(false);
                 return;
             }
-            // ... mark cancelled ...
+
+            notifyMatchFound(pm, startTime);
+
+            // after N tries, stop notifying
+            if (notifyCount.incrementAndGet() >= NOTIFY_COUNT) {
+                ScheduledFuture<?> f = notifierRef.get();
+                if (f != null) f.cancel(false);
+            }
+        };
+        ScheduledFuture<?> notifierFuture =
+                scheduler.scheduleAtFixedRate(
+                        notifierTask,
+                        NOTIFY_INTERVAL_MS,
+                        NOTIFY_INTERVAL_MS,
+                        TimeUnit.MILLISECONDS
+                );
+        notifierRef.set(notifierFuture);
+
+        // 2) schedule the auto‑cancel to fire once after AUTO_CANCEL_MS
+        scheduler.schedule(() -> {
+            // first, make sure no more notifier callbacks
+            ScheduledFuture<?> f = notifierRef.get();
+            if (f != null) f.cancel(false);
+
+            Object raw = redisTemplate.opsForValue().get(key);
+            if (!(raw instanceof PendingMatch pm)
+                    || pm.getStatus() != PendingStatus.WAITING_CONFIRMATION) {
+                // nothing to do if already confirmed/cancelled
+                return;
+            }
+
+            // mark as auto‑cancelled, update Redis, then remove the key
+            pm.setStatus(PendingStatus.CANCELLED);
+            redisTemplate.opsForValue().set(key, pm);
+            redisTemplate.delete(key);
+
+            // now send out both cancellation notices
             PlayerInfo p1 = loadPlayerInfo(pm.getPlayer1Id());
             PlayerInfo p2 = loadPlayerInfo(pm.getPlayer2Id());
 
             MatchResponseDTO cancel1 = new MatchResponseDTO(
                     "AUTO_CANCELLED", null,
-                    p1.id, p1.name, p1.rating,
-                    p2.id, p2.name, p2.rating,
+                    p1.id,  p1.name, p1.rating,
+                    p2.id,  p2.name, p2.rating,
                     System.currentTimeMillis(),
                     pendingMatchId
             );
@@ -786,12 +908,18 @@ public class MatchmakingService {
                     pendingMatchId
             );
 
-            messagingTemplate.convertAndSendToUser(p1.name, "/queue/match-notifications", cancel1);
-            messagingTemplate.convertAndSendToUser(p2.name, "/queue/match-notifications", cancel2);
+            messagingTemplate.convertAndSendToUser(
+                    p1.name(), "/queue/match-notifications", cancel1
+            );
+            messagingTemplate.convertAndSendToUser(
+                    p2.name(), "/queue/match-notifications", cancel2
+            );
         }, AUTO_CANCEL_MS, TimeUnit.MILLISECONDS);
     }
 
-    private void notifyMatchFound(PendingMatch pm) {
+
+
+    private void notifyMatchFound(PendingMatch pm, long startTime) {
 
         PlayerInfo p1 = loadPlayerInfo(pm.getPlayer1Id());
         PlayerInfo p2 = loadPlayerInfo(pm.getPlayer2Id());
@@ -801,7 +929,7 @@ public class MatchmakingService {
                 null,
                 p1.id, p1.name, p1.rating,
                 p2.id, p2.name, p2.rating,
-                System.currentTimeMillis(),
+                startTime,
                 pm.getPendingMatchId()
         );
         MatchResponseDTO msg2 = new MatchResponseDTO(
@@ -809,7 +937,7 @@ public class MatchmakingService {
                 null,
                 p2.id, p2.name, p2.rating,
                 p1.id, p1.name, p1.rating,
-                System.currentTimeMillis(),
+                startTime,
                 pm.getPendingMatchId()
         );
 
@@ -877,6 +1005,7 @@ public class MatchmakingService {
             pm.setStatus(PendingStatus.CONFIRMED);
             redisTemplate.opsForValue().set(PENDING_MATCH_KEY_PREFIX + pendingMatchId, pm);
             notifyMatchConfirmed(pm);
+            scheduler.schedule(()->notifyMatchConfirmed(pm), 5, TimeUnit.MILLISECONDS);
             removeUserFromQueue(pm.getPlayer1Id());
             removeUserFromQueue(pm.getPlayer2Id());
             scheduler.schedule(() -> createDuelTournament(pm), 10, TimeUnit.SECONDS);

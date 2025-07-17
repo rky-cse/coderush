@@ -47,7 +47,7 @@ export default function DuelPage() {
   };
 
   const handleWebSocketMessage = (msg) => {
-    const { status, matchId, player1Id, player1Name, player2Name, player1Rating, player2Rating, player2Id, pendingMatchId,timeControl,tournamentType} = msg;
+    const { status, matchId, player1Id, player1Name, player2Name, player1Rating, player2Rating, player2Id,startTime,pendingMatchId,timeControl,tournamentType} = msg;
     
     switch (status) {
       case 'PENDING_REQUEST':
@@ -68,7 +68,7 @@ export default function DuelPage() {
           rating: isPlayer1 ? player2Rating : player1Rating
         });
         setShowModal(true);
-        startConfirmTimer();
+        startConfirmTimer((startTime + 15000) - Date.now());
         break;
       case 'MATCH_CANCELLED':
         alert('Opponent cancelled the match.');
@@ -86,20 +86,42 @@ export default function DuelPage() {
     }
   };
 
-  const startConfirmTimer = () => {
-    setConfirmCountdown(15);
+  // const startConfirmTimer = () => {
+  //   setConfirmCountdown(15);
+  //   confirmIntervalRef.current = setInterval(() => {
+  //     setConfirmCountdown((c) => {
+  //       if (c <= 1) {
+  //         clearTimers();
+  //         handleCancel();
+  //         return 0;
+  //       }
+  //       return c - 1;
+  //     });
+  //   }, 1000);
+  //   confirmTimerId.current = setTimeout(handleCancel, 15000);
+  // };
+
+  const startConfirmTimer = (timeout) => {
+    const countdownSeconds = Math.ceil(timeout / 1000);
+    setConfirmCountdown(countdownSeconds);
+
     confirmIntervalRef.current = setInterval(() => {
-      setConfirmCountdown((c) => {
-        if (c <= 1) {
-          clearTimers();
-          handleCancel();
-          return 0;
-        }
-        return c - 1;
-      });
+        setConfirmCountdown((c) => {
+            if (c <= 1) {
+                clearTimers();
+                handleCancel();
+                return 0;
+            }
+            return c - 1;
+        });
     }, 1000);
-    confirmTimerId.current = setTimeout(handleCancel, 15000);
+
+    confirmTimerId.current = setTimeout(() => {
+        clearTimers();
+        handleCancel();
+    }, timeout);
   };
+
 
   const startGameTimer = (matchId) => {
     setCountdown(5);
