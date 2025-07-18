@@ -12,6 +12,7 @@ export function submitTournament({
   toast,
   onComplete,
   userOutput,
+  setOutput,
 }) {
   try {
     if (tournamentType === 'FREE_STYLE') {
@@ -66,17 +67,22 @@ export function submitTournament({
           onComplete();
           if (response === true || (response && response.verdict === 'AC')) {
             toast.success('ACCEPTED!');
+            setOutput('');
           } else if (response === false || (response && response.verdict === 'WA')) {
             toast.error('WRONG ANSWER!');
+            setOutput('');
           } else if(response && response.verdict === "TLE"){
             toast.error('TIME LIMIT EXCEEDED!');
+            setOutput('');
           }  else if(response && response.verdict === "RE"){
             toast.error('RUNTIME ERROR!');
+            setOutput('');
           } else if(response && response.verdict === "MLE"){
             toast.error('MEMORY LIMIT EXCEEDED!');
+            setOutput('');
           } else {
             toast.error('Compilation Error!');
-            window.alert(response?.verdict);
+            setOutput(response?.verdict);
           }
         }
       );

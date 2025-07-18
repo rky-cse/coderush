@@ -35,6 +35,7 @@ export default function ControlButtons({ tournamentId, token, setOutput,output, 
       return;
     }
     dispatch(decrement());
+    setOutput('');
     scrollLeftContainerToTop();
   };
 
@@ -44,6 +45,7 @@ export default function ControlButtons({ tournamentId, token, setOutput,output, 
       return;
     }
     dispatch(increment());
+    setOutput('');
     scrollLeftContainerToTop();
   };
 
@@ -95,6 +97,7 @@ export default function ControlButtons({ tournamentId, token, setOutput,output, 
       language,
       code,
       userOutput: output,
+      setOutput,
       toast,
       onComplete: () => {
         setSubmitFlag(true);
