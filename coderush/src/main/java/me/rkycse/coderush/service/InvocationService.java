@@ -61,7 +61,9 @@ public class InvocationService {
 
         InvocationPayload payload = new InvocationPayload(
                 questionId,
-                solution.getCheckerFilePath(),
+                // Pass null for checker if not set — judge skips checker and uses exact string comparison
+                (solution.getCheckerFilePath() != null && !solution.getCheckerFilePath().isBlank())
+                    ? solution.getCheckerFilePath() : null,
                 solution.getValidatorFilePath(),
                 solution.getSolutionFilePath(),
                 testcases.stream()

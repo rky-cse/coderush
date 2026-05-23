@@ -40,8 +40,9 @@ public class Consumer {
     private final SubmissionStatusRepository submissionStatusRepository;
 
     private final Producer producer;
+    private final me.rkycse.coderush.problemgeneratoragent.tools.execution.AgentJudgeResponseWaiter agentJudgeResponseWaiter;
 
-    public Consumer(RedisTemplate<String, Object> redisTemplate, QuestionRepository questionRepository, TestcaseRepository testcaseRepository, TournamentPlayerRepository tournamentPlayerRepository, TournamentQuestionRepository tournamentQuestionRepository, TournamentWebSocketService tournamentWebSocketService, SimpMessagingTemplate messagingTemplate, ClassicSubmissionService classicSubmissionService, RankRepository rankRepository, UserRepository userRepository, SubmissionStatusRepository submissionStatusRepository, Producer producer) {
+    public Consumer(RedisTemplate<String, Object> redisTemplate, QuestionRepository questionRepository, TestcaseRepository testcaseRepository, TournamentPlayerRepository tournamentPlayerRepository, TournamentQuestionRepository tournamentQuestionRepository, TournamentWebSocketService tournamentWebSocketService, SimpMessagingTemplate messagingTemplate, ClassicSubmissionService classicSubmissionService, RankRepository rankRepository, UserRepository userRepository, SubmissionStatusRepository submissionStatusRepository, Producer producer, me.rkycse.coderush.problemgeneratoragent.tools.execution.AgentJudgeResponseWaiter agentJudgeResponseWaiter) {
         this.redisTemplate = redisTemplate;
         this.questionRepository = questionRepository;
         this.testcaseRepository = testcaseRepository;
@@ -54,6 +55,7 @@ public class Consumer {
         this.userRepository = userRepository;
         this.submissionStatusRepository = submissionStatusRepository;
         this.producer = producer;
+        this.agentJudgeResponseWaiter = agentJudgeResponseWaiter;
     }
 
     @KafkaListener(topics = "rank-update", groupId = "myGroup")
@@ -295,11 +297,12 @@ public class Consumer {
     public void consumeClassicSubmissionResponse(String classicSubmissionResponse) {
         logger.info("ClassicSubmissionResponse: {}", classicSubmissionResponse);
 
-        // convert to object
-
         ClassicSubmissionDTO classicSubmissionDTO =
                 JsonConverter.fromJson(classicSubmissionResponse,
                         ClassicSubmissionDTO.class);
+
+        // Notify agent if this response belongs to an agent job (correlationId present)
+        agentJudgeResponseWaiter.complete(classicSubmissionDTO.getCorrelationId(), classicSubmissionDTO);
 //        Long count=(Long)redisTemplate.opsForValue().get("judgeCount/"+classicSubmissionDTO.getTournamentId());
 //        if(count==null) {
 //            count=0L;

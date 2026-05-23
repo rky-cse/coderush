@@ -12,7 +12,12 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 
+import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
+
 @Configuration
+@EnableRedisRepositories(basePackages = {
+    "me.rkycse.coderush.problemgeneratoragent.job"
+})
 public class RedisConfig {
 
     @Bean
