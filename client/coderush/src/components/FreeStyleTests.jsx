@@ -1,21 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, Edit3, Plus, Save, X } from 'lucide-react';
-import axios from 'axios';
+import api from '@/services/api';
+import notify from '@/services/notify';
 
 const FreeStyleTests = ({ questionId }) => {
   const [testCases, setTestCases] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  // Get token from cookies
-  const getCookie = (name) => {
-    if (typeof document === 'undefined') return null;
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-    return null;
-  };
 
   // Fetch existing test cases
   useEffect(() => {
@@ -26,19 +18,13 @@ const FreeStyleTests = ({ questionId }) => {
 
   const fetchTestCases = async () => {
     try {
-      const token = getCookie('token');
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/testcase/getTestcasesByQuestionId/${questionId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
+      const response = await api.get(
+        `/api/testcase/getTestcasesByQuestionId/${questionId}`
       );
       setTestCases(response.data);
     } catch (err) {
-      console.error('Error fetching test cases:', err);
-      setError('Failed to fetch test cases');
+      setError(err.message || 'Failed to fetch test cases');
+      notify.error(err.message || 'Failed to fetch test cases');
     }
   };
 
@@ -58,55 +44,38 @@ const FreeStyleTests = ({ questionId }) => {
   const saveTestCase = async (testCase) => {
     setLoading(true);
     setError('');
-    
+
     try {
-      const token = getCookie('token');
       const payload = {
         questionId: questionId,
         input: testCase.input,
         output: testCase.output,
-        rating: parseInt(testCase.rating)
-      };
-
-      const config = {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        rating: parseInt(testCase.rating),
       };
 
       let response;
       if (testCase.isNew) {
-        // Create new test case
-        response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/testcase/createTestcase`,
-          payload,
-          config
-        );
+        response = await api.post('/api/testcase/createTestcase', payload);
       } else {
-        // Update existing test case
-        response = await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/testcase/${testCase.testcaseId}`,
-          {
-            ...payload,
-            testcaseId: testCase.testcaseId
-          },
-          config
-        );
+        response = await api.put(`/api/testcase/${testCase.testcaseId}`, {
+          ...payload,
+          testcaseId: testCase.testcaseId,
+        });
       }
 
       const updatedTestCase = response.data;
-      setTestCases(prev => 
-        prev.map(tc => 
+      setTestCases(prev =>
+        prev.map(tc =>
           tc.id === testCase.id || tc.testcaseId === testCase.testcaseId
             ? { ...updatedTestCase, id: updatedTestCase.testcaseId }
             : tc
         )
       );
       setEditingId(null);
+      notify.success(testCase.isNew ? 'Test case created.' : 'Test case updated.');
     } catch (err) {
-      console.error('Error saving test case:', err);
-      setError('Failed to save test case: ' + (err.response?.data?.message || err.message));
+      setError(err.message || 'Failed to save test case');
+      notify.error(err.message || 'Failed to save test case');
     } finally {
       setLoading(false);
     }
@@ -121,20 +90,13 @@ const FreeStyleTests = ({ questionId }) => {
 
     setLoading(true);
     try {
-      const token = getCookie('token');
-      await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/testcase/${testCase.testcaseId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      await api.delete(`/api/testcase/${testCase.testcaseId}`);
 
       setTestCases(prev => prev.filter(tc => tc.testcaseId !== testCase.testcaseId));
+      notify.success('Test case deleted.');
     } catch (err) {
-      console.error('Error deleting test case:', err);
-      setError('Failed to delete test case: ' + (err.response?.data?.message || err.message));
+      setError(err.message || 'Failed to delete test case');
+      notify.error(err.message || 'Failed to delete test case');
     } finally {
       setLoading(false);
     }

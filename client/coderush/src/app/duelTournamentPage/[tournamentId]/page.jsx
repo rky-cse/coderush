@@ -11,7 +11,8 @@ import ControlButtons from '@/components/ControlButtons';
 import webSocketService from '@/services/webSocketService';
 import { FaChevronUp, FaChevronDown, FaFileAlt, FaCode } from 'react-icons/fa';
 import { setTournamentData } from '@/redux/slices/tournamentSlice';
-import axios from 'axios';
+import api from '@/services/api';
+import notify from '@/services/notify';
 
 export default function TournamentPage({ params }) {
   // Existing state and refs
@@ -81,41 +82,17 @@ export default function TournamentPage({ params }) {
   useEffect(() => {
     const fetchTournamentData = async () => {
       if (!tournamentId) return;
-      
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      
+
       try {
-        // Fetch tournament details
-        const { data: tournamentData } = await axios.get(
-          `${baseUrl}/api/tournament/duel/getTournamentById/${tournamentId}`,
-          { headers }
+        const { data: tournamentData } = await api.get(
+          `/api/tournament/duel/getTournamentById/${tournamentId}`
         );
-        
-        if (!tournamentData) {
-          setError('Tournament not found');
-          setLoading(false);
-          return;
-        }
-        
+
         setTournament(tournamentData);
         dispatch(setTournamentData(tournamentData));
-
-        // Fetch registered tournaments
-        // if (token) {
-        //   const { data: userTournaments } = await axios.get(
-        //     `${baseUrl}/api/tournament/duel/registeredTournamentsByUser`,
-        //     { headers }
-        //   );
-          
-        //   if (userTournaments) {
-        //     const registeredIds = userTournaments;
-        //     setRegisteredTournaments(registeredIds);
-        //   }
-        // }
       } catch (err) {
-        console.error("Error fetching tournament data:", err);
-        setError(err.response?.data?.message || 'Failed to load tournament details');
+        setError(err.message || 'Failed to load tournament details');
+        notify.error(err.message || 'Failed to load tournament details');
       } finally {
         setLoading(false);
       }

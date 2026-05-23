@@ -1,29 +1,35 @@
 'use client';
 import { useState } from 'react';
-import axios from 'axios';
+import notify from '@/services/notify';
 import { useRouter } from 'next/navigation';
-import { getCookie } from 'cookies-next';
+import api from '@/services/api';
+
 export default function Register() {
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+    setLoading(true);
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
+      await api.post('/api/auth/register', {
         userName: username,
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        password: password,
+        firstName,
+        lastName,
+        email,
+        password,
       });
       router.push('/login');
-    } catch (error) {
-      console.error('Registration failed:', error);
+    } catch (err) {
+      notify.error(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -39,6 +45,8 @@ export default function Register() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+              required
+              disabled={loading}
             />
           </div>
           <div>
@@ -48,6 +56,8 @@ export default function Register() {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               className="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+              required
+              disabled={loading}
             />
           </div>
           <div>
@@ -57,6 +67,8 @@ export default function Register() {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               className="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+              required
+              disabled={loading}
             />
           </div>
           <div>
@@ -66,6 +78,8 @@ export default function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+              required
+              disabled={loading}
             />
           </div>
           <div>
@@ -75,13 +89,18 @@ export default function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+              required
+              disabled={loading}
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition"
+            className={`w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition ${
+              loading ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
+            disabled={loading}
           >
-            Register
+            {loading ? 'Creating account…' : 'Register'}
           </button>
         </form>
       </div>

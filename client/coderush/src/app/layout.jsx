@@ -7,7 +7,7 @@ import { Provider, useDispatch } from 'react-redux';
 import { store } from '../redux/store';
 import { setAuthFromStorage } from '../redux/slices/authSlice';
 import { setUser, clearUser } from '../redux/slices/userSlice'; // <-- import user actions
-import axios from 'axios'; // for the user fetch
+import api from '@/services/api';
 import Navbar from '@/components/Navbar';
 import { WebSocketProvider } from '@/context/WebSocketContext';
 import Head from 'next/head';
@@ -33,20 +33,14 @@ const InitAuth = () => {
     }
 
     // 3) If token, fetch user data from server
-    axios
-      .get(`${process.env.NEXT_PUBLIC_API_URL}/api/user/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+    api
+      .get('/api/user/me')
       .then((res) => {
-        // If successful, store user in Redux
-        console.log("Syncing user data in redux --> ",res.data);
         dispatch(setUser(res.data));
       })
-      .catch((err) => {
-        console.error(err);
-        // If error, clear user
+      .catch(() => {
+        // The api interceptor already auto-redirects to /login on TOKEN_INVALID,
+        // so we just clear local state here.
         dispatch(clearUser());
       });
   }, []);
@@ -74,7 +68,7 @@ const Layout = ({ children }) => {
             {/* Conditionally render Navbar */}
             { !hideNavbar && <Navbar /> }
             <main className="container mx-auto">
-              <Toaster position="top-right" reverseOrder={false} />
+              <Toaster position="top-center" reverseOrder={false} />
               {children}
             </main>
           </div>

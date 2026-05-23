@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/services/api';
+import notify from '@/services/notify';
 
 function Tests({ questionId }) {
   const [tests, setTests] = useState([]);
@@ -19,9 +20,6 @@ function Tests({ questionId }) {
   // For updating existing test
   const [editingTest, setEditingTest] = useState(null);
   
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-  const token = getCookie('token');
-  
   // Fetch all tests on component mount
   useEffect(() => {
     fetchTests();
@@ -30,19 +28,11 @@ function Tests({ questionId }) {
   const fetchTests = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${baseUrl}/api/questions/${questionId}/tests`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      
+      const response = await api.get(`/api/questions/${questionId}/tests`);
       setTests(response.data.tests || []);
-    } catch (error) {
-      console.error('Error fetching tests:', error);
-      setError('Failed to load test cases');
+    } catch (err) {
+      setError(err.message || 'Failed to load test cases');
+      notify.error(err.message || 'Failed to load test cases');
     } finally {
       setLoading(false);
     }
@@ -95,46 +85,31 @@ function Tests({ questionId }) {
     }
     
     try {
-      let response;
       if (editingTest) {
-        // Update existing test
-        response = await axios.put(
-          `${baseUrl}/api/questions/${questionId}/tests/${editingTest.id}`,
+        await api.put(
+          `/api/questions/${questionId}/tests/${editingTest.id}`,
           formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { 'Content-Type': 'multipart/form-data' } }
         );
       } else {
-        // Create new test
-        response = await axios.post(
-          `${baseUrl}/api/questions/${questionId}/tests`,
+        await api.post(
+          `/api/questions/${questionId}/tests`,
           formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { 'Content-Type': 'multipart/form-data' } }
         );
       }
-      
-      setSuccess(editingTest ? 'Test case updated successfully' : 'Test case uploaded successfully');
-      
-      // Refresh the tests list
+
+      const msg = editingTest ? 'Test case updated.' : 'Test case uploaded.';
+      setSuccess(msg);
+      notify.success(msg);
+
       await fetchTests();
-      
-      // Reset form
       setIsAddingTest(false);
       setEditingTest(null);
       clearForm();
-      
-    } catch (error) {
-      console.error('Error uploading test:', error);
-      setError(error.response?.data || 'Failed to upload test case');
+    } catch (err) {
+      setError(err.message || 'Failed to upload test case');
+      notify.error(err.message || 'Failed to upload test case');
     } finally {
       setUploadLoading(false);
     }
@@ -142,17 +117,11 @@ function Tests({ questionId }) {
   
   const handleDownloadTest = async (testId, fileName) => {
     try {
-      const response = await axios.get(
-        `${baseUrl}/api/questions/${questionId}/tests/${testId}`,
-        {
-          responseType: 'blob',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await api.get(
+        `/api/questions/${questionId}/tests/${testId}`,
+        { responseType: 'blob' }
       );
-      
-      // Create blob URL and trigger download
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -161,34 +130,26 @@ function Tests({ questionId }) {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      
-    } catch (error) {
-      console.error('Error downloading test:', error);
-      setError('Failed to download test case');
+    } catch (err) {
+      setError(err.message || 'Failed to download test case');
+      notify.error(err.message || 'Failed to download test case');
     }
   };
   
   const handleEditTest = async (test) => {
     try {
-      // Fetch the test content for editing
-      const response = await axios.get(
-        `${baseUrl}/api/questions/${questionId}/tests/${test.id}`,
-        {
-          responseType: 'text',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await api.get(
+        `/api/questions/${questionId}/tests/${test.id}`,
+        { responseType: 'text' }
       );
-      
+
       setEditingTest(test);
       setText(response.data);
       setFileName(test.fileName);
       setIsAddingTest(true);
-      
-    } catch (error) {
-      console.error('Error loading test for editing:', error);
-      setError('Failed to load test case for editing');
+    } catch (err) {
+      setError(err.message || 'Failed to load test case for editing');
+      notify.error(err.message || 'Failed to load test case for editing');
     }
   };
   
@@ -198,23 +159,14 @@ function Tests({ questionId }) {
     }
     
     try {
-      await axios.delete(
-        `${baseUrl}/api/questions/${questionId}/tests/${testId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      
-      setSuccess('Test case deleted successfully');
-      
-      // Refresh the tests list
+      await api.delete(`/api/questions/${questionId}/tests/${testId}`);
+
+      setSuccess('Test case deleted.');
+      notify.success('Test case deleted.');
       await fetchTests();
-      
-    } catch (error) {
-      console.error('Error deleting test:', error);
-      setError('Failed to delete test case');
+    } catch (err) {
+      setError(err.message || 'Failed to delete test case');
+      notify.error(err.message || 'Failed to delete test case');
     }
   };
   

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/services/api';
+import notify from '@/services/notify';
 import { getCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
 import { FaClock, FaCalendarAlt, FaTrophy, FaUserCheck, FaPlay, FaSignInAlt, FaCheck, FaChevronRight, FaFilter, FaSort } from 'react-icons/fa';
@@ -31,21 +32,21 @@ export default function TournamentsPage() {
     const fetchData = async () => {
       try {
         const token = getCookie('token');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        // Fetch tournaments and registered IDs concurrently
+        // Fetch tournaments and registered IDs concurrently. The api singleton
+        // attaches the bearer token automatically; no need to pass headers.
         const [liveRes, upcomingRes, registeredRes] = await Promise.all([
-          axios.get(`${baseUrl}/api/tournament/mtm/getLiveMTMTournaments`, { headers }),
-          axios.get(`${baseUrl}/api/tournament/mtm/getUpcomingMTMTournaments`, { headers }),
-          token ? axios.get(`${baseUrl}/api/tournament/mtm/registeredTournamentsByUser`, { headers }) : { data: [] },
+          api.get('/api/tournament/mtm/getLiveMTMTournaments'),
+          api.get('/api/tournament/mtm/getUpcomingMTMTournaments'),
+          token ? api.get('/api/tournament/mtm/registeredTournamentsByUser') : { data: [] },
         ]);
 
         setLiveTournaments(liveRes.data);
         setUpcomingTournaments(upcomingRes.data);
         setRegisteredIds(registeredRes.data || []);
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Error fetching tournaments.');
+        notify.error(err.message || 'Could not load tournaments.');
+        setError(err.message || 'Error fetching tournaments.');
       } finally {
         setLoading(false);
       }
@@ -82,36 +83,15 @@ export default function TournamentsPage() {
         router.push('/login?redirect=/tournaments');
         return;
       }
-      
-      const headers = { Authorization: `Bearer ${token}` };
+
       const tournamentId = tournament.tournamentId || tournament.id;
-      
-      await axios.get(`${baseUrl}/api/tournament/mtm/joinTournament/${tournamentId}`, { headers });
-      
-      // Update registeredIds state
+
+      await api.get(`/api/tournament/mtm/joinTournament/${tournamentId}`);
+
       setRegisteredIds((prev) => [...prev, tournamentId]);
-      
-      // Show success notification (using a toast would be better in a real app)
-      const notification = document.getElementById('notification');
-      if (notification) {
-        notification.innerText = "Successfully registered for tournament!";
-        notification.classList.remove('hidden');
-        setTimeout(() => notification.classList.add('hidden'), 3000);
-      }
+      notify.success('Registered for the tournament.');
     } catch (err) {
-      console.error('Error registering for tournament:', err);
-      // Show error notification
-      const notification = document.getElementById('notification');
-      if (notification) {
-        notification.innerText = err.response?.data?.message || "Error registering for tournament.";
-        notification.classList.remove('hidden', 'bg-green-100', 'text-green-800');
-        notification.classList.add('bg-red-100', 'text-red-800');
-        setTimeout(() => {
-          notification.classList.add('hidden');
-          notification.classList.remove('bg-red-100', 'text-red-800');
-          notification.classList.add('bg-green-100', 'text-green-800');
-        }, 3000);
-      }
+      notify.error(err.message || 'Error registering for tournament.');
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,6 @@
 'use client';
-import React, { useEffect, useState, useMemo, useRef } from 'react';
-import axios from 'axios';
-import { getCookie } from 'cookies-next';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import api from '@/services/api';
 import { Line } from 'react-chartjs-2';
 import { format } from 'date-fns';
 import TimeDualRangeSlider from './TimeDualRangeSlider';
@@ -78,67 +77,52 @@ const RatingGraph = ({ className }) => {
   const chartContainer = useRef(null);
   const chartRef = useRef(null);
 
-  // Fetch rating history data
-  useEffect(() => {
-    const fetchRatingHistory = async () => {
-      try {
-        const token = getCookie('token');
-        if (!token) {
-          throw new Error('Authentication token is missing');
-        }
+  // Fetch rating history data (extracted as a callback so the Retry button can call it)
+  const fetchRatingHistory = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get('/api/user/getRatingHistory');
 
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/user/getRatingHistory`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
+      // Process and sort the data by timestamp
+      const data = response.data
+        .map((dto) => ({
+          ...dto,
+          newRating: Number(dto.newRating),
+          oldRating: Number(dto.oldRating || 0),
+          ratingUpdateTimestamp: Number(dto.ratingUpdateTimestamp),
+          tournamentName: dto.tournamentName || 'Unknown Tournament',
+          ratingChange: Number(dto.newRating) - Number(dto.oldRating || 0)
+        }))
+        .sort((a, b) => a.ratingUpdateTimestamp - b.ratingUpdateTimestamp);
 
-        // Process and sort the data by timestamp
-        const data = response.data
-          .map((dto) => ({
-            ...dto,
-            newRating: Number(dto.newRating),
-            oldRating: Number(dto.oldRating || 0),
-            ratingUpdateTimestamp: Number(dto.ratingUpdateTimestamp),
-            tournamentName: dto.tournamentName || 'Unknown Tournament',
-            ratingChange: Number(dto.newRating) - Number(dto.oldRating || 0)
-          }))
-          .sort((a, b) => a.ratingUpdateTimestamp - b.ratingUpdateTimestamp);
+      setRatingHistory(data);
 
-        setRatingHistory(data);
+      // Set initial date range if we have data
+      if (data.length > 0) {
+        const timestamps = data.map(item => item.ratingUpdateTimestamp);
+        const minTimestamp = Math.min(...timestamps);
+        const maxTimestamp = Date.now();
 
-        // Set initial date range if we have data
-        if (data.length > 0) {
-          const timestamps = data.map(item => item.ratingUpdateTimestamp);
-          const minTimestamp = Math.min(...timestamps);
-          const maxTimestamp = Date.now(); // Current date
-          
-          setEarliestTimestamp(minTimestamp);
-          
-          const minDate = new Date(minTimestamp);
-          const maxDate = new Date(maxTimestamp);
-          
-          setXMin(minDate);
-          setXMax(maxDate);
-          
-          // Set Y range based on rating values
-          const ratings = data.map(item => item.newRating);
-          const minRating = 0; // Start from 0
-          const maxRating = Math.max(...ratings) + 500; // Add padding
-          setYMin(minRating);
-          setYMax(maxRating);
-        }
-      } catch (err) {
-        console.error('Error fetching rating history:', err);
-        setError(err.message || 'Failed to load rating history');
-      } finally {
-        setLoading(false);
+        setEarliestTimestamp(minTimestamp);
+
+        setXMin(new Date(minTimestamp));
+        setXMax(new Date(maxTimestamp));
+
+        const ratings = data.map(item => item.newRating);
+        setYMin(0);
+        setYMax(Math.max(...ratings) + 500);
       }
-    };
-
-    fetchRatingHistory();
+    } catch (err) {
+      setError(err.message || 'Failed to load rating history');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchRatingHistory();
+  }, [fetchRatingHistory]);
 
   // Filter data based on timeFilter
   const filteredData = useMemo(() => {
@@ -477,8 +461,11 @@ const RatingGraph = ({ className }) => {
             </svg>
           </div>
           <h3 className="text-sm text-gray-900 dark:text-gray-100 mb-1">Failed to load rating data</h3>
+          {error && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{error}</p>
+          )}
           <button
-            onClick={() => window.location.reload()}
+            onClick={fetchRatingHistory}
             className="mt-2 px-2 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700"
           >
             Retry

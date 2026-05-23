@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCookie } from 'cookies-next';
+import api from '@/services/api';
+import notify from '@/services/notify';
 
 export default function CreateQuestion() {
   const [questionName, setQuestionName] = useState('');
@@ -10,34 +11,19 @@ export default function CreateQuestion() {
   const router = useRouter();
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+    e.preventDefault();
+    if (loading) return;
 
-  try {
-    const token = getCookie('token'); // or use your existing token variable
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-
-    const response = await fetch(`${baseUrl}/api/question/createQuestion`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ name:questionName }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to create question');
+    setLoading(true);
+    try {
+      const { data } = await api.post('/api/question/createQuestion', { name: questionName });
+      notify.success('Question created.');
+      router.push(`/questions/${data.questionId}`);
+    } catch (err) {
+      notify.error(err.message || 'Failed to create question');
+      setLoading(false);
     }
-
-    const data = await response.json();
-    router.push(`/questions/${data.questionId}`);
-  } catch (error) {
-    console.error('Error creating question:', error);
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
@@ -55,6 +41,7 @@ export default function CreateQuestion() {
             onChange={(e) => setQuestionName(e.target.value)}
             placeholder="Enter question name"
             required
+            disabled={loading}
           />
         </div>
         <button
@@ -62,7 +49,7 @@ export default function CreateQuestion() {
           disabled={loading}
           className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50"
         >
-          {loading ? 'Creating...' : 'Create Question'}
+          {loading ? 'Creating…' : 'Create Question'}
         </button>
       </form>
     </div>

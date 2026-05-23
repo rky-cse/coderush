@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '@/services/api';
+import notify from '@/services/notify';
 import { getCookie } from 'cookies-next';
 
 export default function CreateQuestion({ questionData }) {
@@ -46,36 +47,22 @@ export default function CreateQuestion({ questionData }) {
     setErrorMessage('');
 
     try {
-      const token = getCookie('token');
-      if (!token) throw new Error('Authentication token not found.');
-
-      let response;
       if (questionData?.questionId) {
         // Update existing question
-        response = await axios.put(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/question/${questionData.questionId}`,
-          formData,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await api.put(`/api/question/${questionData.questionId}`, formData);
         setSuccessMessage('Question updated successfully!');
+        notify.success('Question updated successfully.');
       } else {
         // Create new question
-        response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/question/createQuestion`,
-          formData,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await api.post('/api/question/createQuestion', formData);
         setSuccessMessage('Question created successfully!');
-        // ✅ Removed form reset to keep data visible
+        notify.success('Question created.');
       }
-
-      console.log(response.data);
     } catch (error) {
-      console.error('Error saving question:', error);
-      setErrorMessage(error.response?.data?.message || 'Failed to save question.');
+      setErrorMessage(error.message || 'Failed to save question.');
+      notify.error(error.message || 'Failed to save question.');
     } finally {
       setLoading(false);
-      // ✅ Automatically hide success message after 3 seconds
       setTimeout(() => setSuccessMessage(''), 3000);
     }
   };

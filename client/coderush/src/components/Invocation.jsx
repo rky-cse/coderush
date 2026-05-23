@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import axios from 'axios'
 import { getCookie } from 'cookies-next'
+import api from '@/services/api'
+import notify from '@/services/notify'
 import webSocketService from '@/services/webSocketService'
 
 export default function Invocation({ questionId }) {
@@ -9,7 +10,6 @@ export default function Invocation({ questionId }) {
   const [result, setResult]       = useState(null)
   const wsConnectedRef            = useRef(false)
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8084'
   const WS_URL  = `${process.env.NEXT_PUBLIC_API_URL ||
                    'http://localhost:8084'}/ws`
 
@@ -26,6 +26,13 @@ export default function Invocation({ questionId }) {
   const handleMessage = (payload) => {
     setResult(payload)
     setStatus('done')
+    if (payload?.verdict === 'OK') {
+      notify.success('Invocation completed: all test cases passed.')
+    } else if (payload?.verdict === 'FAIL') {
+      notify.error('Invocation completed: some test cases failed.')
+    } else if (payload?.verdict) {
+      notify.error(`Invocation: ${payload.verdict}`)
+    }
     webSocketService.unsubscribe(`/topic/invocation-result/${questionId}`)
   }
 
@@ -48,13 +55,11 @@ export default function Invocation({ questionId }) {
       )
 
       // 3) send invocation HTTP POST
-      await axios.post(
-        `${API_URL}/api/questions/invocation/${questionId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      await api.post(`/api/questions/invocation/${questionId}`, {})
+      notify.info('Invocation queued. Waiting for result…')
     } catch (err) {
-      setError(err.response?.data || err.message)
+      setError(err.message)
+      notify.error(err.message || 'Failed to start invocation')
       setStatus('error')
     }
   }

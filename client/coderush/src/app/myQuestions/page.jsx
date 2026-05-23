@@ -1,13 +1,8 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Clock, Eye, MessageCircle, Search, Filter, Plus, Code, FileText, Star, Image } from 'lucide-react';
-
-// Utility function to get cookie
-const getCookie = (name) => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-};
+import { Clock, Eye, MessageCircle, Search, Filter, Plus, Code, FileText, Star, Image, Sparkles } from 'lucide-react';
+import api from '@/services/api';
+import notify from '@/services/notify';
 
 const MyQuestionsPage = () => {
   const [questions, setQuestions] = useState([]);
@@ -23,24 +18,11 @@ const MyQuestionsPage = () => {
   const fetchQuestions = async () => {
     try {
       setLoading(true);
-      const token = getCookie('token');
-      if (!token) throw new Error("Authentication token not found.");
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/question/user`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch questions: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const { data } = await api.get('/api/question/user');
       setQuestions(data || []);
     } catch (err) {
       setError(err.message || 'Failed to fetch questions');
+      notify.error(err.message || 'Failed to fetch questions');
     } finally {
       setLoading(false);
     }
@@ -133,6 +115,13 @@ const MyQuestionsPage = () => {
               </select>
             </div>
           </div>
+
+          {/* AI Generate Button */}
+          <a href="/generateQuestion"
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium text-sm">
+            <Sparkles className="h-4 w-4" />
+            AI Generate
+          </a>
         </div>
 
         {/* Questions Grid */}

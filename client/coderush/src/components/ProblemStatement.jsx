@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { getCookie } from 'cookies-next';
+import api from '@/services/api';
+import notify from '@/services/notify';
+
 export default function ProblemStatement({ questionId }) {
   const [problemData, setProblemData] = useState({
     name: '',
@@ -9,24 +10,13 @@ export default function ProblemStatement({ questionId }) {
     outputFormat: '',
     notes: '',
     tutorial: ''
-    // statement field removed as requested
   });
   const [loading, setLoading] = useState(true);
-  const token = getCookie('token');
-
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
   useEffect(() => {
     async function fetchProblemStatement() {
       try {
-        const response = await axios.get(
-          `${baseUrl}/api/question/${questionId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await api.get(`/api/question/${questionId}`);
 
         if (response.data) {
           setProblemData({
@@ -38,8 +28,8 @@ export default function ProblemStatement({ questionId }) {
             tutorial: response.data.tutorial || ''
           });
         }
-      } catch (error) {
-        console.error('Error fetching problem statement:', error);
+      } catch (err) {
+        notify.error(err.message || 'Failed to load problem statement');
       }
       setLoading(false);
     }
@@ -57,20 +47,10 @@ export default function ProblemStatement({ questionId }) {
 
   const handleSave = async () => {
     try {
-      await axios.put(
-        `${baseUrl}/api/question/${questionId}`,
-        problemData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      // Show success message
-      alert('Problem statement saved successfully');
-    } catch (error) {
-      console.error('Error saving problem statement:', error);
-      alert('Error saving problem statement');
+      await api.put(`/api/question/${questionId}`, problemData);
+      notify.success('Problem statement saved.');
+    } catch (err) {
+      notify.error(err.message || 'Error saving problem statement');
     }
   };
 

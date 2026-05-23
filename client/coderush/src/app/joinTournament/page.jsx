@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import api from '@/services/api';
+import notify from '@/services/notify';
 import { getCookie } from 'cookies-next';
 import { useDispatch } from 'react-redux';
 import { setTournamentData } from '@/redux/slices/tournamentSlice';
@@ -42,36 +43,33 @@ const JoinTournamentPage = () => {
   const handleJoinTournament = async () => {
     const token = typeof window !== 'undefined' ? getCookie('token') : null;
 
-    if (!tournamentId || !token) {
-      alert('Please enter Tournament ID and ensure you are logged in.');
+    if (!tournamentId) {
+      notify.error('Please enter a Tournament ID.');
+      return;
+    }
+    if (!token) {
+      notify.error('Please log in first.');
       return;
     }
 
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/tournament/mtm/joinTournament/${tournamentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await api.get(
+        `/api/tournament/mtm/joinTournament/${tournamentId}`
       );
 
-      // Store data in local component state
       setTournamentDataLocal(response.data);
       setStartTime(response.data.tournament.startTime);
 
-      // Store tournament data in Redux
       dispatch(setTournamentData(response.data));
-      console.log("yahi hai"+response.data);
       dispatch(
         setTournamentEndTime(
           response.data.tournament.startTime +
             response.data.tournament.durationInSeconds * 1000
         )
       );
+      notify.success('Joined the tournament.');
     } catch (error) {
-      alert('Failed to join tournament. Please check the ID or your network connection.');
+      notify.error(error.message || 'Failed to join tournament.');
     }
   };
 

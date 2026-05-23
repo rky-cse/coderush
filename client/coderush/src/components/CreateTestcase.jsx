@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react';
-import axios from 'axios';
-import { getCookie } from 'cookies-next';
+import api from '@/services/api';
+import notify from '@/services/notify';
 
 export default function CreateTestcase() {
   const [formData, setFormData] = useState({
@@ -23,30 +23,21 @@ export default function CreateTestcase() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = getCookie('token');
       const endpoint =
         formData.testcaseType === 'classic'
-          ? `${process.env.NEXT_PUBLIC_API_URL}/api/testcase/createClassicTestcase`
-          : `${process.env.NEXT_PUBLIC_API_URL}/api/testcase/createTestcase`;
+          ? '/api/testcase/createClassicTestcase'
+          : '/api/testcase/createTestcase';
 
-      // Remove testcaseType from the payload.
-      // Also remove rating if the testcase type is classic.
       const { testcaseType, ...rest } = formData;
       const payload = { ...rest };
       if (testcaseType === 'classic') {
         delete payload.rating;
       }
 
-      const response = await axios.post(endpoint, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      alert('Testcase created successfully!');
-      console.log(response.data);
+      await api.post(endpoint, payload);
+      notify.success('Testcase created.');
     } catch (error) {
-      console.error('Error creating testcase:', error);
-      alert('Failed to create testcase.');
+      notify.error(error.message || 'Failed to create testcase.');
     }
   };
 

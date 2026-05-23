@@ -1,47 +1,30 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FaChartLine, FaCalendarAlt, FaChessBoard, FaChess } from 'react-icons/fa';
-import { getCookie } from 'cookies-next';
-import axios from 'axios';
+import api from '@/services/api';
 
 const RecentActivity = ({ userName }) => {
   const [activityData, setActivityData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchActivity = async () => {
-      try {
-        console.log(userName);
-        setLoading(true);
-        const token = getCookie('token');
-
-        if (!token) {
-          setError('Authentication required');
-          return;
-        }
-
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/user/getRecentActivity/${userName}`,
-          {
-            
-            headers: { 'Authorization': `Bearer ${token}`,'Content-Type': 'application/json', },
-          }
-        );
-
-        setActivityData(response.data.activity);
-      } catch (error) {
-        console.error('Error fetching recent activity:', error);
-        setError(error.response?.data?.message || 'Failed to load activity data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (userName) {
-      fetchActivity();
+  const fetchActivity = useCallback(async () => {
+    if (!userName) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get(`/api/user/getRecentActivity/${userName}`);
+      setActivityData(response.data.activity);
+    } catch (err) {
+      setError(err.message || 'Failed to load activity data');
+    } finally {
+      setLoading(false);
     }
   }, [userName]);
+
+  useEffect(() => {
+    fetchActivity();
+  }, [fetchActivity]);
 
   // Sort dates in descending order (most recent first)
   const sortedDates = activityData 
@@ -101,7 +84,15 @@ const RecentActivity = ({ userName }) => {
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Recent Activity</h3>
         </div>
         <div className="px-6 py-8 text-center">
-          <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Couldn't load activity. {error}
+          </p>
+          <button
+            onClick={fetchActivity}
+            className="px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import axios from 'axios';
 import { getCookie } from 'cookies-next';
+import api from '@/services/api';
 import Link from 'next/link';
 import { FaSpinner, FaTrophy, FaCalendarAlt, FaUsers, FaClock, FaArrowLeft, FaChevronLeft, FaChevronRight, FaUser } from 'react-icons/fa';
 
@@ -46,42 +46,19 @@ export default function UserTournaments() {
   const fetchTournaments = async (page = currentPage) => {
     try {
       setLoading(true);
-      const token = getCookie('token');
+      setError(null);
 
-      if (!token) {
-        setError('Authentication required');
-        return;
-      }
+      const response = await api.get(`/api/user/${userName}/tournaments`, {
+        params: { page, size: pageSize, sortBy, direction: sortDirection },
+      });
 
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/user/${userName}/tournaments`, 
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: {
-            page,
-            size: pageSize,
-            sortBy,
-            direction: sortDirection
-          }
-        }
-      );
-
-      // Process the API response
       const pageData = response.data;
       setTournaments(pageData.content);
       setTotalPages(pageData.totalPages);
       setTotalElements(pageData.totalElements);
       setCurrentPage(pageData.number);
-    } catch (error) {
-      console.error('Error fetching tournaments:', error);
-      // Handle 401 specifically
-      if (error.response?.status === 401) {
-        setError('Your session has expired. Please log in again.');
-        // Could add auto-redirect to login page here
-        // setTimeout(() => router.push('/login'), 3000);
-      } else {
-        setError(error.response?.data?.message || 'Failed to load tournaments');
-      }
+    } catch (err) {
+      setError(err.message || 'Failed to load tournaments');
     } finally {
       setLoading(false);
     }
@@ -122,10 +99,20 @@ export default function UserTournaments() {
           </div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Error Loading Tournaments</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{error}</p>
-          <Link href={`/dashboard/${userName}`} 
-                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Back to Profile
-          </Link>
+          <div className="mt-4 flex justify-center gap-3">
+            <button
+              onClick={() => fetchTournaments(0)}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              Retry
+            </button>
+            <Link
+              href={`/dashboard/${userName}`}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+            >
+              Back to Profile
+            </Link>
+          </div>
         </div>
       </div>
     );

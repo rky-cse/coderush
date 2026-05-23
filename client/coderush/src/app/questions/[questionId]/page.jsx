@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import axios from 'axios';
+import api from '@/services/api';
+import notify from '@/services/notify';
 import QuestionNav from '@/components/QuestionNav';
-import { getCookie } from 'cookies-next';
 import ProblemStatement from '@/components/ProblemStatement';
 import Tests from '@/components/Tests';
 import Solution from '@/components/Solution';
@@ -13,38 +13,26 @@ import Validator from '@/components/Validator';
 import Invocation from '@/components/Invocation';
 import FreeStyleTests from '@/components/FreeStyleTests';
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
 export default function QuestionDetails() {
   const { questionId } = useParams();
   const [questionData, setQuestionData] = useState(null);
   const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(true);
-  const token = getCookie('token');
-  console.log(token);
-  
-useEffect(() => {
-  async function fetchQuestion() {
-    try {
-      const response = await axios.get(
-        `${baseUrl}/api/question/${questionId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // Include your token here
-          },
-        }
-      );
 
-      setQuestionData(response.data);
-    } catch (error) {
-      console.error('Error fetching question:', error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    async function fetchQuestion() {
+      try {
+        const response = await api.get(`/api/question/${questionId}`);
+        setQuestionData(response.data);
+      } catch (err) {
+        notify.error(err.message || 'Failed to load question');
+      } finally {
+        setLoading(false);
+      }
     }
-  }
 
-  fetchQuestion();
-}, [questionId]); // include token if it's reactive
+    fetchQuestion();
+  }, [questionId]);
 
 
   const renderTabContent = () => {

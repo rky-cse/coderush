@@ -4,7 +4,8 @@ import { useSelector } from 'react-redux';
 import { Card, CardContent } from '@/components/ui/card';
 import { Timer, Check, Clock, User, Sword, ChevronDown, AlertTriangle } from 'lucide-react';
 import webSocketService from '@/services/webSocketService';
-import axios from 'axios';
+import api from '@/services/api';
+import notify from '@/services/notify';
 import { getCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
 
@@ -71,7 +72,7 @@ export default function DuelPage() {
         startConfirmTimer((startTime + 15000) - Date.now());
         break;
       case 'MATCH_CANCELLED':
-        alert('Opponent cancelled the match.');
+        notify.warning('Opponent cancelled the match.');
         resetState();
         break;
       case 'MATCH_OK':
@@ -156,22 +157,23 @@ export default function DuelPage() {
     setSelectedTime(time);
     setSearchingForMatch(true);
     setShowModal(true);
-    
+
     if (!token) {
-      alert('You are not logged in.');
+      notify.error('You are not logged in.');
       resetState();
       return;
     }
 
     try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/match/request`,
-        { userId, rating: userRating, requestTime: time, timeControl: time, tournamentType: selectedTournamentType },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post('/api/match/request', {
+        userId,
+        rating: userRating,
+        requestTime: time,
+        timeControl: time,
+        tournamentType: selectedTournamentType,
+      });
     } catch (error) {
-      console.error('Error requesting match:', error);
-      alert('Failed to request match.');
+      notify.error(error.message || 'Failed to request match.');
       resetState();
     }
   };

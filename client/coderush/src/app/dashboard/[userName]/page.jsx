@@ -1,8 +1,8 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import axios from 'axios';
 import { getCookie } from 'cookies-next';
+import api from '@/services/api';
 import Image from 'next/image';
 import RatingGraph from '@/components/RatingGraph';
 import RecentActivity from '@/components/RecentActivity';
@@ -43,34 +43,23 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const fetchUser = useCallback(async () => {
     if (!userName) return;
-
-    const fetchUser = async () => {
-      try {
-        setLoading(true);
-        const token = getCookie('token');
-
-        if (!token) {
-          setError('Authentication required');
-          return;
-        }
-
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/user/${userName}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        setUser(response.data);
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        setError(error.response?.data?.message || 'Failed to load user profile');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get(`/api/user/${userName}`);
+      setUser(response.data);
+    } catch (err) {
+      setError(err.message || 'Failed to load user profile');
+    } finally {
+      setLoading(false);
+    }
   }, [userName]);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
 
   if (loading) {
     return (
@@ -95,10 +84,20 @@ export default function Profile() {
           </div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Error Loading Profile</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{error}</p>
-          <Link href="/dashboard" 
-                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            Back to Dashboard
-          </Link>
+          <div className="mt-4 flex justify-center gap-3">
+            <button
+              onClick={fetchUser}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Retry
+            </button>
+            <Link
+              href="/"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+            >
+              Go Home
+            </Link>
+          </div>
         </div>
       </div>
     );

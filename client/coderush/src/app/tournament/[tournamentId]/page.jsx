@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, use } from 'react';
-import axios from 'axios';
+import api from '@/services/api';
+import notify from '@/services/notify';
 import { useRouter } from 'next/navigation';
 import { getCookie } from 'cookies-next';
 import { 
@@ -352,46 +353,33 @@ const TournamentPage = ({ params: { tournamentId } }) => {
   useEffect(() => {
     const fetchTournamentData = async () => {
       if (!tournamentId) return;
-      
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      
+
       try {
-        // Fetch tournament details
-        const { data: tournamentData } = await axios.get(
-          `${baseUrl}/api/tournament/mtm/getTournamentById/${tournamentId}`,
-          { headers }
+        // Fetch tournament details (api auto-attaches bearer)
+        const { data: tournamentData } = await api.get(
+          `/api/tournament/mtm/getTournamentById/${tournamentId}`
         );
-        
-        if (!tournamentData) {
-          setError('Tournament not found');
-          setLoading(false);
-          return;
-        }
-        
+
         setTournament(tournamentData);
         dispatch(setTournamentData(tournamentData));
-        
-        // Fetch registered tournaments
+
+        // Fetch registered tournaments (only if logged in)
         if (token) {
-          const { data: userTournaments } = await axios.get(
-            `${baseUrl}/api/tournament/mtm/registeredTournamentsByUser`,
-            { headers }
+          const { data: userTournaments } = await api.get(
+            '/api/tournament/mtm/registeredTournamentsByUser'
           );
-          
           if (userTournaments) {
-            const registeredIds = userTournaments;
-            setRegisteredTournaments(registeredIds);
+            setRegisteredTournaments(userTournaments);
           }
         }
       } catch (err) {
-        console.error("Error fetching tournament data:", err);
-        setError(err.response?.data?.message || 'Failed to load tournament details');
+        setError(err.message || 'Failed to load tournament details');
+        notify.error(err.message || 'Failed to load tournament details');
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchTournamentData();
   }, [tournamentId, token]);
   
@@ -418,25 +406,17 @@ const TournamentPage = ({ params: { tournamentId } }) => {
 
   const handleRegister = async () => {
     if (!token) {
-      // Redirect to login if not authenticated
       router.push('/login?redirect=/tournament/' + tournamentId);
       return;
     }
-    
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
     try {
       setLoading(true);
-      await axios.get(
-        `${baseUrl}/api/tournament/mtm/joinTournament/${tournament.tournamentId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      // Show success notification and update state
+      await api.get(`/api/tournament/mtm/joinTournament/${tournament.tournamentId}`);
       setRegisteredTournaments(prev => [...prev, tournament.tournamentId]);
+      notify.success('Registered for the tournament.');
     } catch (err) {
-      console.error("Error registering for tournament:", err);
-      const errorMsg = err.response?.data?.message || 'Failed to register for tournament';
-      alert(errorMsg);
+      notify.error(err.message || 'Failed to register for tournament');
     } finally {
       setLoading(false);
     }

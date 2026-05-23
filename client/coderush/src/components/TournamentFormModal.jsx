@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { getCookie } from 'cookies-next';
+import api from '@/services/api';
+import notify from '@/services/notify';
 import { FaTrophy, FaClock, FaLock, FaGlobe, FaUserFriends, FaChartLine, FaInfoCircle, FaUsers, FaUserTag, FaExclamationTriangle, FaChevronDown } from 'react-icons/fa';
 
 const TournamentFormModal = ({ closeModal }) => {
@@ -110,26 +112,13 @@ const TournamentFormModal = ({ closeModal }) => {
     };
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/tournament/mtm/createMTMTournament`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getCookie('token')}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        // Success notification
-        closeModal();
-      } else {
-        setErrors({ submit: result.message || 'Failed to create tournament.' });
-      }
+      await api.post('/api/tournament/mtm/createMTMTournament', payload);
+      notify.success('Tournament created successfully.');
+      closeModal();
     } catch (error) {
-      console.error('Error submitting tournament data:', error);
-      setErrors({ submit: 'Network error while creating the tournament.' });
+      // err.message is the friendly backend message via the api interceptor.
+      notify.error(error.message || 'Failed to create tournament.');
+      setErrors({ submit: error.message || 'Failed to create tournament.' });
     } finally {
       setIsSubmitting(false);
     }

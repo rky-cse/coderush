@@ -21,3 +21,10 @@
   .gutter:active {
     background-color: #2563eb;
   }
+
+
+/* Toast progress bar drain animation (used by services/notify.jsx) */
+@keyframes toastDrain {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}

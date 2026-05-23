@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react';
-import axios from 'axios';
-import { getCookie } from 'cookies-next';
+import api from '@/services/api';
+import notify from '@/services/notify';
 
 export default function CreateQuestion() {
   const [formData, setFormData] = useState({
@@ -12,6 +12,7 @@ export default function CreateQuestion() {
     notes: '',
     tutorial: '',
   });
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -23,22 +24,24 @@ export default function CreateQuestion() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+
+    setLoading(true);
     try {
-      const token = getCookie('token'); // Retrieve token from localStorage or any other method
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/question/createQuestion`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      alert('Question created successfully!');
-      console.log(response.data);
-    } catch (error) {
-      console.error('Error creating question:', error);
-      alert('Failed to create question.');
+      await api.post('/api/question/createQuestion', formData);
+      notify.success('Question created.');
+      setFormData({
+        name: '',
+        legend: '',
+        inputFormat: '',
+        outputFormat: '',
+        notes: '',
+        tutorial: '',
+      });
+    } catch (err) {
+      notify.error(err.message || 'Failed to create question.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,6 +57,7 @@ export default function CreateQuestion() {
           onChange={handleInputChange}
           className="block w-full border px-3 py-2"
           required
+          disabled={loading}
         />
         <textarea
           name="legend"
@@ -62,6 +66,7 @@ export default function CreateQuestion() {
           onChange={handleInputChange}
           className="block w-full border px-3 py-2"
           required
+          disabled={loading}
         ></textarea>
         <textarea
           name="inputFormat"
@@ -70,6 +75,7 @@ export default function CreateQuestion() {
           onChange={handleInputChange}
           className="block w-full border px-3 py-2"
           required
+          disabled={loading}
         ></textarea>
         <textarea
           name="outputFormat"
@@ -78,6 +84,7 @@ export default function CreateQuestion() {
           onChange={handleInputChange}
           className="block w-full border px-3 py-2"
           required
+          disabled={loading}
         ></textarea>
         <textarea
           name="notes"
@@ -85,6 +92,7 @@ export default function CreateQuestion() {
           value={formData.notes}
           onChange={handleInputChange}
           className="block w-full border px-3 py-2"
+          disabled={loading}
         ></textarea>
         <textarea
           name="tutorial"
@@ -92,12 +100,16 @@ export default function CreateQuestion() {
           value={formData.tutorial}
           onChange={handleInputChange}
           className="block w-full border px-3 py-2"
+          disabled={loading}
         ></textarea>
         <button
           type="submit"
-          className="bg-green-500 text-white px-4 py-2 rounded"
+          disabled={loading}
+          className={`bg-green-500 text-white px-4 py-2 rounded ${
+            loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-600'
+          }`}
         >
-          Submit
+          {loading ? 'Creating…' : 'Submit'}
         </button>
       </form>
     </div>

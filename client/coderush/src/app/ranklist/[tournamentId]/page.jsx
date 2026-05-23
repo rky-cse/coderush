@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { getCookie } from 'cookies-next'
+import api from '@/services/api'
+import notify from '@/services/notify'
 
 export default function RankList() {
   const params = useParams()
@@ -16,29 +17,11 @@ export default function RankList() {
 
     const fetchRankList = async () => {
       try {
-        const token = getCookie('token')
-        if (!token) {
-          throw new Error('Authentication required')
-        }
-
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/tournaments/${tournamentId}/ranks`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        )
-
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`)
-        }
-
-        const data = await response.json()
+        const { data } = await api.get(`/api/tournaments/${tournamentId}/ranks`)
         setRanks(data)
       } catch (err) {
         setError(err.message || 'Failed to fetch rank list')
+        notify.error(err.message || 'Failed to fetch rank list')
       } finally {
         setLoading(false)
       }

@@ -1,7 +1,9 @@
+'use client';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { getCookie } from 'cookies-next';
+import api from '@/services/api';
 
 export const useTournament = () => {
   const [tournamentId, setTournamentId] = useState('');
@@ -19,16 +21,12 @@ export const useTournament = () => {
   const handleJoinTournament = async () => {
     setError(null);
     try {
-      const token = getCookie('token');
-      const response = await axios.get(
-        `${process.env.API_URL}/api/tournament/joinTournament/${tournamentId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.get(`/api/tournament/joinTournament/${tournamentId}`);
       if (response.data?.tournament?.startTime) {
         startCountdown(response.data.tournament.startTime);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred');
+      setError(err.message || 'An error occurred');
     }
   };
 
@@ -54,7 +52,7 @@ export const useTournament = () => {
     if (!isStartButtonDisabled) {
       const token = getCookie('token');
       const stompClient = new Client({
-        webSocketFactory: () => new SockJS(`${process.env.API_URL}/ws`),
+        webSocketFactory: () => new SockJS(`${process.env.NEXT_PUBLIC_API_URL}/ws`),
         connectHeaders: { Authorization: `Bearer ${token}` },
         onConnect: () => {
           stompClient.subscribe(`/topic/rankList${tournamentId}`, (message) => {
