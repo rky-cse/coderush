@@ -15,6 +15,10 @@ public class ClassicSubmissionDTO {
     private String verdict;//AC,CE,WA,RE,TLE,MLE
     private Long submissionTime; // in milliseconds
     private Long judgingTime;// time when judging starts
+    private String correlationId;
+
+    public String getCorrelationId() { return correlationId; }
+    public void setCorrelationId(String correlationId) { this.correlationId = correlationId; }
 
     public Long getMaxTimeTaken() {
         return maxTimeTaken;

@@ -136,6 +136,7 @@ public class InvocationProcessingService {
     }
 
     private Path resolvePath(String p) {
+        if (p == null || p.isBlank()) return null;
         String norm = p.replace("\\", File.separator).replace("/", File.separator);
         Path path = Paths.get(norm);
         Path resolved = path.isAbsolute() ? path : FILES_ROOT.resolve(path);
@@ -145,6 +146,10 @@ public class InvocationProcessingService {
 
     private CompiledArtifact prepareArtifact(String sourcePath, String label)
             throws IOException, InterruptedException, TimeoutException {
+        if (sourcePath == null || sourcePath.isBlank()) {
+            log.info("No {} provided (path is null/empty), skipping.", label);
+            return null;
+        }
         Path src = resolvePath(sourcePath);
         log.info("Preparing {} artifact from '{}'", label, src);
 
