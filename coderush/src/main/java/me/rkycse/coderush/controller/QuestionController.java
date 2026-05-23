@@ -52,11 +52,7 @@ public class QuestionController {
 
     @GetMapping("/{questionId}")
     public ResponseEntity<QuestionDTO> getQuestionById(@PathVariable Long questionId) {
-        try {
-            QuestionDTO question = questionService.getQuestionById(questionId);
-            return ResponseEntity.ok(question);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        // Throws QuestionNotFoundException -> handled globally as 404 ApiError.
+        return ResponseEntity.ok(questionService.getQuestionById(questionId));
     }
 }

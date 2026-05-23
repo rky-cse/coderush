@@ -52,34 +52,27 @@ public class MTMTournamentService {
 
 
         if (tournament.getStartTime() == null) {
-            throw new IllegalArgumentException("Start time cannot be null");
-        } else {
-            System.out.println("currentTime: " + TimeUtil.getCurrentEpochMillis());
-            System.out.println("startTime: " + tournament.getStartTime());
-            System.out.println("start Time:" +
-                    TimeUtil.convertEpochToDateTime(tournament.getStartTime()));
-            System.out.println("createMTMTournament:" + tournament);
+            throw new me.rkycse.coderush.exception.InvalidStartTimeException("Start time is required");
+        }
+        if (tournament.getStartTime() < TimeUtil.getCurrentEpochMillis()) {
+            throw new me.rkycse.coderush.exception.InvalidStartTimeException();
         }
 
         if (tournament.getDurationInSeconds() <= 0) {
-            System.out.println("duration is: " + tournament.getDurationInSeconds());
-            throw new IllegalArgumentException("Duration must be greater than zero");
+            throw new me.rkycse.coderush.exception.InvalidDurationException();
         }
 
-        MTMTournamentEntity savedTournament = mtmTournamentRepository.save(tournament);
-        System.out.println("Tournament created successfully: " + savedTournament);
-
-        return savedTournament;
+        return mtmTournamentRepository.save(tournament);
     }
 
 
     public JoinTournamentResponseDTO joinTournament(Long tournamentId) {
         if (tournamentId == null) {
-            throw new IllegalArgumentException("Tournament ID cannot be null");
+            throw new me.rkycse.coderush.exception.TournamentNotFoundException();
         }
 
         if (!mtmTournamentRepository.existsById(tournamentId)) {
-            throw new NoSuchElementException("No such tournament");
+            throw new me.rkycse.coderush.exception.TournamentNotFoundException(tournamentId);
         }
 
         // Retrieve the current user
@@ -91,7 +84,7 @@ public class MTMTournamentService {
 
         // Retrieve tournament details
         MTMTournamentEntity tournament = mtmTournamentRepository.findById(tournamentId)
-                .orElseThrow(() -> new NoSuchElementException("Tournament not found"));
+                .orElseThrow(() -> new me.rkycse.coderush.exception.TournamentNotFoundException(tournamentId));
 
         long currentTime = TimeUtil.getCurrentEpochMillis();
         long startTime = tournament.getStartTime();
@@ -99,7 +92,7 @@ public class MTMTournamentService {
 
         // Prevent joining if the tournament has already ended
         if (currentTime >= endTime) {
-            throw new IllegalStateException("Tournament has already ended");
+            throw new me.rkycse.coderush.exception.TournamentEndedException();
         }
 
         // Check if the user is already registered for this tournament (unique combination of tournamentId and username)
@@ -273,7 +266,11 @@ public class MTMTournamentService {
     }
 
     public MTMTournamentDTO getMTMTournamentById(Long tournamentId) {
-        return Mapper.toDTO(mtmTournamentRepository.findByTournamentId(tournamentId));
+        MTMTournamentEntity entity = mtmTournamentRepository.findByTournamentId(tournamentId);
+        if (entity == null) {
+            throw new me.rkycse.coderush.exception.TournamentNotFoundException(tournamentId);
+        }
+        return Mapper.toDTO(entity);
     }
 
     public Page<MTMTournamentDTO> findPastTournaments(Pageable pageable) {

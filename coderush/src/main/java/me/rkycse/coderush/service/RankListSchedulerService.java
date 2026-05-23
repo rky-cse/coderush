@@ -49,7 +49,7 @@ public class RankListSchedulerService {
 
     private void checkAndSendRankLists() {
         try {
-            logger.info("✅ Rank list scheduler tick...");
+            logger.debug("✅ Rank list scheduler tick...");
 
             // 1. Process pending rating updates
             Set<String> ratingUpdateKeys = redisTemplate.keys("rating-update/*");
@@ -91,7 +91,7 @@ public class RankListSchedulerService {
             // 2. Process rank list broadcasting
             Set<String> tournamentKeys = redisTemplate.keys("$*");
             if (tournamentKeys == null || tournamentKeys.isEmpty()) {
-                logger.info("ℹ️ No tournament keys found in Redis.");
+                logger.debug("ℹ️ No tournament keys found in Redis.");
                 return;
             }
 

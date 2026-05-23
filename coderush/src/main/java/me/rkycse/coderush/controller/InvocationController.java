@@ -57,33 +57,15 @@ public class InvocationController {
         log.info("Received HTTP invocation request for questionId={}", questionId);
 
         // 1) send invocation to Kafka
-        try {
+        long freeStyleTestcasesCount = testcaseRepository.countByQuestionId(questionId);
+        QuestionEntity questionEntity = questionRepository.findById(questionId)
+                .orElseThrow(() -> new me.rkycse.coderush.exception.QuestionNotFoundException(questionId));
 
-            long freeStyleTestcasesCount=testcaseRepository.countByQuestionId(questionId);
-            QuestionEntity questionEntity = questionRepository.findById(questionId).orElse(null);
-            if(freeStyleTestcasesCount==0L) {
+        questionEntity.setFreeStyle(freeStyleTestcasesCount > 0);
+        questionRepository.save(questionEntity);
 
-                if(questionEntity!=null) {
-                    questionEntity.setFreeStyle(Boolean.FALSE);
-
-                }
-
-            }
-            else{
-                assert questionEntity != null;
-                questionEntity.setFreeStyle(Boolean.TRUE);
-            }
-            assert questionEntity != null;
-            questionEntity = questionRepository.save(questionEntity);
-
-            invocationService.handleInvocation(questionId);
-        } catch (ResourceNotFoundException rnfe) {
-            log.warn("Resource not found for questionId={}", questionId);
-            return ResponseEntity.status(404).body(rnfe.getMessage());
-        } catch (Exception ex) {
-            log.error("Failed to send invocation for questionId={}", questionId, ex);
-            return ResponseEntity.status(500).body("Invocation request failed");
-        }
+        // Throws ResourceNotFoundException (handled globally) if checker/validator/solution missing.
+        invocationService.handleInvocation(questionId);
 
         // 2) start background polling for result
         ExecutorService executor = Executors.newSingleThreadExecutor();

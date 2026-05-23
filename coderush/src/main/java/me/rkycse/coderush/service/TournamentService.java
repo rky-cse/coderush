@@ -31,7 +31,7 @@ public class TournamentService {
 
     public TournamentBaseEntity getTournamentById(Long tournamentId) {
         return tournamentBaseRepository.findById(tournamentId)
-                .orElse(null);
+                .orElseThrow(() -> new me.rkycse.coderush.exception.TournamentNotFoundException(tournamentId));
     }
 
 

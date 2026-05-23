@@ -57,7 +57,7 @@ public class MTMTournamentSchedulerService {
             List<Object[]> tournaments = tournamentBaseRepository.findTournamentsBetween(now, upperLimit);
 
             if (tournaments.isEmpty()) {
-                logger.info("No upcoming tournaments found in the given time range.");
+                logger.debug("No upcoming tournaments found in the given time range.");
                 return;
             }
 
@@ -94,7 +94,7 @@ public class MTMTournamentSchedulerService {
         try {
             Set<String> keys = redisTemplate.keys("tournament:*");
             if (keys == null || keys.isEmpty()) {
-                logger.info("No tournaments found in Redis for scheduling.");
+                logger.debug("No tournaments found in Redis for scheduling.");
                 return;
             }
 

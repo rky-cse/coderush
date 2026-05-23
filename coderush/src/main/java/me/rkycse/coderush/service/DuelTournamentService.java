@@ -123,7 +123,11 @@ public class DuelTournamentService {
     }
 
     public DuelTournamentDTO getDuelTournamentById(Long tournamentId) {
-        return Mapper.toDTO(duelTournamentRepository.findByTournamentId(tournamentId));
+        DuelTournamentEntity entity = duelTournamentRepository.findByTournamentId(tournamentId);
+        if (entity == null) {
+            throw new me.rkycse.coderush.exception.TournamentNotFoundException(tournamentId);
+        }
+        return Mapper.toDTO(entity);
     }
 
 }

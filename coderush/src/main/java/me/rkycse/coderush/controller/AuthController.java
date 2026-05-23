@@ -4,14 +4,18 @@ import me.rkycse.coderush.dto.LoginRequest;
 import me.rkycse.coderush.dto.LoginResponse;
 import me.rkycse.coderush.dto.UserDTO;
 import me.rkycse.coderush.entity.UserEntity;
+import me.rkycse.coderush.exception.EmailExistsException;
+import me.rkycse.coderush.exception.InvalidCredentialsException;
+import me.rkycse.coderush.exception.UsernameExistsException;
 import me.rkycse.coderush.repository.UserRepository;
 import me.rkycse.coderush.security.CustomUserDetailsService;
 import me.rkycse.coderush.util.JwtUtil;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,37 +45,46 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponse authenticate(@RequestBody LoginRequest loginRequest) {
-        // Perform authentication with the given credentials
-        System.out.println(loginRequest);
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUserName(), loginRequest.getPassword())
-        );
+        // Catch any auth failure (bad password, no such user, locked, etc.) and
+        // collapse to a single generic error so we don't leak which usernames exist.
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUserName(),
+                            loginRequest.getPassword()
+                    )
+            );
+        } catch (AuthenticationException ex) {
+            throw new InvalidCredentialsException();
+        }
 
-
-        // Retrieve the authenticated UserDetails from the authentication object
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        System.out.println(userDetails.getUsername());
-
-        // Generate JWT token
         String token = jwtUtil.generateToken(userDetails.getUsername());
-
-        // Return the JWT token in the response
         return new LoginResponse(token);
     }
 
     @PostMapping("/register")
     public UserDTO register(@RequestBody UserDTO userDto) {
+        // Pre-validate unique fields so we can return a friendly error instead of
+        // a generic 500 from the DB-level unique constraint violation.
+        if (userRepository.findByUserName(userDto.getUserName()).isPresent()) {
+            throw new UsernameExistsException();
+        }
+        if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
+            throw new EmailExistsException();
+        }
+
         UserEntity userEntity = new UserEntity();
         userEntity.setUserName(userDto.getUserName());
         userEntity.setFirstName(userDto.getFirstName());
         userEntity.setLastName(userDto.getLastName());
         userEntity.setEmail(userDto.getEmail());
         userEntity.setPassword(passwordEncoder.encode(userDto.getPassword()));
-        userEntity.setRoles(List.of("ROLE_USER")); // adjust roles as needed
+        userEntity.setRoles(List.of("ROLE_USER"));
 
         UserEntity savedUser = userRepository.save(userEntity);
 
-        // Convert savedUser back to a DTO (excluding password)
         UserDTO responseDto = new UserDTO();
         responseDto.setId(savedUser.getId());
         responseDto.setUserName(savedUser.getUserName());
@@ -79,7 +92,6 @@ public class AuthController {
         responseDto.setLastName(savedUser.getLastName());
         responseDto.setEmail(savedUser.getEmail());
         responseDto.setRoles(savedUser.getRoles());
-
         return responseDto;
     }
 }

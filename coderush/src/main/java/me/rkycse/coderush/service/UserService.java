@@ -58,7 +58,9 @@ public class UserService {
     }
 
     public UserDTO getUserByUsername(String username) {
-        return Mapper.toDTO(userRepository.findByUserName(username).orElse(null));
+        UserEntity user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new me.rkycse.coderush.exception.UserNotFoundException(username));
+        return Mapper.toDTO(user);
     }
     public List<UserTournamentRatingDTO> getUserTournamentRating(String username) {
         List<UserTournamentRatingEntity>userTournamentRatingEntities=

@@ -291,9 +291,7 @@ public class TestsController {
             ));
 
         } catch (FileUploadBase.FileSizeLimitExceededException ex) {
-            return ResponseEntity
-                    .status(HttpStatus.PAYLOAD_TOO_LARGE)
-                    .body("File too large (max 5 MB)");
+            throw new me.rkycse.coderush.exception.FileTooLargeException(MAX_FILE_SIZE);
         } catch (Exception ex) {
             ex.printStackTrace();
             return ResponseEntity

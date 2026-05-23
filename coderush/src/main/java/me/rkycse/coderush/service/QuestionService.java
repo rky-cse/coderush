@@ -45,14 +45,14 @@ public class QuestionService {
     }
     public QuestionDTO getQuestionById(Long questionId) {
         QuestionEntity question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new RuntimeException("Question not found"));
+                .orElseThrow(() -> new me.rkycse.coderush.exception.QuestionNotFoundException(questionId));
         return convertToDTO(question);
     }
     public QuestionDTO createQuestion(QuestionDTO question) {
         if (question != null) {
             String username = getCurrentUsername();
             UserEntity user = userRepository.findByUserName(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new me.rkycse.coderush.exception.UserNotFoundException(username));
 
             if (question.getRated() == null) question.setRated(false);
             boolean rated = question.getRated();
@@ -81,7 +81,7 @@ public class QuestionService {
 
     public List<QuestionDTO> getQuestionsByUsername(String username) {
         UserEntity user = userRepository.findByUserName(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new me.rkycse.coderush.exception.UserNotFoundException(username));
 
         List<QuestionEntity> questions = questionRepository.findByCreatorId(user.getId());
         return questions.stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -89,14 +89,14 @@ public class QuestionService {
 
     public boolean updateQuestion(Long questionId, QuestionDTO updatedQuestion) {
         QuestionEntity existingQuestion = questionRepository.findById(questionId)
-                .orElseThrow(() -> new RuntimeException("Question not found"));
+                .orElseThrow(() -> new me.rkycse.coderush.exception.QuestionNotFoundException(questionId));
 
         String username = getCurrentUsername();
         UserEntity user = userRepository.findByUserName(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new me.rkycse.coderush.exception.UserNotFoundException(username));
 
         if (!existingQuestion.getCreatorId().equals(user.getId())) {
-            throw new RuntimeException("You are not authorized to update this question");
+            throw new me.rkycse.coderush.exception.NotQuestionCreatorException();
         }
 
         existingQuestion.setName(updatedQuestion.getName());

@@ -38,13 +38,10 @@ public class MTMTournamentController {
 
     @GetMapping("/joinTournament/{tournamentId}")
     public ResponseEntity<JoinTournamentResponseDTO> joinTournament(@PathVariable Long tournamentId) {
-        System.out.println("Joining tournament: " + tournamentId);
-        JoinTournamentResponseDTO joinMTMTournamentResponseDTO =
-                mtmTournamentService.joinTournament(tournamentId);
-        if (joinMTMTournamentResponseDTO != null) {
-            return ResponseEntity.ok(joinMTMTournamentResponseDTO);
-        }
-        return ResponseEntity.notFound().build();
+        // Service throws TournamentNotFoundException / TournamentEndedException on failure;
+        // GlobalExceptionHandler maps them to ApiError JSON.
+        JoinTournamentResponseDTO response = mtmTournamentService.joinTournament(tournamentId);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/startTournament/{tournamentId}")

@@ -679,7 +679,7 @@ public class MatchmakingService {
     @Transactional
     public void processMatchmakingQueue() {
         // Iterate over each timeControl and tournament type
-        System.out.println( "[processMatchmakingQueue()] Starting matchmaking queue processing... ");
+        // (was: System.out.println logging "Starting matchmaking queue processing..." every 5s — silenced)
         List<String> timeControls = Arrays.asList("5", "10", "15", "25", "45", "60", "75", "90", "100", "120");
         for (String timeControl : timeControls) {
             for (String type : TOURNAMENT_TYPES) {
