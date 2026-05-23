@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Clock, Eye, MessageCircle, Search, Filter, Plus, Code, FileText, Star, Image, Sparkles } from 'lucide-react';
+import { Clock, Eye, MessageCircle, Search, Filter, Plus, Code, FileText, Star, Image } from 'lucide-react';
 import api from '@/services/api';
 import notify from '@/services/notify';
 
@@ -115,13 +115,6 @@ const MyQuestionsPage = () => {
               </select>
             </div>
           </div>
-
-          {/* AI Generate Button */}
-          <a href="/generateQuestion"
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium text-sm">
-            <Sparkles className="h-4 w-4" />
-            AI Generate
-          </a>
         </div>
 
         {/* Questions Grid */}

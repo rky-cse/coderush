@@ -27,7 +27,13 @@ export default function CreateQuestion() {
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6">Create New Question</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Create New Question</h1>
+        <a href="/generateQuestion"
+          className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium text-sm">
+          ✨ AI Generate
+        </a>
+      </div>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label htmlFor="questionName" className="block text-sm font-medium text-gray-700">
